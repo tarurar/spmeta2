@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>SPMeta2 by SubPointSolutions</title>
+    <title>SPMeta2 - a fluent API for code-based SharePoint artifact provisioning</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -11,71 +11,126 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-  </head>
-  <body>
+</head>
+<body>
     <div class="wrapper">
-      <header>
-        <h1>SPMeta2</h1>
-        <p>Fluent API for code-based SharePoint artifact provisioning.</p>
+        <header>
+            <h1>SPMeta2 - a fluent API for code-based SharePoint artifact provisioning</h1>
+            <p>Forget XML/WSP. Unleash power of SSOM/CSOM and JSOM to get things done.</p>
 
-        <p class="view"><a href="https://github.com/SubPointSolutions/spmeta2">View the Project on GitHub <small>SubPointSolutions/spmeta2</small></a></p>
+            <p class="view">
+                <a target="_blank" href="https://github.com/SubPointSolutions/spmeta2">SPMeta2 @ GitHub</a><br />
+                <a target="_blank" href="https://www.nuget.org/packages?q=spmeta2">SPMeta2 @ Nuget</a><br />
+                <a target="_blank" href="https://github.com/SubPointSolutions/spmeta2/wiki">SPMeta2 Documentation Wiki</a><br />
+                <a target="_blank" href="https://github.com/SubPointSolutions/spmeta2/issues">SPMeta2 Bugtracker</a><br />
+                <a target="_blank" href="http://subpointsolutions.github.io/spmeta2/Help">SPMeta2 API Documentation</a><br />
+            </p>
 
+            <ul class="ic">
+                <li><a target="_blank" href="https://www.nuget.org/packages?q=spmeta2">Check out<strong>NuGet</strong></a></li>
+                <li><a target="_blank" href="https://github.com/SubPointSolutions/spmeta2/wiki">Check out <strong>Wiki Docs</strong></a></li>
+                <li><a target="_blank" href="https://github.com/SubPointSolutions/spmeta2">View On <strong>GitHub</strong></a></li>
+            </ul>
+        </header>
+        <section>
+            <h2>
+                SPMeta2 overview
+            </h2>
 
-        <ul>
-          <li><a href="https://github.com/SubPointSolutions/spmeta2/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/SubPointSolutions/spmeta2/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/SubPointSolutions/spmeta2">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+            <p>
+                Struggling with SharePoint's API inconsistency, bugs, "by-design" behaviour, unaffordable amount of time to write, support and upgrade WSP packages and XML, a team of passionate SharePoint professionals decided to come up with robust, testable and repeatable way to deploy such artifacts like fields, content types, libraries, pages and many more.
+            </p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+            <p>
+                As an outcome, we created SPMeta2 - a .NET 4.5 library to provide fluent API for SharePoint 2013 artifact with SSOM/CSOM or JSOM for both on premise and O365 instances. What's inside?
+            </p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+            <h2>
+                SPMeta2 philosophy and mission
+            </h2>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+            <h3>Fluent API and syntax extensions</h3>
+            <p>
+                SPMeta2 API allows you to define SharePoint artifacts such as field, content type, list (and many more), define relationships between them and, finally, deploy them via SSOM/CSOM.
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+                You work with c# POCO objects defining your data model, we take care about the rest. <br /><br />
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+                SPMeta2 might be extended with custom syntax implementation to meet your project needs.
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+                Extension methods are used to adjust a specific behavior or property of SharePoint artifacts.
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+                Custom syntax or DSL can easily be created to address specific project needs.
+            </p>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+            <h3>Model tree build-in validation</h3>
+            <p>
+                The model tree might be optionally validated with build in rules.
+                It guarantees nobody adds a field to the web or list to the site collection. Custom validators can be implemented to address your project needs as well. <br /><br />
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+                Builtin validators ensure SharePoint limitations and boundaries. SPMeta2 checks that internal names of all your fields don not exceed 32 chars. There is more magic than you can imagine.
+            </p>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+            <h3>SharePoint 2013 Foundation, Standard, Enterprise and O365 are supported</h3>
+            <p>
+                SPMeta2 supports all SharePoint editions.
+                It is splitted up into several packages to reflect SharePoint editions: Foundation, Standart and Enterprise.
+                O365 support is implemented with CSOM.
+            </p>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/SubPointSolutions">SubPointSolutions</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+            <h3>SSOM and CSOM are supported. JSOM is coming up.</h3>
+            <p>
+                SPMeta2 supports SSOM and CSOM. We are working on JSOM support implemeted with TypeScript and SPTypeScript.
+            </p>
+
+            <h3>No XML inside - only code</h3>
+            <p>
+                SPMeta2 is code based provision library for SharePoint 2013.<ul>
+                    <li> You DO NOT write XML</li>
+                    <li> You DO NOT write WSP</li>
+                    <li> You DO write code instead</li>
+                </ul>
+
+            </p>
+
+            <h3>Regression and testing are implemented and supported</h3>
+            <p>
+                Having code based provision allows us to have full control over the provision and update flow. As there is no WSP or XML, not features need to be deployed or activated.
+
+                <br /><br />
+                This allows us to write integration tests within minutes, make sure deployment and upgrade work as expected. Most of the provision cases are covered with integration tests. We create a new site or web, deploy everything we need and check if everything has been deployed correctly.
+            </p>
+            <h2>
+                SPMeta2 Documentation
+            </h2>
+            <p>
+                We used to live with codeplex, but recently have moved to github.
+                Here are some links to get started:
+                <ul>
+                    <li><a target="_blank" href="https://github.com/SubPointSolutions/spmeta2">SPMeta2 @ GitHub</a></li>
+                    <li><a target="_blank" href="https://www.nuget.org/packages?q=spmeta2">SPMeta2 @ Nuget</a></li>
+                    <li><a target="_blank" href="https://github.com/SubPointSolutions/spmeta2/wiki">SPMeta2 Documentation Wiki</a></li>
+                    <li><a target="_blank" href="https://github.com/SubPointSolutions/spmeta2/issues">SPMeta2 Bugtracker</a></li>
+                    <li><a target="_blank" href="http://subpointsolutions.github.io/spmeta2/Help">SPMeta2 API Documentation</a></li>
+                </ul>
+            </p>
+
+        </section>
+        <footer>
+            <p>This project is maintained by <a target="_blank" href="https://twitter.com/SubPointSocial">SubPoint Solutions</a>. Join us and <a href="https://github.com/SubPointSolutions/spmeta2">become a new contributor.</a></p>
+            <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+        </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-51347243-1");
+    <script type="text/javascript">
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+        try {
+            var pageTracker = _gat._getTracker("UA-51347243-1");
             pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
+        } catch (err) { }
+    </script>
 
-  </body>
+</body>
 </html>
