@@ -19,7 +19,7 @@ namespace SPMeta2.CSOM.Behaviours
 
         public static Field MakeChoices(this Field field, IEnumerable<string> choiceValues, bool cleanOldChoice = true)
         {
-            var choiceField = field as FieldChoice;
+            var choiceField = field as FieldMultiChoice;
 
             if (choiceField != null)
             {
@@ -34,6 +34,16 @@ namespace SPMeta2.CSOM.Behaviours
 
                 choiceField.Choices = tmpChoices.ToArray();
             }
+
+            return field;
+        }
+
+        public static Field MakeFillInChoice(this Field field, bool fillIn = true)
+        {
+            var choiceField = field as FieldMultiChoice;
+
+            if (choiceField != null)
+                choiceField.FillInChoice = fillIn;
 
             return field;
         }
