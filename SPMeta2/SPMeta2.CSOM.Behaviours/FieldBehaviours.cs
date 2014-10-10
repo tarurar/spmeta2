@@ -48,6 +48,16 @@ namespace SPMeta2.CSOM.Behaviours
             return field;
         }
 
+        public static Field MakeDateOnly(this Field field)
+        {
+            var dateField = field as FieldDateTime;
+
+            if (dateField != null)
+                dateField.DisplayFormat = DateTimeFieldFormatType.DateOnly;
+
+            return field;
+        }
+
         public static Field MakeDefaultValue(this Field field, string value)
         {
             field.DefaultValue = value;
