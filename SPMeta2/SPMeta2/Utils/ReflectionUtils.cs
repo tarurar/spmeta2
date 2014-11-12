@@ -7,6 +7,18 @@ using System.Text;
 
 namespace SPMeta2.Utils
 {
+    public class PropResult
+    {
+        public string Name { get; set; }
+        public object Value { get; set; }
+
+        public Type ObjectType { get; set; }
+    }
+
+    /// <summary>
+    /// Reflection helpers.
+    /// Internal usage only.
+    /// </summary>
     public static class ReflectionUtils
     {
         #region methods
@@ -100,12 +112,5 @@ namespace SPMeta2.Utils
         #endregion
     }
 
-    public class PropResult
-    {
-        public string Name { get; set; }
-        public object Value { get; set; }
-
-        public Type ObjectType { get; set; }
-    }
-
+   
 }

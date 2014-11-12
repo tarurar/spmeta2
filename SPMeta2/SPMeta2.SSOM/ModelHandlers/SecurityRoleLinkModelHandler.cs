@@ -2,9 +2,11 @@
 using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
+using SPMeta2.Exceptions;
 
 namespace SPMeta2.SSOM.ModelHandlers
 {
@@ -17,7 +19,31 @@ namespace SPMeta2.SSOM.ModelHandlers
             get { return typeof(SecurityRoleLinkDefinition); }
         }
 
-        protected override void DeployModelInternal(object modelHost, DefinitionBase model)
+        private SPSecurableObject ExtractSecurableObject(object modelHost)
+        {
+            if (modelHost is SPSecurableObject)
+                return modelHost as SPSecurableObject;
+
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList;
+
+            if (modelHost is FolderModelHost)
+                return (modelHost as FolderModelHost).CurrentLibraryFolder.Item;
+
+            if (modelHost is WebpartPageModelHost)
+                return (modelHost as WebpartPageModelHost).PageListItem;
+
+            throw new SPMeta2NotImplementedException(string.Format("Model host of type:[{0}] is not supported by SecurityGroupLinkModelHandler yet.",
+                modelHost.GetType()));
+        }
+
+        public override void DeployModel(object modelHost, DefinitionBase model)
         {
             var modelHostContext = modelHost.WithAssertAndCast<SecurityGroupModelHost>("modelHost", value => value.RequireNotNull());
             var securityRoleLinkModel = model.WithAssertAndCast<SecurityRoleLinkDefinition>("model", value => value.RequireNotNull());
@@ -30,9 +56,9 @@ namespace SPMeta2.SSOM.ModelHandlers
                 // this is SPGroup -> SPRoleLink deployment
                 ProcessSPGroupHost(securityGroup, securityGroup, securityRoleLinkModel);
             }
-            else if (securableObject is SPList)
+            else if (securableObject is SPSecurableObject)
             {
-                ProcessSPListHost(securableObject as SPList, securityGroup, securityRoleLinkModel);
+                ProcessSPSecurableObjectHost(securableObject as SPSecurableObject, securityGroup, securityRoleLinkModel);
             }
             else
             {
@@ -40,16 +66,70 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
         }
 
-        private void ProcessSPListHost(SPList targetList, SPGroup securityGroup, 
+        protected SPWeb ExtractWeb(object modelHost)
+        {
+            if (modelHost is SPWeb)
+                return modelHost as SPWeb;
+
+            if (modelHost is SPList)
+                return (modelHost as SPList).ParentWeb;
+
+            if (modelHost is SPListItem)
+                return (modelHost as SPListItem).ParentList.ParentWeb;
+
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList.ParentWeb;
+
+            if (modelHost is FolderModelHost)
+                return (modelHost as FolderModelHost).CurrentLibraryFolder.ParentWeb;
+
+            throw new Exception(string.Format("modelHost with type [{0}] is not supported.", modelHost.GetType()));
+        }
+
+        protected SPRoleDefinition ResolveSecurityRole(SPWeb web, SecurityRoleLinkDefinition rolDefinitionModel)
+        {
+            var roleDefinitions = web.RoleDefinitions;
+
+            if (!string.IsNullOrEmpty(rolDefinitionModel.SecurityRoleName))
+            {
+                foreach (SPRoleDefinition roleDefinition in roleDefinitions)
+                    if (string.Compare(roleDefinition.Name, rolDefinitionModel.SecurityRoleName, true) == 0)
+                        return roleDefinition;
+            }
+            else if (rolDefinitionModel.SecurityRoleId > 0)
+            {
+                foreach (SPRoleDefinition roleDefinition in roleDefinitions)
+                {
+                    if (roleDefinition.Id == rolDefinitionModel.SecurityRoleId)
+                        return roleDefinition;
+                }
+            }
+            else if (!string.IsNullOrEmpty(rolDefinitionModel.SecurityRoleType))
+            {
+                var roleType = (SPRoleType)Enum.Parse(typeof(SPRoleType), rolDefinitionModel.SecurityRoleType, true);
+
+                return roleDefinitions.GetByType(roleType);
+            }
+
+            throw new ArgumentException(string.Format("Cannot resolve role definition for role definition link model:[{0}]", rolDefinitionModel));
+        }
+
+        private void ProcessSPSecurableObjectHost(SPSecurableObject targetSecurableObject, SPGroup securityGroup,
             SecurityRoleLinkDefinition securityRoleLinkModel)
         {
             //// TODO
             // need common validation infrastructure 
-            var web = targetList.ParentWeb;
+            var web = ExtractWeb(targetSecurableObject);
 
             var roleAssignment = new SPRoleAssignment(securityGroup);
 
-            var role = web.RoleDefinitions[securityRoleLinkModel.SecurityRoleName];
+            var role = ResolveSecurityRole(web, securityRoleLinkModel);
 
             if (!roleAssignment.RoleDefinitionBindings.Contains(role))
             {
@@ -61,7 +141,7 @@ namespace SPMeta2.SSOM.ModelHandlers
                     Object = null,
                     ObjectType = typeof(SPRoleDefinition),
                     ObjectDefinition = securityRoleLinkModel,
-                    ModelHost = targetList
+                    ModelHost = targetSecurableObject
                 });
 
                 roleAssignment.RoleDefinitionBindings.Add(role);
@@ -76,12 +156,12 @@ namespace SPMeta2.SSOM.ModelHandlers
                     Object = role,
                     ObjectType = typeof(SPRoleDefinition),
                     ObjectDefinition = securityRoleLinkModel,
-                    ModelHost = targetList
+                    ModelHost = targetSecurableObject
                 });
 
             }
 
-            targetList.RoleAssignments.Add(roleAssignment);
+            targetSecurableObject.RoleAssignments.Add(roleAssignment);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -91,10 +171,8 @@ namespace SPMeta2.SSOM.ModelHandlers
                 Object = role,
                 ObjectType = typeof(SPRoleDefinition),
                 ObjectDefinition = securityRoleLinkModel,
-                ModelHost = targetList
+                ModelHost = targetSecurableObject
             });
-
-            targetList.Update();
         }
 
         private void ProcessSPGroupHost(SPGroup modelHost, SPGroup securityGroup, SecurityRoleLinkDefinition securityRoleLinkModel)
@@ -104,7 +182,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             var web = securityGroup.ParentWeb;
 
             var securityRoleAssignment = new SPRoleAssignment(securityGroup);
-            var roleDefinition = web.RoleDefinitions[securityRoleLinkModel.SecurityRoleName];
+            SPRoleDefinition roleDefinition = ResolveSecurityRole(web, securityRoleLinkModel);
 
             if (!securityRoleAssignment.RoleDefinitionBindings.Contains(roleDefinition))
             {

@@ -1,8 +1,27 @@
-﻿namespace SPMeta2.Definitions
+﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Regression;
+using System;
+using SPMeta2.Definitions.Base;
+using SPMeta2.Utils;
+
+namespace SPMeta2.Definitions
 {
-    public class WebPartDefinition : DefinitionBase
+    /// <summary>
+    /// Allows to define and deploy SharePoint web part.
+    /// </summary>
+    /// 
+
+    [SPObjectTypeAttribute(SPObjectModelType.SSOM, "System.Web.UI.WebControls.WebParts.WebPart", "System.Web")]
+    [SPObjectTypeAttribute(SPObjectModelType.CSOM, "Microsoft.SharePoint.Client.WebParts.WebPart", "Microsoft.SharePoint.Client")]
+
+    [DefaultRootHostAttribute(typeof(WebDefinition))]
+    [DefaultParentHostAttribute(typeof(WebPartPageDefinition))]
+
+    [Serializable]
+
+    public class WebPartDefinition : WebPartDefinitionBase
     {
-        #region contructors
+        #region constructors
 
         public WebPartDefinition()
         {
@@ -11,26 +30,23 @@
 
         #endregion
 
-        #region properties
-
-        public string Title { get; set; }
-        public string Id { get; set; }
-
-        public string ZoneId { get; set; }
-        public int ZoneIndex { get; set; }
-
-        public string WebpartFileName { get; set; }
-        public string WebpartType { get; set; }
-        public string WebpartXmlTemplate { get; set; }
-
-        #endregion
-
         #region methods
 
         public override string ToString()
         {
-            return string.Format("Title:[{0}] Id:[{1}] WebpartFileName:[{2}] WebpartType:[{3}] ZoneId:[{4}] ZoneIndex:[{5}]",
-                new[] { Title, Id, WebpartFileName, WebpartType, ZoneId, ZoneIndex.ToString() });
+            return new ToStringResult<WebPartDefinition>(this)
+                          .AddPropertyValue(p => p.Title)
+                          .AddPropertyValue(p => p.Id)
+                          .AddPropertyValue(p => p.ZoneId)
+                          .AddPropertyValue(p => p.ZoneIndex)
+
+                          .AddPropertyValue(p => p.WebpartFileName)
+                          .AddPropertyValue(p => p.WebpartType)
+                // TODO, this is too big to put into ToString()
+                //.AddPropertyValue(p => p.WebpartXmlTemplate)
+
+                          .AddPropertyValue(p => p.AddToPageContent)
+                          .ToString();
         }
 
         #endregion

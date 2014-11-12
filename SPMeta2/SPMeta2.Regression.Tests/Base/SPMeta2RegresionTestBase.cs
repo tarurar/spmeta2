@@ -3,19 +3,25 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using SPMeta2.Models;
 using SPMeta2.Regression.Runners;
 using SPMeta2.Regression.Runners.Consts;
 using SPMeta2.Regression.Runners.Utils;
 using SPMeta2.Utils;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SPMeta2.Regression.Tests.Base
 {
     public class SPMeta2RegresionTestBase
     {
+        public TestContext TestContext { get; set; }
+
         #region constructors
 
         public SPMeta2RegresionTestBase()
         {
+            ProvisionGenerationCount = 1;
+
             ProvisionRunners = new List<ProvisionRunnerBase>();
             ProvisionRunnerAssemblies = new List<string>();
 
@@ -27,6 +33,8 @@ namespace SPMeta2.Regression.Tests.Base
         #endregion
 
         #region properties
+
+        public int ProvisionGenerationCount { get; set; }
 
         protected void InitLazyRunnerConnection()
         {
@@ -84,30 +92,54 @@ namespace SPMeta2.Regression.Tests.Base
 
             Trace.WriteLine(string.Format("Testing with runner libraries: [{0}]", runnerLibraries));
 
-            //if (!string.IsNullOrEmpty(runnerLibraries))
-            //{
-            //    var libs = runnerLibraries.Split(',');
+            if (!string.IsNullOrEmpty(runnerLibraries))
+            {
+                var libs = runnerLibraries.Split(',');
 
-            //    foreach (var lib in libs)
-            //        ProvisionRunnerAssemblies.Add(lib);
-            //}
+                foreach (var lib in libs)
+                    ProvisionRunnerAssemblies.Add(lib);
+            }
 
-            ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.O365.dll");
-            //ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.CSOM.dll");
-            //ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.SSOM.dll");
+            if (ProvisionRunnerAssemblies.Count == 0)
+                throw new ArgumentException("Cannot find any test runners. Please configure test runners via SPMeta2.Regression.Environment.ps1 script.");
+
+            // Test runners should be managed via SPMeta2.Regression.Environment.ps1
+            // Manual adding is for internal use only.
+
+            //  ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.O365.dll");
+            //  ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.CSOM.dll");
+            //  ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.SSOM.dll");
         }
 
-        protected void WithProvisionRunners(Action<ProvisionRunnerBase> action)
+        protected ProvisionRunnerBase CurrentProvisionRunner;
+
+        protected void WithProvisionRunnerContext(Action<ProvisionRunnerContext> action)
         {
             foreach (var provisionRunner in ProvisionRunners)
             {
                 var type = provisionRunner.GetType().FullName;
 
+                provisionRunner.ProvisionGenerationCount = ProvisionGenerationCount;
                 provisionRunner.EnableDefinitionValidation = EnableDefinitionValidation;
 
-                Trace.WriteLine(string.Format("Testing with runner impl: [{0}]", type));
-                action(provisionRunner);
+                CurrentProvisionRunner = provisionRunner;
+
+                Trace.WriteLine(string.Format("[INF]    Testing with runner impl: [{0}]", type));
+                Trace.WriteLine(string.Format("[INF]        - ProvisionGenerationCount: [{0}]", ProvisionGenerationCount));
+                Trace.WriteLine(string.Format("[INF]        - EnableDefinitionValidation: [{0}]", EnableDefinitionValidation));
+
+                action(new ProvisionRunnerContext
+                {
+                    Runner = provisionRunner
+                });
             }
         }
+    }
+
+
+    public class ProvisionRunnerContext
+    {
+        public ProvisionRunnerBase Runner { get; set; }
+
     }
 }

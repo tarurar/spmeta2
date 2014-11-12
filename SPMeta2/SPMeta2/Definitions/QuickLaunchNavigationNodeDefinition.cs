@@ -1,28 +1,36 @@
-﻿using System;
+﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Regression;
+using SPMeta2.Definitions.Base;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SPMeta2.Utils;
 
 namespace SPMeta2.Definitions
 {
-    public class QuickLaunchNavigationNodeDefinition : DefinitionBase
+    /// <summary>
+    /// Allows to define and deploy quick lunch navigation node.
+    /// </summary>
+    /// 
+
+    [SPObjectTypeAttribute(SPObjectModelType.SSOM, "Microsoft.SharePoint.Navigation.SPNavigationNode", "Microsoft.SharePoint")]
+    [SPObjectTypeAttribute(SPObjectModelType.CSOM, "Microsoft.SharePoint.Client.NavigationNode", "Microsoft.SharePoint.Client")]
+
+    [DefaultRootHostAttribute(typeof(WebDefinition))]
+    [DefaultParentHostAttribute(typeof(WebDefinition))]
+
+    [Serializable]
+
+    public class QuickLaunchNavigationNodeDefinition : NavigationNodeDefinitionBase
     {
-        #region contructors
+        #region methods
 
-        public QuickLaunchNavigationNodeDefinition()
+        public override string ToString()
         {
-            IsVisible = true;
+            return new ToStringResult<QuickLaunchNavigationNodeDefinition>(this, base.ToString())
+                          .ToString();
         }
-
-        #endregion
-
-        #region properties
-
-        public string Title { get; set; }
-        public string Url { get; set; }
-
-        public bool IsExternal { get; set; }
-        public bool IsVisible { get; set; }
 
         #endregion
     }

@@ -1,11 +1,17 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.SharePoint.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.Definitions;
-using SPMeta2.Regression.Common.Utils;
+using SPMeta2.Definitions.Base;
+using SPMeta2.Regression.Utils;
 using SPMeta2.Utils;
+using SPMeta2.CSOM.ModelHosts;
+using System.Text;
+using SPMeta2.Syntax.Default.Utils;
+using SPMeta2.Regression.Assertion;
 
 namespace SPMeta2.Regression.CSOM.Validation
 {
@@ -15,30 +21,122 @@ namespace SPMeta2.Regression.CSOM.Validation
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var list = modelHost.WithAssertAndCast<List>("modelHost", value => value.RequireNotNull());
-            var webPartPageModel = model.WithAssertAndCast<WebPartPageDefinition>("model", value => value.RequireNotNull());
+            var folderModelHost = modelHost.WithAssertAndCast<FolderModelHost>("modelHost", value => value.RequireNotNull());
+            var definition = model.WithAssertAndCast<WebPartPageDefinition>("model", value => value.RequireNotNull());
 
-            //if (!string.IsNullOrEmpty(webPartPageModel.FolderUrl))
-            //    throw new NotImplementedException("FolderUrl for the web part page model is not supported yet");
+            var folder = folderModelHost.CurrentLibraryFolder;
+            var context = folder.Context;
 
-            var pageName = GetSafeWebPartPageFileName(webPartPageModel);
-            var pageItem = list.QueryAndGetItemByFileName(pageName);
+            var pageName = GetSafeWebPartPageFileName(definition);
+            var pageFile = GetCurrentWebPartPage(folderModelHost.CurrentList, folder, pageName);
 
-            TraceUtils.WithScope(traceScope =>
+            var spObject = pageFile.ListItemAllFields;
+
+            context.Load(spObject);
+            context.Load(spObject, s => s.File);
+
+            context.ExecuteQuery();
+
+            var assert = ServiceFactory.AssertService
+                                     .NewAssert(definition, spObject)
+                                           .ShouldNotBeNull(spObject)
+                                           .ShouldBeEqual(m => m.FileName, o => o.GetName());
+
+            assert.SkipProperty(m => m.Title, "Web part pages don't have title. Skipping.");
+
+            if (!string.IsNullOrEmpty(definition.CustomPageLayout))
             {
-                traceScope.WriteLine(string.Format("Validate model:[{0}] web part page:[{1}]", webPartPageModel, pageItem));
-                Assert.IsNotNull(pageItem);
+                var custmPageContent = Encoding.UTF8.GetBytes(definition.CustomPageLayout);
+                var pageTemplateContent = definition.GetWebPartPageTemplateContent();
 
-                traceScope.WithTraceIndent(trace =>
+                byte[] dstContent = null;
+
+                using (var stream = File.OpenBinaryDirect(folderModelHost.HostClientContext, spObject.File.ServerRelativeUrl).Stream)
+                    dstContent = ModuleFileUtils.ReadFully(stream);
+
+                assert.ShouldBeEqual((p, s, d) =>
                 {
-                    var fileName = pageItem["FileLeafRef"];
+                    var srcProp = s.GetExpressionValue(m => m.PageLayoutTemplate);
 
-                    traceScope.WriteLine(string.Format("Validate FileName model:[{0}] web part page:[{1}]", pageName, fileName));
-                    Assert.AreEqual(pageName, fileName);
+                    var isValidPageLayoutTemplate = custmPageContent.SequenceEqual(dstContent);
+
+                    return new PropertyValidationResult
+                    {
+                        Tag = p.Tag,
+                        Src = srcProp,
+                        //Dst = dstProp,
+                        IsValid = isValidPageLayoutTemplate
+                    };
                 });
-            });
+
+                assert.SkipProperty(m => m.PageLayoutTemplate, "PageLayoutTemplate validated with GetWebPartPageTemplateContent() call before.");
+                assert.SkipProperty(m => m.CustomPageLayout, "CustomPageLayout validated with GetCustomnPageContent() call before.");
+            }
+            else
+            {
+                assert.SkipProperty(m => m.CustomPageLayout, "CustomPageLayout is null or empty. Skipping.");
+            }
+
+            if (definition.PageLayoutTemplate > 0)
+            {
+                var pageTemplateContent = definition.GetWebPartPageTemplateContent();
+
+                byte[] dstContent = null;
+
+                using (var stream = File.OpenBinaryDirect(folderModelHost.HostClientContext, spObject.File.ServerRelativeUrl).Stream)
+                    dstContent = ModuleFileUtils.ReadFully(stream);
+
+                assert.ShouldBeEqual((p, s, d) =>
+                {
+                    var srcProp = s.GetExpressionValue(m => m.PageLayoutTemplate);
+
+                    var isValidPageLayoutTemplate = pageTemplateContent.SequenceEqual(dstContent);
+
+                    return new PropertyValidationResult
+                    {
+                        Tag = p.Tag,
+                        Src = srcProp,
+                        //Dst = dstProp,
+                        IsValid = isValidPageLayoutTemplate
+                    };
+                });
+
+                assert.SkipProperty(m => m.PageLayoutTemplate, "PageLayoutTemplate validated with GetWebPartPageTemplateContent() call before.");
+            }
+            else
+            {
+                assert.SkipProperty(m => m.CustomPageLayout, "PageLayoutTemplate is o or less. Skipping.");
+            }
         }
 
         #endregion
+
+
     }
+
+    internal static class WebPartPageDefinitionEx
+    {
+        public static byte[] GetWebPartPageTemplateContent(this WebPartPageDefinition definition)
+        {
+            return Encoding.UTF8.GetBytes(WebPartPageModelHandler.GetWebPartTemplateContent(definition));
+        }
+
+        public static byte[] GetCustomnPageContent(this WebPartPageDefinition definition)
+        {
+            return Encoding.UTF8.GetBytes(definition.CustomPageLayout);
+        }
+    }
+
+    //internal static class SPListItemExtensions
+    //{
+    //    public static byte[] GetContent(this ListItem item)
+    //    {
+    //        byte[] result = null;
+
+    //        using (var stream = File.OpenBinaryDirect(folderHost.HostClientContext, item.File.ServerRelativeUrl).Stream)
+    //            dstContent = ModuleFileUtils.ReadFully(stream);
+
+    //        return result;
+    //    }
+    //}
 }

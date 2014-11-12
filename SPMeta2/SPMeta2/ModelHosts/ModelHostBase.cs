@@ -5,14 +5,21 @@ using System.Text;
 
 namespace SPMeta2.ModelHosts
 {
+    /// <summary>
+    /// Base model host for provision flow.
+    /// </summary>
     public class ModelHostBase : ICloneable
     {
-        #region methods
+        #region constructors
 
-        public object Clone()
+        public ModelHostBase()
         {
-            return MemberwiseClone();
+            ShouldUpdateHost = true;
         }
+
+        #endregion
+
+        #region static
 
         public static ModelHostBase Inherit(ModelHostBase modelHost)
         {
@@ -45,11 +52,32 @@ namespace SPMeta2.ModelHosts
             foreach (var prop in source.GetType().GetProperties())
             {
                 var propGetter = prop.GetGetMethod();
-                var propSetter = customerType.GetProperty(prop.Name).GetSetMethod();
-                var valueToSet = propGetter.Invoke(source, null);
 
-                propSetter.Invoke(target, new[] { valueToSet });
+                var targetProperty = customerType.GetProperty(prop.Name);
+
+                if (targetProperty != null)
+                {
+                    var propSetter = customerType.GetProperty(prop.Name).GetSetMethod();
+                    var valueToSet = propGetter.Invoke(source, null);
+
+                    propSetter.Invoke(target, new[] { valueToSet });
+                }
             }
+        }
+
+        #endregion
+
+        #region properties
+
+        public bool ShouldUpdateHost { get; set; }
+
+        #endregion
+
+        #region methods
+
+        public object Clone()
+        {
+            return MemberwiseClone();
         }
 
         #endregion

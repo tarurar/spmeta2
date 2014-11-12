@@ -4,11 +4,12 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.Exceptions;
-using SPMeta2.Regression.Common;
-using SPMeta2.Regression.Common.Utils;
-using SPMeta2.Regression.SSOM.Utils;
+
+using SPMeta2.Regression.Utils;
 using SPMeta2.Utils;
+
 
 namespace SPMeta2.Regression.CSOM.Validation
 {
@@ -16,48 +17,33 @@ namespace SPMeta2.Regression.CSOM.Validation
     {
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var fieldModel = model.WithAssertAndCast<FieldDefinition>("model", value => value.RequireNotNull());
+            var definition = model.WithAssertAndCast<FieldDefinition>("model", value => value.RequireNotNull());
+
+            Field spObject = null;
 
             if (modelHost is SiteModelHost)
-                ValidateSiteField(modelHost as SiteModelHost, fieldModel);
+                spObject = FindSiteField(modelHost as SiteModelHost, definition);
             else if (modelHost is ListModelHost)
-                ValidateListField(modelHost as ListModelHost, fieldModel);
+                spObject = FindListField((modelHost as ListModelHost).HostList, definition);
             else
             {
                 throw new SPMeta2NotSupportedException(
                     string.Format("Validation for artifact of type [{0}] under model host [{1}] is not supported.",
-                    fieldModel.GetType(),
+                    definition.GetType(),
                     modelHost.GetType()));
             }
-        }
 
-        private void ValidateListField(ListModelHost listModelHost, FieldDefinition fieldModel)
-        {
-            throw new SPMeta2NotImplementedException();
-        }
+            var assert = ServiceFactory.AssertService.NewAssert(model, definition, spObject);
 
-        private void ValidateSiteField(SiteModelHost siteModelHost, FieldDefinition model)
-        {
-            var spObject = FindSiteField(siteModelHost, model);
-
-            TraceUtils.WithScope(traceScope =>
-            {
-                var pair = new ComparePair<FieldDefinition, Field>(model, spObject);
-
-                traceScope.WriteLine(string.Format("Validating model:[{0}] field:[{1}]", model, spObject));
-
-                traceScope.WithTraceIndent(trace => pair
-                    .ShouldBeEqual(trace, m => m.Title, o => o.Title)
-                    .ShouldBeEqual(trace, m => m.InternalName, o => o.InternalName)
-                    .ShouldBeEqual(trace, m => m.Id, o => o.Id)
-                    .ShouldBeEqual(trace, m => m.Description, o => o.Description)
-                    .ShouldBeEqual(trace, m => m.Group, o => o.Group));
-            });
-        }
-
-        public override System.Type TargetType
-        {
-            get { return typeof(FieldDefinition); }
+            assert
+                .ShouldNotBeNull(spObject)
+                .ShouldBeEqual(m => m.Title, o => o.Title)
+                    .ShouldBeEqual(m => m.InternalName, o => o.InternalName)
+                    .ShouldBeEqual(m => m.Id, o => o.Id)
+                    .ShouldBeEqual(m => m.Required, o => o.Required)
+                    .ShouldBeEqual(m => m.Description, o => o.Description)
+                    .ShouldBeEqual(m => m.FieldType, o => o.TypeAsString)
+                    .ShouldBeEqual(m => m.Group, o => o.Group);
         }
     }
 }

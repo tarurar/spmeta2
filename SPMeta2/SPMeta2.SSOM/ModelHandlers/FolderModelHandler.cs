@@ -7,6 +7,7 @@ using Microsoft.SharePoint;
 using Microsoft.SharePoint.Administration;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
@@ -72,6 +73,31 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
         }
 
+        protected SPFolder GetListFolder(FolderModelHost folderModelHost, FolderDefinition folderModel)
+        {
+            var list = folderModelHost.CurrentList;
+            var currentFolderItem = folderModelHost.CurrentListItem;
+
+            var serverRelativeUrl = folderModelHost.CurrentListItem == null
+                                                ? list.RootFolder.ServerRelativeUrl
+                                                : folderModelHost.CurrentListItem.Folder.ServerRelativeUrl;
+
+            var currentUrl = serverRelativeUrl + "/" + folderModel.Name;
+            return folderModelHost.CurrentList.ParentWeb.GetFolder(currentUrl);
+        }
+
+
+        protected SPFolder GetLibraryFolder(FolderModelHost folderModelHost, FolderDefinition folderModel)
+        {
+            var parentFolder = folderModelHost.CurrentLibraryFolder;
+
+            // dirty stuff, needs to be rewritten
+            return parentFolder
+                                   .SubFolders
+                                   .OfType<SPFolder>()
+                                   .FirstOrDefault(f => f.Name == folderModel.Name);
+        }
+
         private SPListItem EnsureListFolder(FolderModelHost folderModelHost, FolderDefinition folderModel)
         {
             var list = folderModelHost.CurrentList;
@@ -82,7 +108,7 @@ namespace SPMeta2.SSOM.ModelHandlers
                                                 : folderModelHost.CurrentListItem.Folder.ServerRelativeUrl;
 
             var currentUrl = serverRelativeUrl + "/" + folderModel.Name;
-            var currentFolder = folderModelHost.CurrentList.ParentWeb.GetFolder(currentUrl);
+            var currentFolder = GetListFolder(folderModelHost, folderModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -139,10 +165,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             var parentFolder = folderModelHost.CurrentLibraryFolder;
 
             // dirty stuff, needs to be rewritten
-            var currentFolder = parentFolder
-                                   .SubFolders
-                                   .OfType<SPFolder>()
-                                   .FirstOrDefault(f => f.Name == folderModel.Name);
+            var currentFolder = GetLibraryFolder(folderModelHost, folderModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {

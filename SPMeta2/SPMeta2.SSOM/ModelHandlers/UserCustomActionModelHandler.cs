@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
@@ -38,11 +39,16 @@ namespace SPMeta2.SSOM.ModelHandlers
             DeploySiteCustomAction(modelHost, site, customAction);
         }
 
+        protected SPUserCustomAction GetCurrentCustomUserAction(SPSite site, UserCustomActionDefinition customActionModel)
+        {
+            return site.UserCustomActions.FirstOrDefault(a => a.Name == customActionModel.Name);
+        }
+
         private void DeploySiteCustomAction(
             object modelHost,
             SPSite site, UserCustomActionDefinition customActionModel)
         {
-            var existingAction = site.UserCustomActions.FirstOrDefault(a => a.Name == customActionModel.Name);
+            var existingAction = GetCurrentCustomUserAction(site, customActionModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -83,6 +89,25 @@ namespace SPMeta2.SSOM.ModelHandlers
             existringAction.ScriptBlock = customAction.ScriptBlock;
             existringAction.ScriptSrc = customAction.ScriptSrc;
             existringAction.Title = customAction.Title;
+            existringAction.Url = customAction.Url;
+
+            existringAction.Sequence = customAction.Sequence;
+
+            if (!string.IsNullOrEmpty(customAction.RegistrationId))
+                existringAction.RegistrationId = customAction.RegistrationId;
+
+            if (!string.IsNullOrEmpty(customAction.RegistrationType))
+                existringAction.RegistrationType = (SPUserCustomActionRegistrationType)Enum.Parse(typeof(SPUserCustomActionRegistrationType), customAction.RegistrationType, true);
+
+            var permissions = SPBasePermissions.EmptyMask;
+
+            if (customAction.Rights != null && customAction.Rights.Count > 0)
+            {
+                foreach (var permissionString in customAction.Rights)
+                    permissions = permissions | (SPBasePermissions)Enum.Parse(typeof(SPBasePermissions), permissionString);
+            }
+
+            existringAction.Rights = permissions;
         }
 
         private bool IsValidHostModelHost(object modelHost)

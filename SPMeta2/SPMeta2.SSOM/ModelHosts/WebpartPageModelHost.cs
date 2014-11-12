@@ -8,10 +8,11 @@ using System.Threading.Tasks;
 
 namespace SPMeta2.SSOM.ModelHosts
 {
-    public class WebpartPageModelHost
+    public class WebpartPageModelHost : SSOMModelHostBase
     {
         #region properties
 
+        public SPFile HostFile { get; set; }
         public SPLimitedWebPartManager SPLimitedWebPartManager { get; set; }
         public SPListItem PageListItem { get; set; }
 

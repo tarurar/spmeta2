@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\SPMeta2.O365.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,13 +51,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ModelHandlers\SiteDefinitionModelHandler.cs" />
+    <Compile Include="Definitions\O365SiteDefinition.cs" />
+    <Compile Include="ModelHandlers\Base\O365ModelHandlerBase.cs" />
+    <Compile Include="ModelHandlers\O365SiteDefinitionModelHandler.cs" />
     <Compile Include="ModelHosts\O365ModelHostBase.cs" />
-    <Compile Include="ModelHosts\SiteModelHost.cs" />
+    <Compile Include="ModelHosts\AdminSiteModelHost.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="TODO.txt" />
+    <Compile Include="Services\O365ProvisionService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SPMeta2\SPMeta2.csproj">
@@ -64,9 +65,7 @@
       <Name>SPMeta2</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

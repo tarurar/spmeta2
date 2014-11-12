@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SPMeta2.Enumerations
 {
+    /// <summary>
+    /// Out of the box SharePoint field types.
+    /// </summary>
     public static class BuiltInFieldTypes
     {
         public static readonly string Invalid = "Invalid";
@@ -44,5 +47,29 @@ namespace SPMeta2.Enumerations
 
         public static readonly string TaxonomyFieldType = "TaxonomyFieldType";
         public static readonly string TaxonomyFieldTypeMulti = "TaxonomyFieldTypeMulti";
+
+        public static readonly string BusinessData = "BusinessData";
+
+        public static string Overbook = "Overbook";
+        public static string Whereabout = "Whereabout";
+        public static string UserMulti = "UserMulti";
+        public static string RelatedItems = "RelatedItems";
+        public static string CallTo = "CallTo";
+        public static string FreeBusy = "FreeBusy";
+        public static string Likes = "Likes";
+        public static string RatingCount = "RatingCount";
+        public static string LookupMulti = "UserMulti";
+        public static string HTML = "HTML";
+        public static string TargetTo = "TargetTo";
+        public static string SummaryLinks = "SummaryLinks";
+        public static string Image = "Image";
+        public static string LayoutVariationsField = "LayoutVariationsField";
+        public static string Facilities = "Facilities";
+        public static string AverageRating = "AverageRating";
+        public static string ExemptField = "ExemptField";
+        public static string ContactInfo = "ContactInfo";
+        public static string ContentTypeIdFieldType = "ContentTypeId";
+        public static string PublishingScheduleEndDateFieldType = DateTime;
+        public static string PublishingScheduleStartDateFieldType = DateTime;
     }
 }

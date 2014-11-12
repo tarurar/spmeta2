@@ -13,6 +13,9 @@ using System.Reflection;
 
 namespace SPMeta2.Services
 {
+    /// <summary>
+    /// Base model service class for model provision operations.
+    /// </summary>
     public abstract class ModelServiceBase
     {
         #region constructors
@@ -58,11 +61,17 @@ namespace SPMeta2.Services
         private readonly List<ModelHandlerBase> ModelHandlerEvents = new List<ModelHandlerBase>();
         private ModelNode _activeModelNode = null;
 
+        public void RegisterModelHandler(ModelHandlerBase modelHandlerType)
+        {
+            if (!ModelHandlers.ContainsKey(modelHandlerType.TargetType))
+                ModelHandlers.Add(modelHandlerType.TargetType, modelHandlerType);
+        }
+
         public Dictionary<Type, ModelHandlerBase> ModelHandlers { get; set; }
 
         protected virtual List<ModelWeigh> GetModelWeighs()
         {
-            return DefaultModelWegh.Weighs;
+            return DefaultModelWeigh.Weighs;
         }
 
         #endregion
@@ -120,6 +129,10 @@ namespace SPMeta2.Services
 
         #endregion
 
+        #region internal
+
+        #endregion
+
         #region methods
 
         protected void InvokeOnModelNodeProcessed(object sender, OnModelNodeProcessedEventArgs args)
@@ -150,7 +163,12 @@ namespace SPMeta2.Services
             {
                 modelHandler.OnModelEvent += (s, e) =>
                 {
-                    if (_activeModelNode != null)
+                    if (e.CurrentModelNode != null)
+                    {
+                        e.CurrentModelNode.InvokeOnModelEvents(e.Object, e.EventType);
+                        e.CurrentModelNode.InvokeOnModelContextEvents(s, e);
+                    }
+                    else if (_activeModelNode != null)
                     {
                         _activeModelNode.InvokeOnModelEvents(e.Object, e.EventType);
                         _activeModelNode.InvokeOnModelContextEvents(s, e);
@@ -184,7 +202,7 @@ namespace SPMeta2.Services
             // spsite -> spweb -> spcontentype -> spcontentypelink
 
             // process current model
-            if (modelDefinition.RequireSelfProcessing)
+            if (modelDefinition.RequireSelfProcessing || modelNode.Options.RequireSelfProcessing)
             {
                 _activeModelNode = modelNode;
 
@@ -206,20 +224,70 @@ namespace SPMeta2.Services
             // deployment chain with changes from SPWeb to SPList
 
             // sort out child models by types
+            var modelWeights = GetModelWeighs();
+
             var childModelTypes = modelNode.ChildModels
                                        .Select(m => m.Value.GetType())
-                                       .GroupBy(t => t);
+                                       .GroupBy(t => t)
+                                       .ToList();
+
+
+            var currentModelWeights = modelWeights.FirstOrDefault(w => w.Model == modelDefinition.GetType());
+
+            if (currentModelWeights != null)
+            {
+                childModelTypes.Sort(delegate(IGrouping<Type, Type> p1, IGrouping<Type, Type> p2)
+                {
+                    var srcW = int.MaxValue;
+                    var dstW = int.MaxValue;
+
+                    if (currentModelWeights.ChildModels.ContainsKey(p1.Key))
+                        srcW = currentModelWeights.ChildModels[p1.Key];
+
+                    if (currentModelWeights.ChildModels.ContainsKey(p2.Key))
+                        dstW = currentModelWeights.ChildModels[p2.Key];
+
+                    return srcW.CompareTo(dstW);
+                });
+            }
+
 
             foreach (var childModelType in childModelTypes)
             {
-                modelHandler.WithResolvingModelHost(modelHost, modelDefinition, childModelType.Key, childModelHost =>
-                {
-                    var childModels =
-                        modelNode.GetChildModels(childModelType.Key);
+                // V1, optimized one
+                // does not work with nintex workflow as 'List was modified and needs to be refreshed.'
 
-                    foreach (var childModel in childModels)
-                        ProcessModelDeployment(childModelHost, childModel);
-                });
+                //var childModels =
+                //        modelNode.GetChildModels(childModelType.Key);
+
+                //modelHandler.WithResolvingModelHost(modelHost, modelDefinition, childModelType.Key, childModelHost =>
+                //{
+                //    foreach (var childModel in childModels)
+                //        ProcessModelDeployment(childModelHost, childModel);
+                //});
+
+                // V2, less optimized version
+                var childModels = modelNode.GetChildModels(childModelType.Key);
+
+                foreach (var childModel in childModels)
+                {
+                    modelHandler.WithResolvingModelHost(new ModelHostResolveContext
+                    {
+                        ModelHost = modelHost,
+                        Model = modelDefinition,
+                        ChildModelType = childModelType.Key,
+                        ModelNode = modelNode,
+                        Action = childModelHost =>
+                        {
+                            ProcessModelDeployment(childModelHost, childModel);
+                        }
+                    });
+
+                    //modelHandler.WithResolvingModelHost(modelHost, modelDefinition, childModelType.Key, childModelHost =>
+                    //{
+                    //    ProcessModelDeployment(childModelHost, childModel);
+                    //});
+                }
             }
         }
 

@@ -1,0 +1,12 @@
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.Regression.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.Regression.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.Syntax.Default.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.Syntax.Default.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\obj\Debug\SPMeta2.Regression.csprojResolveAssemblyReference.cache
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\obj\Debug\SPMeta2.Regression.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\obj\Debug\SPMeta2.Regression.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.Regression.XML
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.Syntax.Default.xml
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression\bin\Debug\SPMeta2.xml

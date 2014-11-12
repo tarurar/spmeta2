@@ -3,12 +3,15 @@ using Microsoft.SharePoint.Client;
 using SPMeta2.Common;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SPMeta2.Utils;
+
+using SPMeta2.ModelHosts;
 
 namespace SPMeta2.CSOM.ModelHandlers
 {
@@ -34,15 +37,12 @@ namespace SPMeta2.CSOM.ModelHandlers
             {
                 var currentFolder = EnsureLibraryFolder(folderModelHost, folderModel);
 
-                var newContext = new FolderModelHost
+                var newContext = ModelHostBase.Inherit<FolderModelHost>(folderModelHost, c =>
                 {
-                    CurrentList = folderModelHost.CurrentList,
-                    CurrentLibraryFolder = currentFolder,
-                    CurrentWeb = folderModelHost.CurrentWeb
-                    //Folder = currentFolder,
-                    //List = folderModelHost.CurrentList,
-                    //Web = folderModelHost.CurrentWeb
-                };
+                    c.CurrentList = folderModelHost.CurrentList;
+                    c.CurrentLibraryFolder = currentFolder;
+                    c.CurrentWeb = folderModelHost.CurrentWeb;
+                });
 
                 action(newContext);
             }
@@ -50,12 +50,12 @@ namespace SPMeta2.CSOM.ModelHandlers
             {
                 var currentListItem = EnsureListFolder(folderModelHost, folderModel);
 
-                var newContext = new FolderModelHost
+                var newContext = ModelHostBase.Inherit<FolderModelHost>(folderModelHost, c =>
                 {
-                    CurrentList = folderModelHost.CurrentList,
-                    CurrentListItem = currentListItem,
-                    CurrentWeb = folderModelHost.CurrentWeb
-                };
+                    c.CurrentList = folderModelHost.CurrentList;
+                    c.CurrentListItem = currentListItem;
+                    c.CurrentWeb = folderModelHost.CurrentWeb;
+                });
 
                 action(newContext);
             }
@@ -177,6 +177,13 @@ namespace SPMeta2.CSOM.ModelHandlers
                 currentFolderItem.Update();
 
                 context.ExecuteQuery();
+
+
+
+                context.Load(currentFolderItem.Folder);
+                context.ExecuteQuery();
+
+                currentFolder = currentFolderItem.Folder;
             }
             else
             {

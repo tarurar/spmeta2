@@ -41,6 +41,8 @@
       <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\CSOM\Microsoft.SharePoint.Client.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -57,35 +59,58 @@
   <ItemGroup>
     <Compile Include="Base\SPMeta2RegresionEventsTestBase.cs" />
     <Compile Include="Common\EventHits.cs" />
-    <Compile Include="Impl\Definitions\ContentTypeLinksTests.cs" />
-    <Compile Include="Impl\Definitions\ContentTypeTests.cs" />
-    <Compile Include="Impl\Definitions\FieldLinksTests.cs" />
-    <Compile Include="Impl\Definitions\FieldTests.cs" />
-    <Compile Include="Impl\Definitions\FolderTests.cs" />
-    <Compile Include="Impl\Definitions\ListTests.cs" />
-    <Compile Include="Impl\Events\DefinitionEventsTestBase.cs" />
+    <Compile Include="Consts\RegWebparts.cs" />
+    <Compile Include="Definitions\RegWebFeatures.cs" />
+    <Compile Include="Definitions\RegSiteFeatures.cs" />
+    <Compile Include="Definitions\RegWebs.cs" />
+    <Compile Include="Impl\Definitions\DefinitionTests.cs" />
+    <Compile Include="Impl\Extensions\WebpartXmlExtensionsTest.cs" />
+    <Compile Include="Impl\Random\RandomDefinitionTest.cs" />
+    <Compile Include="Impl\Scenarios\Base\SPMeta2RegresionScenarioTestBase.cs" />
+    <Compile Include="Impl\Scenarios\BreakRoleInheritanceScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ContentTypeFieldLinkScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ContentTypeLinkScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ContentTypeScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\FieldScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\FolderScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ListFieldLinkScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ListItemScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ListScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\TaxonomyScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ListViewScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ModuleFileScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\WebpartScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\WebScenariosTest.cs" />
+    <Compile Include="Impl\Upgrade\ListViewUpgradeTest.cs" />
+    <Compile Include="Impl\Upgrade\ContentTypeUpgradeTest.cs" />
+    <Compile Include="Impl\Upgrade\FieldUpgradeTest.cs" />
     <Compile Include="Impl\Validation\EmptyDefinitionValidationTest.cs" />
+    <Compile Include="Impl\Misc\BuiltInWebpartTemplatesTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Base\SPMeta2RegresionTestBase.cs" />
-    <Compile Include="Impl\Definitions\QuickLaunchNavigationTests.cs" />
-    <Compile Include="Impl\Definitions\WebTests.cs" />
+    <Compile Include="Services\ServiceFactory.cs" />
+    <Compile Include="Utils\ResourceReaderUtils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SPMeta2.Common\SPMeta2.Common.csproj">
-      <Project>{3c2dceeb-8c4e-4663-bad9-41f536371a85}</Project>
-      <Name>SPMeta2.Common</Name>
+    <ProjectReference Include="..\SPMeta2.Containers.Standard\SPMeta2.Containers.Standard.csproj">
+      <Project>{5793019F-7514-4B1F-B31D-A5E472FD034D}</Project>
+      <Name>SPMeta2.Containers.Standard</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SPMeta2.Regression.Common\SPMeta2.Regression.Common.csproj">
-      <Project>{E9D05AE0-6466-45CD-B28D-63F87097D721}</Project>
-      <Name>SPMeta2.Regression.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SPMeta2.Regression.Model\SPMeta2.Regression.Model.csproj">
-      <Project>{0985687D-426F-4ACF-A85F-EE79FA4FF752}</Project>
-      <Name>SPMeta2.Regression.Model</Name>
+    <ProjectReference Include="..\SPMeta2.Containers\SPMeta2.Containers.csproj">
+      <Project>{091C48FB-27E3-4F84-897C-5DE7BB55A2D3}</Project>
+      <Name>SPMeta2.Containers</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Regression.Runners\SPMeta2.Regression.Runners.csproj">
       <Project>{C69C8205-B0C7-4FDB-B1F6-F4FA77FF95AB}</Project>
       <Name>SPMeta2.Regression.Runners</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SPMeta2.Regression\SPMeta2.Regression.csproj">
+      <Project>{2b5ca105-8d61-4704-b9ce-c1cba53aaab0}</Project>
+      <Name>SPMeta2.Regression</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SPMeta2.Standard\SPMeta2.Standard.csproj">
+      <Project>{F310878E-9B72-4C3C-AE5D-C60B3515E2FC}</Project>
+      <Name>SPMeta2.Standard</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Syntax.Default\SPMeta2.Syntax.Default.csproj">
       <Project>{6f7e5d77-0a17-4409-be8c-94389d276fa9}</Project>
@@ -101,8 +126,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\SPMeta2.CSOM.Behaviours\bin\Debug\SPMeta2.CSOM.Behaviours.dll">
-      <Link>SPMeta2.CSOM.Behaviours.dll</Link>
+    <Content Include="..\SPMeta2.CSOM.Standard\bin\Debug\SPMeta2.CSOM.Standard.dll">
+      <Link>SPMeta2.CSOM.Standard.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="..\SPMeta2.CSOM\bin\Debug\SPMeta2.CSOM.dll">
@@ -149,8 +174,8 @@
       <Link>Microsoft.SharePoint.Client.WorkflowServices.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\SPMeta2.Regression.CSOM\bin\Debug\SPMeta2.Regression.Common.dll">
-      <Link>SPMeta2.Regression.Common.dll</Link>
+    <Content Include="..\SPMeta2.Regression.CSOM.Standard\bin\Debug\SPMeta2.Regression.CSOM.Standard.dll">
+      <Link>SPMeta2.Regression.CSOM.Standard.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="..\SPMeta2.Regression.CSOM\bin\Debug\SPMeta2.Regression.CSOM.dll">
@@ -177,6 +202,14 @@
       <Link>SPMeta2.SSOM.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SPMeta2.Regression.SSOM.Standard\bin\Debug\SPMeta2.Regression.SSOM.Standard.dll">
+      <Link>SPMeta2.Regression.SSOM.Standard.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.SSOM.Standard\bin\Debug\SPMeta2.SSOM.Standard.dll">
+      <Link>SPMeta2.SSOM.Standard.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.Syntax.Default.dll">
       <Link>SPMeta2.Syntax.Default.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -187,7 +220,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Impl\Utils\" />
+    <EmbeddedResource Include="Templates\Webparts\v2\News Feed.dwp" />
+    <EmbeddedResource Include="Templates\Webparts\v3\Team Tasks.webpart" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\Webparts\Base\ContentEditor.webpart" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

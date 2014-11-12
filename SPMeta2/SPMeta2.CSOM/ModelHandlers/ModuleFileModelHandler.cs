@@ -2,6 +2,7 @@
 using Microsoft.SharePoint.Client;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Utils;
 using SPMeta2.Common;
@@ -90,37 +91,55 @@ namespace SPMeta2.CSOM.ModelHandlers
 
         //}
 
-        private void WithSafeFileOperation(List list, File file, Func<File, File> action)
-        {
-            var context = file.Context;
+        //public static void WithSafeFileOperation(List list, File file, Func<File, File> action)
+        //{
 
-            context.Load(file, f => f.Exists);
+        //}
+
+        public static void WithSafeFileOperation(List list, File file,
+          Func<File, File> action)
+        {
+            WithSafeFileOperation(list, file, action, null);
+        }
+
+        public static void WithSafeFileOperation(List list, File file,
+            Func<File, File> action,
+
+            Action<File> onCreated)
+        {
+            var context = list.Context;
+
+            context.Load(list, l => l.EnableMinorVersions);
+            context.Load(list, l => l.EnableModeration);
             context.ExecuteQuery();
 
-            if (file.Exists)
+            if (file != null)
             {
-                context.Load(file, f => f.CheckOutType);
-                context.Load(file, f => f.Level);
-
+                context.Load(file, f => f.Exists);
                 context.ExecuteQuery();
+
+                if (file.Exists)
+                {
+                    context.Load(file, f => f.CheckOutType);
+                    context.Load(file, f => f.CheckedOutByUser);
+                    context.Load(file, f => f.Level);
+
+                    context.ExecuteQuery();
+                }
             }
 
-
-            // big todo with correct update and punblishing
-            // get prev SPMeta2 impl for publishing pages
-            if (list != null && (file.Exists && file.CheckOutType != CheckOutType.None))
+            if (list != null && file != null && (file.Exists && file.CheckOutType != CheckOutType.None))
                 file.UndoCheckOut();
 
-            if (list != null && (list.EnableMinorVersions || list.EnableVersioning) && (file.Exists && file.Level == FileLevel.Published))
+            if (list != null && file != null && (list.EnableMinorVersions) && (file.Exists && file.Level == FileLevel.Published))
                 file.UnPublish("Provision");
 
-            if (list != null && (file.Exists && file.CheckOutType == CheckOutType.None))
+            if (list != null && file != null && (file.Exists && file.CheckOutType == CheckOutType.None))
                 file.CheckOut();
 
             context.ExecuteQuery();
 
             var spFile = action(file);
-
             context.ExecuteQuery();
 
             context.Load(spFile, f => f.Exists);
@@ -128,22 +147,53 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             if (spFile.Exists)
             {
+                if (onCreated != null)
+                    onCreated(spFile);
+
                 context.Load(spFile, f => f.CheckOutType);
                 context.Load(spFile, f => f.Level);
 
                 context.ExecuteQuery();
             }
 
-            if (list != null && (spFile.Exists && spFile.CheckOutType != CheckOutType.None))
-                spFile.CheckIn("", CheckinType.MajorCheckIn);
+            if (list != null && spFile != null && (spFile.Exists && spFile.CheckOutType != CheckOutType.None))
+                spFile.CheckIn("Provision", CheckinType.MajorCheckIn);
 
-            if (list != null && (list.EnableMinorVersions || list.EnableVersioning))
+            if (list != null && spFile != null && (list.EnableMinorVersions))
                 spFile.Publish("Provision");
 
-            if (list != null && (list.EnableModeration))
+            if (list != null && spFile != null && (list.EnableModeration))
                 spFile.Approve("Provision");
 
             context.ExecuteQuery();
+        }
+
+        protected File GetFile(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
+        {
+            var context = folderHost.CurrentLibraryFolder.Context;
+
+            var web = folderHost.CurrentWeb;
+            var list = folderHost.CurrentList;
+            var folder = folderHost.CurrentLibraryFolder;
+
+            context.Load(folder, f => f.ServerRelativeUrl);
+            context.ExecuteQuery();
+
+            if (list != null)
+            {
+                context.Load(list, l => l.EnableMinorVersions);
+                context.Load(list, l => l.EnableVersioning);
+                context.Load(list, l => l.EnableModeration);
+
+                context.ExecuteQuery();
+            }
+
+            var file = web.GetFileByServerRelativeUrl(GetSafeFileUrl(folder, moduleFile));
+
+            context.Load(file, f => f.Exists);
+            context.ExecuteQuery();
+
+            return file;
         }
 
         private File ProcessFile(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
@@ -193,9 +243,18 @@ namespace SPMeta2.CSOM.ModelHandlers
                 var fileCreatingInfo = new FileCreationInformation
                 {
                     Url = fileName,
-                    Content = fileContent,
                     Overwrite = file.Exists
                 };
+
+                if (fileContent.Length < 1024 * 1024 * 1.5)
+                {
+                    fileCreatingInfo.Content = fileContent;
+                }
+                else
+                {
+                    fileCreatingInfo.ContentStream = new System.IO.MemoryStream(fileContent);
+                }
+
 
                 return folder.Files.Add(fileCreatingInfo);
 

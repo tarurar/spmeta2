@@ -1,0 +1,5 @@
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Dependencies\bin\Debug\SPMeta2.Dependencies.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Dependencies\bin\Debug\SPMeta2.Dependencies.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Dependencies\obj\Debug\SPMeta2.Dependencies.csprojResolveAssemblyReference.cache
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Dependencies\obj\Debug\SPMeta2.Dependencies.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Dependencies\obj\Debug\SPMeta2.Dependencies.pdb

@@ -2,8 +2,12 @@
 using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Utils;
+using SPMeta2.SSOM.ModelHosts;
+using System.Text;
+using System.Web.UI.WebControls.WebParts;
 
 namespace SPMeta2.SSOM.ModelHandlers
 {
@@ -16,7 +20,40 @@ namespace SPMeta2.SSOM.ModelHandlers
             get { return typeof(WikiPageDefinition); }
         }
 
-        protected string FindWikiPartPage(WikiPageDefinition wikiPageModel)
+        public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
+        {
+            var folderModelHost = modelHost.WithAssertAndCast<FolderModelHost>("modelHost", value => value.RequireNotNull());
+            var wikiPageModel = model.WithAssertAndCast<WikiPageDefinition>("model", value => value.RequireNotNull());
+
+            var folder = folderModelHost.CurrentLibraryFolder;
+
+            var targetPage = FindWikiPageItem(folder, wikiPageModel);
+
+            ModuleFileModelHandler.WithSafeFileOperation(folderModelHost.CurrentLibrary, folder,
+                targetPage.Url,
+                GetWikiPageName(wikiPageModel),
+                Encoding.UTF8.GetBytes(PublishingPageTemplates.RedirectionPageMarkup),
+                false,
+                null,
+                afterFile =>
+                {
+                    using (var webPartManager = afterFile.GetLimitedWebPartManager(PersonalizationScope.Shared))
+                    {
+                        var webpartPageHost = new WebpartPageModelHost
+                        {
+                            HostFile =afterFile,
+                            PageListItem = targetPage,
+                            SPLimitedWebPartManager = webPartManager
+                        };
+
+                        action(webpartPageHost);
+
+                       // targetPage.Update();
+                    }
+                });
+        }
+
+        protected string GetWikiPageName(WikiPageDefinition wikiPageModel)
         {
             var pageName = wikiPageModel.FileName;
             if (!pageName.EndsWith(".aspx")) pageName += ".aspx";
@@ -24,15 +61,17 @@ namespace SPMeta2.SSOM.ModelHandlers
             return pageName;
         }
 
-        protected override void DeployModelInternal(object modelHost, DefinitionBase model)
+        public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var list = modelHost.WithAssertAndCast<SPList>("modelHost", value => value.RequireNotNull());
+            var folderModelHost = modelHost.WithAssertAndCast<FolderModelHost>("modelHost", value => value.RequireNotNull());
             var wikiPageModel = model.WithAssertAndCast<WikiPageDefinition>("model", value => value.RequireNotNull());
+
+            var folder = folderModelHost.CurrentLibraryFolder;
 
             //if (!string.IsNullOrEmpty(wikiPageModel.FolderUrl))
             //    throw new Exception("FolderUrl property is not supported yet!");
 
-            var pageItem = FindWikiPage(list, wikiPageModel);
+            var pageItem = FindWikiPageItem(folder, wikiPageModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -47,8 +86,10 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (pageItem == null)
             {
-                var newWikiPageUrl = GetSafeWikiPageUrl(list, wikiPageModel);
-                var newpage = list.RootFolder.Files.Add(newWikiPageUrl, SPTemplateFileType.WikiPage);
+                var newWikiPageUrl = GetSafeWikiPageUrl(folder, wikiPageModel);
+                var newpage = folder.Files.Add(newWikiPageUrl, SPTemplateFileType.WikiPage);
+
+                newpage.ListItemAllFields[SPBuiltInFieldId.WikiField] = wikiPageModel.Content ?? string.Empty;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -61,10 +102,14 @@ namespace SPMeta2.SSOM.ModelHandlers
                     ModelHost = modelHost
                 });
 
+                newpage.ListItemAllFields.Update();
                 newpage.Update();
             }
             else
             {
+                if (wikiPageModel.NeedOverride)
+                    pageItem[SPBuiltInFieldId.WikiField] = wikiPageModel.Content ?? string.Empty;
+
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
                     CurrentModelNode = null,
@@ -76,14 +121,15 @@ namespace SPMeta2.SSOM.ModelHandlers
                     ModelHost = modelHost
                 });
 
+                pageItem.Update();
                 pageItem.File.Update();
             }
         }
 
-        protected string GetSafeWikiPageUrl(SPList pageList, WikiPageDefinition wikiPageModel)
+        protected string GetSafeWikiPageUrl(SPFolder folder, WikiPageDefinition wikiPageModel)
         {
             // TODO, fix +/ to SPUtility
-            return pageList.RootFolder.ServerRelativeUrl + "/" + GetSafeWikiPageFileName(wikiPageModel);
+            return folder.ServerRelativeUrl + "/" + GetSafeWikiPageFileName(wikiPageModel);
         }
 
         protected string GetSafeWikiPageFileName(WikiPageDefinition wikiPageModel)
@@ -96,9 +142,9 @@ namespace SPMeta2.SSOM.ModelHandlers
             return wikiPageName;
         }
 
-        protected SPListItem FindWikiPage(SPList pageList, WikiPageDefinition wikiPageModel)
+        protected SPListItem FindWikiPageItem(SPFolder folder, WikiPageDefinition wikiPageModel)
         {
-            var file = pageList.ParentWeb.GetFile(GetSafeWikiPageUrl(pageList, wikiPageModel));
+            var file = folder.ParentWeb.GetFile(GetSafeWikiPageUrl(folder, wikiPageModel));
 
             return file.Exists ? file.Item : null;
         }

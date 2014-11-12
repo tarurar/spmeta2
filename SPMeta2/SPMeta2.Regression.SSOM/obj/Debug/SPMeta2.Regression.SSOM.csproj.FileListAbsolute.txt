@@ -1,0 +1,17 @@
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.SSOM.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.SSOM.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.SSOM.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Syntax.Default.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.SSOM.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Syntax.Default.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\obj\Debug\SPMeta2.Regression.SSOM.csprojResolveAssemblyReference.cache
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\obj\Debug\SPMeta2.Regression.SSOM.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\obj\Debug\SPMeta2.Regression.SSOM.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.SSOM.XML
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.xml
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Syntax.Default.xml
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.xml

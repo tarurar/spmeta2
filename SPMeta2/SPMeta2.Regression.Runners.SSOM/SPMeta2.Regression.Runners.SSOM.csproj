@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\SPMeta2.Regression.Runners.SSOM.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -34,12 +35,23 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.SharePoint.Publishing, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.Publishing.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.SharePoint.Security, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.Security.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.SharePoint.Taxonomy, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.Taxonomy.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -55,9 +67,17 @@
       <Project>{C69C8205-B0C7-4FDB-B1F6-F4FA77FF95AB}</Project>
       <Name>SPMeta2.Regression.Runners</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SPMeta2.Regression.SSOM.Standard\SPMeta2.Regression.SSOM.Standard.csproj">
+      <Project>{d81ae83a-beef-4099-b354-0b88d7396b25}</Project>
+      <Name>SPMeta2.Regression.SSOM.Standard</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Regression.SSOM\SPMeta2.Regression.SSOM.csproj">
       <Project>{00E1581F-31D9-493E-AD16-C188AE966458}</Project>
       <Name>SPMeta2.Regression.SSOM</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SPMeta2.SSOM.Standard\SPMeta2.SSOM.Standard.csproj">
+      <Project>{7d095a0d-0bde-446d-8093-13e5685f1d3c}</Project>
+      <Name>SPMeta2.SSOM.Standard</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.SSOM\SPMeta2.SSOM.csproj">
       <Project>{FBD78AC1-B766-4332-A9B1-C73EE64FD5C6}</Project>

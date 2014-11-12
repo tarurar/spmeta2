@@ -2,6 +2,10 @@
 
 namespace SPMeta2.Utils
 {
+    /// <summary>
+    /// Validation helper.
+    /// Internal usage only.
+    /// </summary>
     public static class ValidationUtils
     {
         #region static
@@ -11,7 +15,6 @@ namespace SPMeta2.Utils
             var resultValue = WithAssert(value, valueName, validation);
 
             // double validation to make sure cast will be ok
-
             var valueContext = new ValidationValueContext
             {
                 Value = resultValue,

@@ -2,47 +2,64 @@
 using Microsoft.SharePoint;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.SSOM.ModelHandlers;
 using SPMeta2.Utils;
-using SPMeta2.Regression.Common.Utils;
+using SPMeta2.Regression.Utils;
+using SPMeta2.SSOM.ModelHosts;
+using SPMeta2.Regression.Assertion;
 
 namespace SPMeta2.Regression.SSOM.Validation
 {
     public class ContentTypeLinkDefinitionValidator : ContentTypeLinkModelHandler
     {
-        protected override void DeployModelInternal(object modelHost, DefinitionBase model)
+        public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var spList = modelHost.WithAssertAndCast<SPList>("modelHost", value => value.RequireNotNull());
-            var contentTypeLinkModel = model.WithAssertAndCast<ContentTypeLinkDefinition>("model", value => value.RequireNotNull());
+            var listModelHost = modelHost.WithAssertAndCast<ListModelHost>("modelHost", value => value.RequireNotNull());
+            var definition = model.WithAssertAndCast<ContentTypeLinkDefinition>("model", value => value.RequireNotNull());
 
-            TraceUtils.WithScope(traceScope =>
+            var spList = listModelHost.HostList;
+            var spObject = GetListContentType(spList, definition);
+
+            var assert = ServiceFactory.AssertService
+                                       .NewAssert(definition, spObject)
+                                            .ShouldNotBeNull(spObject);
+
+
+            if (!string.IsNullOrEmpty(definition.ContentTypeName))
             {
-                Trace.WriteLine(string.Format("Validate model: {0} ContentTypeLink:{1}", spList, contentTypeLinkModel));
+                assert
+                    .ShouldBeEqual(m => m.ContentTypeName, o => o.Name);
+            }
+            else
+            {
+                assert
+                    .SkipProperty(m => m.ContentTypeName, "ContentTypeName is empty. Skipping");
 
-                // assert base properties
-                traceScope.WithTraceIndent(trace =>
+            }
+
+            if (!string.IsNullOrEmpty(definition.ContentTypeId))
+            {
+                assert.ShouldBeEqual((p, s, d) =>
                 {
-                    if (spList.ContentTypesEnabled)
+                    var srcProp = s.GetExpressionValue(def => def.ContentTypeId);
+                    var dstProp = d.GetExpressionValue(ct => ct.Id);
+
+                    return new PropertyValidationResult
                     {
-                        var contentTypeId = new SPContentTypeId(contentTypeLinkModel.ContentTypeId);
-                        var targetContentType = spList.ParentWeb.ContentTypes[contentTypeId];
-
-                        var listContentType = spList.ContentTypes[targetContentType.Name];
-
-                        // presence
-                        trace.WriteLine(string.Format("Validate list content type presence (not null): model:[{0}] content type link:[{1}]", contentTypeLinkModel.ContentTypeId, listContentType));
-                        Assert.IsNotNull(listContentType);
-
-                        // child of
-                        trace.WriteLine(string.Format("Validate ChildOf: model:[{0}] content type link:[{1}]", contentTypeLinkModel.ContentTypeId, listContentType));
-                        Assert.IsTrue(listContentType.Id.IsChildOf(new SPContentTypeId(contentTypeLinkModel.ContentTypeId)));
-                    }
-                    else
-                    {
-                        trace.WriteLine("Skipping content type link check as List.ContentTypesEnabled is false");
-                    }
+                        Tag = p.Tag,
+                        Src = srcProp,
+                        Dst = dstProp,
+                        IsValid = dstProp.Value.ToString().ToUpper().StartsWith(srcProp.Value.ToString().ToUpper())
+                    };
                 });
-            });
+            }
+            else
+            {
+                assert
+                    .SkipProperty(m => m.ContentTypeId, "ContentTypeId is empty. Skipping");
+
+            }
         }
     }
 }

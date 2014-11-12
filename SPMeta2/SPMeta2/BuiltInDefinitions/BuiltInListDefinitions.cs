@@ -7,10 +7,16 @@ using SPMeta2.Definitions;
 
 namespace SPMeta2.BuiltInDefinitions
 {
+    /// <summary>
+    /// Out of the box SharePoint list and libraries.
+    /// </summary>
     public static class BuiltInListDefinitions
     {
         #region libraries
 
+        /// <summary>
+        /// 'Style Library' library shortcut.
+        /// </summary>
         public static ListDefinition StyleLibrary = new ListDefinition
         {
             Title = "Style Library",
@@ -20,6 +26,9 @@ namespace SPMeta2.BuiltInDefinitions
             ContentTypesEnabled = true
         };
 
+        /// <summary>
+        /// 'Site Pages' library shortcut.
+        /// </summary>
         public static ListDefinition SitePages = new ListDefinition
         {
             Title = "Site Pages",
@@ -28,6 +37,9 @@ namespace SPMeta2.BuiltInDefinitions
             ContentTypesEnabled = false
         };
 
+        /// <summary>
+        /// 'Shared Documents' library shortcut.
+        /// </summary>
         public static ListDefinition Documents = new ListDefinition
         {
             Title = "Documents",
@@ -36,6 +48,9 @@ namespace SPMeta2.BuiltInDefinitions
             ContentTypesEnabled = true
         };
 
+        /// <summary>
+        /// 'Site Assets' library shortcut.
+        /// </summary>
         public static ListDefinition SiteAssets = new ListDefinition
         {
             Title = "Site Assets",
@@ -44,10 +59,13 @@ namespace SPMeta2.BuiltInDefinitions
             ContentTypesEnabled = true
         };
 
+        /// <summary>
+        /// 'Pages' library shortcut.
+        /// </summary>
         public static ListDefinition Pages = new ListDefinition
         {
             Title = "Pages",
-            TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+            TemplateType = 850,
             Url = "Pages",
             ContentTypesEnabled = true
         };
@@ -57,6 +75,70 @@ namespace SPMeta2.BuiltInDefinitions
         #region lists
 
 
+        #endregion
+
+        #region catalogs
+
+        /// <summary>
+        /// Out of the box SharePoint list and libraries under "_catalogs" category.
+        /// </summary>
+        public static class Calalogs
+        {
+            public static ListDefinition AppData = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.GenericList,
+                Url = "_catalogs/appdata"
+            };
+
+            public static ListDefinition Design = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.GenericList,
+                Url = "_catalogs/design"
+            };
+
+            public static ListDefinition Users = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.GenericList,
+                Url = "_catalogs/users"
+            };
+
+            public static ListDefinition ListTemplates = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+                Url = "_catalogs/lt"
+            };
+
+            public static ListDefinition MasterPage = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+                Url = "_catalogs/masterpage",
+            };
+
+            public static ListDefinition Solutions = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+                Url = "_catalogs/solutions"
+            };
+
+            public static ListDefinition Theme = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+                Url = "_catalogs/theme"
+            };
+
+            public static ListDefinition WfPub = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+                Url = "_catalogs/wfpub"
+            };
+
+            public static ListDefinition Wp = new ListDefinition
+            {
+                TemplateType = BuiltInListTemplateTypeId.DocumentLibrary,
+                Url = "_catalogs/wp"
+            };
+        } 
+        
         #endregion
     }
 }

@@ -3,11 +3,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.CSOM.DefaultSyntax;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.CSOM.ModelHosts;
+using SPMeta2.CSOM.Utils;
 using SPMeta2.Definitions;
-using SPMeta2.Regression.Common;
-using SPMeta2.Regression.Common.Utils;
-using SPMeta2.Regression.SSOM.Utils;
+using SPMeta2.Definitions.Base;
+using SPMeta2.Exceptions;
+using SPMeta2.Regression.Utils;
 using SPMeta2.Utils;
+
 
 namespace SPMeta2.Regression.CSOM.Validation
 {
@@ -16,42 +18,47 @@ namespace SPMeta2.Regression.CSOM.Validation
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
             var webModelHost = modelHost.WithAssertAndCast<WebModelHost>("modelHost", value => value.RequireNotNull());
-            var listModel = model.WithAssertAndCast<ListDefinition>("model", value => value.RequireNotNull());
+            var definition = model.WithAssertAndCast<ListDefinition>("model", value => value.RequireNotNull());
 
             var web = webModelHost.HostWeb;
             var context = web.Context;
 
             context.Load(web, w => w.ServerRelativeUrl);
-            context.Load(web, w => w.Lists);
+
+            var lists = context.LoadQuery<List>(web.Lists.Include(l => l.DefaultViewUrl));
             context.ExecuteQuery();
 
-            var spObject = FindListByTitle(web.Lists, listModel.Title);
+            var spObject = FindListByUrl(lists, definition.GetListUrl());
 
+            context.Load(spObject);
             context.Load(spObject, list => list.RootFolder.ServerRelativeUrl);
             context.ExecuteQuery();
 
-            TraceUtils.WithScope(traceScope =>
+            var assert = ServiceFactory.AssertService.NewAssert(model, definition, spObject);
+
+            assert
+                .ShouldBeEqual(m => m.Title, o => o.Title)
+                .ShouldBeEqual(m => m.Description, o => o.Description)
+                .ShouldBeEndOf(m => m.GetServerRelativeUrl(web), m => m.Url, o => o.GetServerRelativeUrl(), o => o.GetServerRelativeUrl())
+                .ShouldBeEqual(m => m.ContentTypesEnabled, o => o.ContentTypesEnabled);
+
+            if (definition.TemplateType > 0)
             {
-                var pair = new ComparePair<ListDefinition, List>(listModel, spObject);
+                assert.ShouldBeEqual(m => m.TemplateType, o => (int)o.BaseTemplate);
+            }
+            else
+            {
+                assert.SkipProperty(m => m.TemplateType, "TemplateType == 0. Skipping.");
+            }
 
-                traceScope.WriteLine(string.Format("Validating model:[{0}] field:[{1}]", model, spObject));
-
-                traceScope.WithTraceIndent(trace => pair
-                    .ShouldBeEqual(trace, m => m.Title, o => o.Title)
-                    .ShouldBeEqual(trace, m => m.Description, o => o.Description)
-                    .ShouldBeEqual(trace, m => m.GetServerRelativeUrl(web), o => o.GetServerRelativeUrl())
-                    .ShouldBeEqual(trace, m => m.ContentTypesEnabled, o => o.ContentTypesEnabled));
-
-                if (listModel.TemplateType > 0)
-                {
-                    traceScope.WithTraceIndent(trace => pair
-                        .ShouldBeEqual(trace, m => m.TemplateType, o => (int)o.BaseTemplate));
-                }
-                else
-                {
-
-                }
-            });
+            if (!string.IsNullOrEmpty(definition.TemplateName))
+            {
+                throw new SPMeta2NotImplementedException("TemplateName validation for List is not supported yet.");
+            }
+            else
+            {
+                assert.SkipProperty(m => m.TemplateName, "TemplateName is null or empty. Skipping.");
+            }
         }
     }
 
@@ -59,7 +66,7 @@ namespace SPMeta2.Regression.CSOM.Validation
     {
         public static string GetServerRelativeUrl(this ListDefinition listDef, Web web)
         {
-            return web.ServerRelativeUrl + "/" + listDef.GetListUrl();
+            return UrlUtility.CombineUrl(web.ServerRelativeUrl, listDef.GetListUrl());
         }
 
         public static string GetServerRelativeUrl(this List list)

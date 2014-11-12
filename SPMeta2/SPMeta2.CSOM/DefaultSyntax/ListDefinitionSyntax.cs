@@ -6,6 +6,7 @@ using System;
 
 namespace SPMeta2.CSOM.DefaultSyntax
 {
+    [Obsolete("Obsolete. Will be removed from the SPMeta2 API. Use ModernSyntax.OnProvisioning/OnProvisioned events.")]
     public static class ListDefinitionSyntax
     {
         #region methods
@@ -42,6 +43,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
 
         #endregion
 
+        [Obsolete("Obsolete. Will be removed from the SPMeta2 API. Use ModernSyntax.OnProvisioning/OnProvisioned events.")]
         public static ModelNode OnCreating(this ModelNode model, Action<ListDefinition, List> action)
         {
             model.RegisterModelEvent<ListDefinition, List>(SPMeta2.Common.ModelEventType.OnUpdating, action);
@@ -49,6 +51,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
             return model;
         }
 
+        [Obsolete("Obsolete. Will be removed from the SPMeta2 API. Use ModernSyntax.OnProvisioning/OnProvisioned events.")]
         public static ModelNode OnCreated(this ModelNode model, Action<ListDefinition, List> action)
         {
             model.RegisterModelEvent<ListDefinition, List>(SPMeta2.Common.ModelEventType.OnUpdated, action);
@@ -61,6 +64,9 @@ namespace SPMeta2.CSOM.DefaultSyntax
 
         public static string GetListUrl(this ListDefinition listDefinition)
         {
+            if (listDefinition.Url.ToUpper().Contains("_CATALOGS"))
+                return listDefinition.Url;
+
             // BIG BIG BIG TODO
             // correct list/doc lib mapping has to be implemented and tested
             // very critical part of the whole provision lib
@@ -80,6 +86,10 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.DiscussionBoard:
                 case ListTemplateType.ExternalList:
                 case ListTemplateType.Links:
+                case ListTemplateType.WorkflowHistory:
+                case ListTemplateType.Facility:
+                case ListTemplateType.GanttTasks:
+                case ListTemplateType.Posts:
 
                     return "Lists/" + listDefinition.Url;
 
@@ -92,8 +102,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.Decision:
                 case ListTemplateType.DocumentLibrary:
 
-                case ListTemplateType.Facility:
-                case ListTemplateType.GanttTasks:
+                
                 case ListTemplateType.HealthReports:
                 case ListTemplateType.HealthRules:
                 case ListTemplateType.Holidays:
@@ -111,7 +120,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.NoCodeWorkflows:
                 case ListTemplateType.NoListTemplate:
                 case ListTemplateType.PictureLibrary:
-                case ListTemplateType.Posts:
+                
                 case ListTemplateType.SolutionCatalog:
                 case ListTemplateType.Survey:
                 case ListTemplateType.TextBox:
@@ -123,7 +132,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.WebPartCatalog:
                 case ListTemplateType.WebTemplateCatalog:
                 case ListTemplateType.Whereabouts:
-                case ListTemplateType.WorkflowHistory:
+                
                 case ListTemplateType.WorkflowProcess:
                 case ListTemplateType.XMLForm:
 

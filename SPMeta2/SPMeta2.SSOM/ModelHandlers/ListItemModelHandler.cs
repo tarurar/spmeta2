@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Utils;
+using SPMeta2.SSOM.ModelHosts;
 
 namespace SPMeta2.SSOM.ModelHandlers
 {
@@ -26,8 +28,10 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var list = modelHost.WithAssertAndCast<SPList>("modelHost", value => value.RequireNotNull());
+            var listModelHost = modelHost.WithAssertAndCast<ListModelHost>("modelHost", value => value.RequireNotNull());
             var listItemModel = model.WithAssertAndCast<ListItemDefinition>("model", value => value.RequireNotNull());
+
+            var list = listModelHost.HostList;
 
             DeployInternall(list, listItemModel);
         }
@@ -42,13 +46,19 @@ namespace SPMeta2.SSOM.ModelHandlers
             EnsureListItem(list, listItemModel);
         }
 
-        private SPListItem EnsureListItem(SPList list, ListItemDefinition listItemModel)
+        protected SPListItem GetListItem(SPList list, ListItemDefinition listItemModel)
         {
             // TODO, lazy to query
             // BIG TODO, don't tell me, I know that
-            var currentItem = list.Items
+
+            return list.Items
                             .OfType<SPListItem>()
                             .FirstOrDefault(i => i.Title == listItemModel.Title);
+        }
+
+        private SPListItem EnsureListItem(SPList list, ListItemDefinition listItemModel)
+        {
+            var currentItem = GetListItem(list, listItemModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -105,9 +115,10 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
         {
-            var list = modelHost.WithAssertAndCast<SPList>("modelHost", value => value.RequireNotNull());
+            var listModelHost = modelHost.WithAssertAndCast<ListModelHost>("modelHost", value => value.RequireNotNull());
             var listItemModel = model.WithAssertAndCast<ListItemDefinition>("model", value => value.RequireNotNull());
 
+            var list = listModelHost.HostList;
             var item = EnsureListItem(list, listItemModel);
 
             if (childModelType == typeof(ListItemFieldValueDefinition))

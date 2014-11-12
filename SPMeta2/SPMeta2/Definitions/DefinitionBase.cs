@@ -2,64 +2,43 @@
 
 namespace SPMeta2.Definitions
 {
+    /// <summary>
+    /// Base definition for all SharePoint artifacts to be defined and deployed.
+    /// </summary>
+    /// 
+    [Serializable]
     public abstract class DefinitionBase : ICloneable
     {
-        #region contructors
+        #region constructors
 
         protected DefinitionBase()
         {
-            //InitCollections();
             RequireSelfProcessing = true;
         }
 
         #endregion
 
-        #region private
-
-        //private void InitCollections()
-        //{
-        //    var childModels = new ObservableCollection<DefinitionBase>();
-
-        //    childModels.CollectionChanged += ChildModelsCollectionChanged;
-
-        //    ChildModels = childModels;94c94ca6
-
-        //    ModelEvents = new Dictionary<string, List<object>>();
-        //}
-
-        //private void ChildModelsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        //{
-        //    switch (e.Action)
-        //    {
-        //        case NotifyCollectionChangedAction.Add:
-        //            {
-        //                foreach (var item in e.NewItems)
-        //                    ((DefinitionBase)item).ParentModel = this;
-        //            }
-        //            break;
-        //    }
-        //}
-
-        #endregion
-
         #region properties
 
-        public string ObjectType
-        {
-            get { return GetType().Name; }
-            set
-            {
-
-            }
-        }
-
+        /// <summary>
+        /// Internal usage only. Will be removed in future versions of SPMeta2 library.
+        /// </summary>
+        [Obsolete("Please use AddHostXXX syntax to setup RequireSelfProcessing on the particular model node. RequireSelfProcessing property will be removed from the future releases of SPMeta2 library.")]
         public virtual bool RequireSelfProcessing { get; set; }
 
         #endregion
 
+        #region methods
+
+        /// <summary>
+        /// Create a clone of the current model definition.
+        /// </summary>
+        /// <returns></returns>
         public object Clone()
         {
             return MemberwiseClone();
         }
+
+        #endregion
     }
 }

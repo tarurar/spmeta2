@@ -5,7 +5,7 @@ using SPMeta2.CSOM.Common;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.Definitions;
 using SPMeta2.Utils;
-using SPMeta2.Regression.Common.Utils;
+using SPMeta2.Regression.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SPMeta2.Regression.CSOM.Validation
@@ -26,29 +26,21 @@ namespace SPMeta2.Regression.CSOM.Validation
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
             var modelHostContext = modelHost.WithAssertAndCast<ModelHostContext>("modelHost", value => value.RequireNotNull());
-            var fieldlinkModel = model.WithAssertAndCast<ContentTypeFieldLinkDefinition>("model", value => value.RequireNotNull());
+            var definition = model.WithAssertAndCast<ContentTypeFieldLinkDefinition>("model", value => value.RequireNotNull());
 
             var site = modelHostContext.Site;
             var contentType = modelHostContext.ContentType;
 
             var context = site.Context;
 
-            context.Load(contentType, ct => ct.FieldLinks);
+            var spObject = contentType.FieldLinks.GetById(definition.FieldId);
+            context.Load(spObject);
             context.ExecuteQuery();
 
-            var spFieldLink = FindFieldLinkById(contentType.FieldLinks, fieldlinkModel.FieldId);
-
-            TraceUtils.WithScope(traceScope =>
-            {
-                Trace.WriteLine(string.Format("Validate model: {0} ContentType:{1}", fieldlinkModel, contentType));
-
-                // assert base properties
-                traceScope.WithTraceIndent(trace =>
-                {
-                    trace.WriteLine(string.Format("Validate FieldId: model:[{0}] ct field link:[{1}]", fieldlinkModel.FieldId, spFieldLink.Id));
-                    Assert.AreEqual(fieldlinkModel.FieldId, spFieldLink.Id);
-                });
-            });
+            var assert = ServiceFactory.AssertService
+                                       .NewAssert(definition, spObject)
+                                             .ShouldNotBeNull(spObject)
+                                             .ShouldBeEqual(m => m.FieldId, o => o.Id);
         }
     }
 }

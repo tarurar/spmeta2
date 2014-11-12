@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
+using SPMeta2.Exceptions;
 
 namespace SPMeta2.SSOM.ModelHandlers
 {
@@ -19,17 +21,19 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
         {
-            if (modelHost is SPSecurableObject)
+            var securableObject = ExtractSecurableObject(modelHost);
+
+            if (securableObject is SPSecurableObject)
             {
                 var securityGroupLinkModel = model as SecurityGroupLinkDefinition;
                 if (securityGroupLinkModel == null) throw new ArgumentException("model has to be SecurityGroupDefinition");
 
                 var web = ExtractWeb(modelHost);
-                var securityGroup = web.SiteGroups[securityGroupLinkModel.SecurityGroupName];
+                var securityGroup = ResolveSecurityGroup(web, securityGroupLinkModel);
 
                 var newModelHost = new SecurityGroupModelHost
                 {
-                    SecurableObject = modelHost as SPSecurableObject,
+                    SecurableObject = securableObject as SPSecurableObject,
                     SecurityGroup = securityGroup
                 };
 
@@ -52,30 +56,72 @@ namespace SPMeta2.SSOM.ModelHandlers
             if (modelHost is SPListItem)
                 return (modelHost as SPListItem).ParentList.ParentWeb;
 
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList.ParentWeb;
+
+            if (modelHost is FolderModelHost)
+                return (modelHost as FolderModelHost).CurrentLibraryFolder.ParentWeb;
+
             throw new Exception(string.Format("modelHost with type [{0}] is not supported.", modelHost.GetType()));
         }
 
-        protected override void DeployModelInternal(object modelHost, DefinitionBase model)
+        protected SPGroup ResolveSecurityGroup(SPWeb web, SecurityGroupLinkDefinition securityGroupLinkModel)
         {
-            var securableObject = modelHost.WithAssertAndCast<SPSecurableObject>("modelHost", value => value.RequireNotNull());
+            SPGroup securityGroup = null;
+
+            if (securityGroupLinkModel.IsAssociatedMemberGroup)
+            {
+                securityGroup = web.AssociatedMemberGroup;
+            }
+            else if (securityGroupLinkModel.IsAssociatedOwnerGroup)
+            {
+                securityGroup = web.AssociatedOwnerGroup;
+            }
+            else if (securityGroupLinkModel.IsAssociatedVisitorGroup)
+            {
+                securityGroup = web.AssociatedVisitorGroup;
+            }
+            else if (!string.IsNullOrEmpty(securityGroupLinkModel.SecurityGroupName))
+            {
+                securityGroup =web.SiteGroups[securityGroupLinkModel.SecurityGroupName];
+            }
+            else
+            {
+                throw new ArgumentException("securityGroupLinkModel");
+            }
+            return securityGroup;
+        }
+
+        public override void DeployModel(object modelHost, DefinitionBase model)
+        {
+            var securableObject = ExtractSecurableObject(modelHost);
             var securityGroupLinkModel = model.WithAssertAndCast<SecurityGroupLinkDefinition>("model", value => value.RequireNotNull());
+
+            if (!securableObject.HasUniqueRoleAssignments)
+            {
+                throw new SPMeta2Exception("securableObject does not have HasUniqueRoleAssignments. Please use BreakRoleInheritanceDefinition object or break role inheritable manually before deploying SecurityGroupLinkDefinition.");
+            }
 
             var web = GetWebFromSPSecurableObject(securableObject);
 
-            var securityGroup = web.SiteGroups[securityGroupLinkModel.SecurityGroupName];
-            var roleAssignment = new SPRoleAssignment(securityGroup);
+            var securityGroup = ResolveSecurityGroup(web, securityGroupLinkModel);
+            var roleAssignment = securableObject.RoleAssignments
+                                                       .OfType<SPRoleAssignment>()
+                                                       .FirstOrDefault(a => a.Member.ID == securityGroup.ID);
 
-            // default one, it will be removed later
-            var dummyRole = web.RoleDefinitions.GetByType(SPRoleType.Reader);
+            var isNewRoleAssignment = false;
 
-
-
-            if (!roleAssignment.RoleDefinitionBindings.Contains(dummyRole))
-                roleAssignment.RoleDefinitionBindings.Add(dummyRole);
-
-            // this is has to be decided later - what is the strategy fro breaking role inheritance
-            if (!securableObject.HasUniqueRoleAssignments)
-                securableObject.BreakRoleInheritance(false);
+            if (roleAssignment == null)
+            {
+                roleAssignment = new SPRoleAssignment(securityGroup);
+                isNewRoleAssignment = true;
+            }
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -88,7 +134,32 @@ namespace SPMeta2.SSOM.ModelHandlers
                 ModelHost = modelHost
             });
 
+            if (isNewRoleAssignment)
+            {
+                // default one, it will be removed later
+                // we need at least one role for a new role assignment created
+                // it will be deleted later
+
+                var dummyRole = web.RoleDefinitions.GetByType(SPRoleType.Reader);
+
+                if (!roleAssignment.RoleDefinitionBindings.Contains(dummyRole))
+                    roleAssignment.RoleDefinitionBindings.Add(dummyRole);
+            }
+
             securableObject.RoleAssignments.Add(roleAssignment);
+
+            if (isNewRoleAssignment)
+            {
+                // removing dummy role for a new assignment created
+                var tmpAssignment = securableObject.RoleAssignments
+                                                       .OfType<SPRoleAssignment>()
+                                                       .FirstOrDefault(a => a.Member.ID == securityGroup.ID);
+
+                while (tmpAssignment.RoleDefinitionBindings.Count > 0)
+                    tmpAssignment.RoleDefinitionBindings.Remove(0);
+
+                tmpAssignment.Update();
+            }
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -100,9 +171,30 @@ namespace SPMeta2.SSOM.ModelHandlers
                 ObjectDefinition = model,
                 ModelHost = modelHost
             });
+        }
 
-            // GOTCHA!!! supposed to continue chain with adding role definitions via RoleDefinitionLinks
-            roleAssignment.RoleDefinitionBindings.RemoveAll();
+        protected SPSecurableObject ExtractSecurableObject(object modelHost)
+        {
+            if (modelHost is SPSecurableObject)
+                return modelHost as SPSecurableObject;
+
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList;
+
+            if (modelHost is FolderModelHost)
+                return (modelHost as FolderModelHost).CurrentLibraryFolder.Item;
+
+            if (modelHost is WebpartPageModelHost)
+                return (modelHost as WebpartPageModelHost).PageListItem;
+
+            throw new SPMeta2NotImplementedException(string.Format("Model host of type:[{0}] is not supported by SecurityGroupLinkModelHandler yet.",
+                modelHost.GetType()));
         }
 
         protected SPWeb GetWebFromSPSecurableObject(SPSecurableObject securableObject)

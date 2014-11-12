@@ -1,0 +1,9 @@
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.Syntax.Default.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.Syntax.Default.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\obj\Debug\SPMeta2.Syntax.Default.csprojResolveAssemblyReference.cache
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\obj\Debug\SPMeta2.Syntax.Default.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\obj\Debug\SPMeta2.Syntax.Default.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.Syntax.Default.XML
+C:\Sources\spmeta2\SPMeta2\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.xml

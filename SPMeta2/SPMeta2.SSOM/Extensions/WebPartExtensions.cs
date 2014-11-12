@@ -9,12 +9,13 @@ using Microsoft.SharePoint;
 using Microsoft.SharePoint.WebPartPages;
 using SPMeta2.Definitions;
 using WebPart = System.Web.UI.WebControls.WebParts.WebPart;
+using SPMeta2.Exceptions;
 
 namespace SPMeta2.SSOM.Extensions
 {
     public static class WebPartExtensions
     {
-        private static System.Web.UI.WebControls.WebParts.WebPart ResolveWebPartInstance(SPSite site,
+        public static System.Web.UI.WebControls.WebParts.WebPart ResolveWebPartInstance(SPSite site,
            SPLimitedWebPartManager webPartManager,
            WebPartDefinition webpartModel)
         {
@@ -78,91 +79,137 @@ namespace SPMeta2.SSOM.Extensions
         }
 
         public static void DeployWebPartsToPage(SPLimitedWebPartManager webPartManager,
-            IEnumerable<WebPartDefinition> webpartDefinitions)
+            WebPartDefinition webpartDefinitions)
         {
-            DeployWebPartsToPage(webPartManager, webpartDefinitions, null, null);
+            DeployWebPartToPage(webPartManager, webpartDefinitions, null, null);
         }
 
-        public static void DeployWebPartsToPage(SPLimitedWebPartManager webPartManager,
-            IEnumerable<WebPartDefinition> webpartDefinitions,
+        public static void WithExistingWebPart(SPListItem targetPage,
+            WebPartDefinition definition,
+            Action<SPLimitedWebPartManager, WebPart> webpart)
+        {
+            WithLimitedWebPartManager(targetPage, webPartManager =>
+            {
+                var webParts = webPartManager.WebParts.OfType<WebPart>();
+
+                // by ID
+                var currentWebPart = webParts.FirstOrDefault(wp =>
+                                                !string.IsNullOrEmpty(wp.ID) &&
+                                                wp.ID.ToUpper() == definition.Id.ToUpper());
+
+                // by type
+                if (currentWebPart == null)
+                {
+                    var webPartInstance = ResolveWebPartInstance(webPartManager.Web.Site, webPartManager, definition);
+                    var webPartInstanceType = webPartInstance.GetType();
+
+                    currentWebPart = webParts.FirstOrDefault(wp => wp.GetType() == webPartInstanceType);
+                }
+
+                if (currentWebPart != null)
+                    webpart(webPartManager, currentWebPart);
+                else
+                {
+                    throw new SPMeta2Exception(string.Format("Cannot lookup web part by definition:[{0}]", definition));
+                }
+            });
+
+        }
+
+        public static void DeployWebPartToPage(SPLimitedWebPartManager webPartManager,
+            WebPartDefinition webpartDefinitions,
             Action<WebPart> onUpdating,
             Action<WebPart> onUpdated)
         {
-            foreach (var webpartModel in webpartDefinitions)
+            DeployWebPartToPage(webPartManager, webpartDefinitions, onUpdating, onUpdated, null);
+        }
+
+        public static void DeployWebPartToPage(SPLimitedWebPartManager webPartManager,
+            WebPartDefinition webpartModel,
+            Action<WebPart> onUpdating,
+            Action<WebPart> onUpdated,
+            Action<WebPart, WebPartDefinition> onProcessCommonProperties)
+        {
+            var site = webPartManager.Web.Site;
+            var webPartInstance = ResolveWebPartInstance(site, webPartManager, webpartModel);
+
+            if (onUpdating != null)
+                onUpdating(webPartInstance);
+
+            // webpartModel.InvokeOnModelUpdatingEvents<WebPartDefinition, AspWebPart.WebPart>(webPartInstance);
+
+            var needUpdate = false;
+            var targetWebpartType = webPartInstance.GetType();
+
+            foreach (System.Web.UI.WebControls.WebParts.WebPart existingWebpart in webPartManager.WebParts)
             {
-                var site = webPartManager.Web.Site;
-                var webPartInstance = ResolveWebPartInstance(site, webPartManager, webpartModel);
-
-                if (onUpdating != null)
-                    onUpdating(webPartInstance);
-
-                // webpartModel.InvokeOnModelUpdatingEvents<WebPartDefinition, AspWebPart.WebPart>(webPartInstance);
-
-                var needUpdate = false;
-                var targetWebpartType = webPartInstance.GetType();
-
-                foreach (System.Web.UI.WebControls.WebParts.WebPart existingWebpart in webPartManager.WebParts)
+                if (existingWebpart.ID == webpartModel.Id && existingWebpart.GetType() == targetWebpartType)
                 {
-                    if (existingWebpart.ID == webpartModel.Id && existingWebpart.GetType() == targetWebpartType)
-                    {
-                        webPartInstance = existingWebpart;
-                        needUpdate = true;
-                        break;
-                    }
+                    webPartInstance = existingWebpart;
+                    needUpdate = true;
+                    break;
                 }
+            }
 
-                // process common properties
-                webPartInstance.Title = webpartModel.Title;
-                webPartInstance.ID = webpartModel.Id;
+            // process common properties
+            webPartInstance.Title = webpartModel.Title;
+            webPartInstance.ID = webpartModel.Id;
 
-                // faking context for CQWP deployment
-                var webDeploymentAction = new Action(delegate()
+            if (onProcessCommonProperties != null)
+                onProcessCommonProperties(webPartInstance, webpartModel);
+
+            // faking context for CQWP deployment
+            var webDeploymentAction = new Action(delegate()
+            {
+                // webpartModel.InvokeOnModelUpdatedEvents<WebPartDefinition, AspWebPart.WebPart>(webPartInstance);
+
+                if (!needUpdate)
                 {
-                    // webpartModel.InvokeOnModelUpdatedEvents<WebPartDefinition, AspWebPart.WebPart>(webPartInstance);
+                    if (onUpdating != null)
+                        onUpdating(webPartInstance);
 
-                    if (!needUpdate)
-                    {
-                        if (onUpdating != null)
-                            onUpdating(webPartInstance);
+                    if (onUpdated != null)
+                        onUpdated(webPartInstance);
 
-                        if (onUpdated != null)
-                            onUpdated(webPartInstance);
-
-                        webPartManager.AddWebPart(webPartInstance, webpartModel.ZoneId, webpartModel.ZoneIndex);
-                    }
-                    else
-                    {
-                        if (webPartInstance.ZoneIndex != webpartModel.ZoneIndex)
-                            webPartManager.MoveWebPart(webPartInstance, webpartModel.ZoneId, webpartModel.ZoneIndex);
-
-                        if (onUpdating != null)
-                            onUpdating(webPartInstance);
-
-                        if (onUpdated != null)
-                            onUpdated(webPartInstance);
-
-                        webPartManager.SaveChanges(webPartInstance);
-                    }
-                });
-
-                if (SPContext.Current == null)
-                    SPContextExtensions.WithFakeSPContextScope(webPartManager.Web, webDeploymentAction);
+                    webPartManager.AddWebPart(webPartInstance, webpartModel.ZoneId, webpartModel.ZoneIndex);
+                }
                 else
-                    webDeploymentAction();
+                {
+                    if (webPartInstance.ZoneIndex != webpartModel.ZoneIndex)
+                        webPartManager.MoveWebPart(webPartInstance, webpartModel.ZoneId, webpartModel.ZoneIndex);
+
+                    if (onUpdating != null)
+                        onUpdating(webPartInstance);
+
+                    if (onUpdated != null)
+                        onUpdated(webPartInstance);
+
+                    webPartManager.SaveChanges(webPartInstance);
+                }
+            });
+
+            if (SPContext.Current == null)
+                SPContextExtensions.WithFakeSPContextScope(webPartManager.Web, webDeploymentAction);
+            else
+                webDeploymentAction();
+        }
+
+        public static void WithLimitedWebPartManager(SPListItem targetPage, Action<SPLimitedWebPartManager> action)
+        {
+            using (var webPartManager = targetPage.File.GetLimitedWebPartManager(PersonalizationScope.Shared))
+            {
+                action(webPartManager);
             }
         }
 
-        public static void DeployWebPartsToPage(SPListItem targetPage, IEnumerable<WebPartDefinition> webpartDefinitions)
+        public static void DeployWebPartToPage(SPListItem targetPage, WebPartDefinition webpartDefinitions)
         {
             var webPartModels = webpartDefinitions;
 
-            if (!webPartModels.Any()) return;
-
-            using (var webPartManager = targetPage.File.GetLimitedWebPartManager(PersonalizationScope.Shared))
+            WithLimitedWebPartManager(targetPage, webPartManager =>
             {
                 DeployWebPartsToPage(webPartManager, webpartDefinitions);
-            }
+            });
         }
-
     }
 }

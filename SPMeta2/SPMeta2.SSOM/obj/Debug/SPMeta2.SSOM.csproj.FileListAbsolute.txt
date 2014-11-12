@@ -1,0 +1,10 @@
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\bin\Debug\SPMeta2.SSOM.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\bin\Debug\SPMeta2.SSOM.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.csprojResolveAssemblyReference.cache
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.dll
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.pdb
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\bin\Debug\W.xml
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.PublishingPageTemplates.resources
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.WebPartPageTemplates.resources
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.WebPartTemplates.resources
+C:\Sources\spmeta2\SPMeta2\SPMeta2.SSOM\obj\Debug\SPMeta2.SSOM.csproj.GenerateResource.Cache

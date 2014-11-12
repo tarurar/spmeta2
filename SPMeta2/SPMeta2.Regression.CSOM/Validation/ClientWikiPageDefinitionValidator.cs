@@ -4,8 +4,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.Definitions;
-using SPMeta2.Regression.Common.Utils;
+using SPMeta2.Definitions.Base;
+using SPMeta2.Regression.Utils;
 using SPMeta2.Utils;
+using SPMeta2.CSOM.ModelHosts;
 
 namespace SPMeta2.Regression.CSOM.Validation
 {
@@ -15,30 +17,35 @@ namespace SPMeta2.Regression.CSOM.Validation
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var list = modelHost.WithAssertAndCast<List>("modelHost", value => value.RequireNotNull());
-            var wikiPageModel = model.WithAssertAndCast<WikiPageDefinition>("model", value => value.RequireNotNull());
+            var folderModelHost = modelHost.WithAssertAndCast<FolderModelHost>("modelHost", value => value.RequireNotNull());
+            var definition = model.WithAssertAndCast<WikiPageDefinition>("model", value => value.RequireNotNull());
 
-            //if (!string.IsNullOrEmpty(wikiPageModel.FolderUrl))
-            //    throw new NotImplementedException("FolderUrl for the web part page model is not supported yet");
+            var folder = folderModelHost.CurrentLibraryFolder;
+            var context = folder.Context;
 
-            var pageName = GetSafeWikiPageFileName(wikiPageModel);
-            var pageItem = list.QueryAndGetItemByFileName(pageName);
+            var pageName = GetSafeWikiPageFileName(definition);
+            var file = GetWikiPageFile(folderModelHost.CurrentList.ParentWeb, folder, definition);
+            var spObject = file.ListItemAllFields;
 
-            TraceUtils.WithScope(traceScope =>
-            {
-                traceScope.WriteLine(string.Format("Validate model:[{0}] wiki page:[{1}]", wikiPageModel, pageItem));
-                Assert.IsNotNull(pageItem);
+            context.Load(spObject);
+            context.ExecuteQuery();
 
-                traceScope.WithTraceIndent(trace =>
-                {
-                    var fileName = pageItem["FileLeafRef"];
+            var assert = ServiceFactory.AssertService
+                                     .NewAssert(definition, spObject)
+                                           .ShouldNotBeNull(spObject)
+                                           .ShouldBeEqual(m => m.FileName, o => o.GetName())
+                                           .SkipProperty(m => m.Title, "Title field is not available for wiki pages.");
 
-                    traceScope.WriteLine(string.Format("Validate FileName model:[{0}] web part page:[{1}]", wikiPageModel.FileName, fileName));
-                    Assert.AreEqual(pageName, fileName);
-                });
-            });
         }
 
         #endregion
+    }
+
+    internal static class LIstItemUtils
+    {
+        public static string GetName(this ListItem item)
+        {
+            return item.FieldValues["FileLeafRef"] as string;
+        }
     }
 }

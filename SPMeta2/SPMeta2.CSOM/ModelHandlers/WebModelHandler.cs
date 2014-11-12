@@ -7,6 +7,8 @@ using SPMeta2.Definitions;
 using SPMeta2.ModelHandlers;
 using SPMeta2.ModelHosts;
 using SPMeta2.Utils;
+using SPMeta2.Exceptions;
+using SPMeta2.CSOM.Utils;
 
 namespace SPMeta2.CSOM.ModelHandlers
 {
@@ -23,7 +25,7 @@ namespace SPMeta2.CSOM.ModelHandlers
 
         #region methods
 
-        private string GetCurrentWebUrl(ClientRuntimeContext context, Web parentWeb, WebDefinition webModel)
+        protected string GetCurrentWebUrl(ClientRuntimeContext context, Web parentWeb, WebDefinition webModel)
         {
             var fullUrl = context.Url.ToLower();
             var serverUrl = fullUrl.EndsWith(parentWeb.ServerRelativeUrl.ToLower())
@@ -39,34 +41,97 @@ namespace SPMeta2.CSOM.ModelHandlers
             return currentWebUrl.ToLower();
         }
 
-        public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
+        protected Web ExtractWeb(object modelHost)
         {
-            var webModelHost = modelHost.WithAssertAndCast<WebModelHost>("modelHost", value => value.RequireNotNull());
-            var webModel = model.WithAssertAndCast<WebDefinition>("model", value => value.RequireNotNull());
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
 
-            var parentWeb = GetParentWeb(webModelHost);
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            throw new SPMeta2NotSupportedException(string.Format("New web canonot be created under model host of type:[{0}]", modelHost.GetType()));
+        }
+
+        public override void WithResolvingModelHost(ModelHostResolveContext modelHostContext)
+        {
+            var modelHost = modelHostContext.ModelHost;
+            var model = modelHostContext.Model;
+            var childModelType = modelHostContext.ChildModelType;
+            var action = modelHostContext.Action;
+
+            var parentWeb = ExtractWeb(modelHost);
+            var hostClientContext = ExtractHostClientContext(modelHost);
+            var hostSite = ExtractHostSite(modelHost);
+
+            var webModel = model.WithAssertAndCast<WebDefinition>("model", value => value.RequireNotNull());
 
             var context = parentWeb.Context;
 
-            context.Load(parentWeb, w => w.RootFolder);
+            context.Load(parentWeb, w => w.Url);
+            //context.Load(parentWeb, w => w.RootFolder);
             context.Load(parentWeb, w => w.ServerRelativeUrl);
             context.ExecuteQuery();
 
             var currentWebUrl = GetCurrentWebUrl(context, parentWeb, webModel);
+            var currentWeb = GetExistingWeb(hostSite, parentWeb, currentWebUrl);
 
-            using (var webContext = new ClientContext(currentWebUrl))
+            InvokeOnModelEvent(this, new ModelEventArgs
             {
-                var tmpWebContext = webContext;
+                CurrentModelNode = modelHostContext.ModelNode,
+                Model = null,
+                EventType = ModelEventType.OnModelHostResolving,
+                Object = parentWeb,
+                ObjectType = typeof(Web),
+                ObjectDefinition = model,
+                ModelHost = modelHost
+            });
 
-                webContext.Credentials = context.Credentials;
-                var tmpWebModelHost = ModelHostBase.Inherit<WebModelHost>(webModelHost,
-                    webHost =>
-                    {
-                        webHost.HostWeb = tmpWebContext.Web;
-                    });
+            var tmpWebModelHost = new WebModelHost
+            {
+                HostClientContext = hostClientContext,
+                HostSite = hostSite,
+                HostWeb = currentWeb
+            };
 
-                action(tmpWebModelHost);
-            }
+            action(tmpWebModelHost);
+
+            InvokeOnModelEvent(this, new ModelEventArgs
+            {
+                CurrentModelNode = modelHostContext.ModelNode,
+                Model = null,
+                EventType = ModelEventType.OnModelHostResolved,
+                Object = parentWeb,
+                ObjectType = typeof(Web),
+                ObjectDefinition = model,
+                ModelHost = modelHost
+            });
+
+            currentWeb.Update();
+            context.ExecuteQuery();
+        }
+
+        private Site ExtractHostSite(object modelHost)
+        {
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostSite;
+
+            throw new SPMeta2NotSupportedException(string.Format("Cannot get host site from model host of type:[{0}]", modelHost.GetType()));
+
+        }
+
+        protected ClientContext ExtractHostClientContext(object modelHost)
+        {
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostClientContext;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostClientContext;
+
+            throw new SPMeta2NotSupportedException(string.Format("Cannot get host client context from model host of type:[{0}]", modelHost.GetType()));
+
         }
 
         private static Web GetParentWeb(WebModelHost csomModelHost)
@@ -83,21 +148,77 @@ namespace SPMeta2.CSOM.ModelHandlers
             return parentWeb;
         }
 
-        public override void DeployModel(object modelHost, DefinitionBase model)
-        {
-            var csomModelHost = modelHost.WithAssertAndCast<WebModelHost>("modelHost", value => value.RequireNotNull());
-            var webModel = model.WithAssertAndCast<WebDefinition>("model", value => value.RequireNotNull());
+        //protected Web GetWeb(Web parentWeb, WebDefinition definition)
+        //{
+        //    var currentWebUrl = GetCurrentWebUrl(parentWeb.Context, parentWeb, definition);
 
-            var parentWeb = GetParentWeb(csomModelHost); ;
+        //    var tmp = new ClientContext(currentWebUrl);
+
+        //    tmp.Credentials = parentWeb.Context.Credentials;
+
+        //    tmp.Load(tmp.Web);
+        //    tmp.ExecuteQuery();
+
+        //    return tmp.Web;
+        //}
+
+        protected Web GetExistingWeb(Site site, Web parentWeb, string currentWebUrl)
+        {
+            var result = false;
+            var srcUrl = currentWebUrl.ToLower().Trim('/').Trim('\\');
+
+            // for self-hosting and '/'
+            if (parentWeb.Url.ToLower().Trim('/').Trim('\\').EndsWith(srcUrl))
+                return parentWeb;
+
             var context = parentWeb.Context;
 
-            context.Load(parentWeb, w => w.RootFolder);
+            Web web = null;
+
+            var scope = new ExceptionHandlingScope(context);
+
+            using (scope.StartScope())
+            {
+                using (scope.StartTry())
+                {
+                    web = site.OpenWeb(currentWebUrl);
+                }
+
+                using (scope.StartCatch())
+                {
+
+                }
+            }
+
+            context.ExecuteQuery();
+
+            if (!scope.HasException && web != null && web.ServerObjectIsNull == false)
+            {
+                context.Load(web);
+                context.ExecuteQuery();
+
+                return web;
+            }
+
+            return null;
+        }
+
+        public override void DeployModel(object modelHost, DefinitionBase model)
+        {
+            var parentWeb = ExtractWeb(modelHost);
+            var hostClientContext = ExtractHostClientContext(modelHost);
+            var webModel = model.WithAssertAndCast<WebDefinition>("model", value => value.RequireNotNull());
+
+            var context = parentWeb.Context;
+
+            context.Load(parentWeb, w => w.Url);
+            //context.Load(parentWeb, w => w.RootFolder);
             context.Load(parentWeb, w => w.ServerRelativeUrl);
             context.ExecuteQuery();
 
             var currentWebUrl = GetCurrentWebUrl(context, parentWeb, webModel);
 
-            Web currentWeb = null;
+            Web currentWeb = GetExistingWeb(hostClientContext.Site, parentWeb, currentWebUrl);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -111,19 +232,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             });
             InvokeOnModelEvent<WebDefinition, Web>(currentWeb, ModelEventType.OnUpdating);
 
-            try
-            {
-                // TODO
-                // how else???
-                using (var tmp = new ClientContext(currentWebUrl))
-                {
-                    tmp.Credentials = context.Credentials;
-
-                    tmp.Load(tmp.Web);
-                    tmp.ExecuteQuery();
-                }
-            }
-            catch (Exception)
+            if (currentWeb == null)
             {
                 var newWebInfo = new WebCreationInformation
                 {
@@ -131,36 +240,42 @@ namespace SPMeta2.CSOM.ModelHandlers
                     Url = webModel.Url,
                     Description = webModel.Description ?? string.Empty,
                     WebTemplate = webModel.WebTemplate,
-                    UseSamePermissionsAsParentSite = !webModel.UseUniquePermission
+                    UseSamePermissionsAsParentSite = !webModel.UseUniquePermission,
+                    Language = (int)webModel.LCID
                 };
 
-                parentWeb.Webs.Add(newWebInfo);
+                var newWeb = parentWeb.Webs.Add(newWebInfo);
                 context.ExecuteQuery();
-            }
 
-            using (var tmpContext = new ClientContext(currentWebUrl))
-            {
-                tmpContext.Credentials = context.Credentials;
-
-                var tmpWeb = tmpContext.Web;
-
-                tmpContext.Load(tmpWeb);
-                tmpContext.ExecuteQuery();
+                context.Load(newWeb);
+                context.ExecuteQuery();
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
                     CurrentModelNode = null,
                     Model = null,
                     EventType = ModelEventType.OnProvisioned,
-                    Object = tmpWeb,
+                    Object = newWeb,
                     ObjectType = typeof(Web),
                     ObjectDefinition = model,
                     ModelHost = modelHost
                 });
-                InvokeOnModelEvent<WebDefinition, Web>(tmpContext.Web, ModelEventType.OnUpdated);
+                InvokeOnModelEvent<WebDefinition, Web>(newWeb, ModelEventType.OnUpdated);
+            }
+            else
+            {
 
-                tmpWeb.Update();
-                tmpContext.ExecuteQuery();
+                InvokeOnModelEvent(this, new ModelEventArgs
+                {
+                    CurrentModelNode = null,
+                    Model = null,
+                    EventType = ModelEventType.OnProvisioned,
+                    Object = currentWeb,
+                    ObjectType = typeof(Web),
+                    ObjectDefinition = model,
+                    ModelHost = modelHost
+                });
+                InvokeOnModelEvent<WebDefinition, Web>(currentWeb, ModelEventType.OnUpdated);
             }
         }
 

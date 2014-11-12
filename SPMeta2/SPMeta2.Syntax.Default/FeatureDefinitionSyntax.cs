@@ -1,11 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using SPMeta2.Definitions;
+using SPMeta2.Definitions.Base;
 using SPMeta2.Models;
 using SPMeta2.Syntax.Default.Extensions;
 
 namespace SPMeta2.Syntax.Default
 {
+    public static class DefinitionExtensions
+    {
+        public static TDefinition Inherit<TDefinition>(this DefinitionBase definition)
+            where TDefinition : DefinitionBase, new()
+        {
+            return Inherit<TDefinition>(definition, null);
+        }
+
+        public static TDefinition Inherit<TDefinition>(this DefinitionBase definition, Action<TDefinition> config)
+            where TDefinition : DefinitionBase, new()
+        {
+            var model = definition.Clone() as TDefinition;
+
+            if (config != null)
+                config(model);
+
+            return model;
+        }
+    }
+
     public static class FeatureDefinitionSyntax
     {
         #region methods
@@ -80,6 +101,13 @@ namespace SPMeta2.Syntax.Default
         public static FeatureDefinition Enable(this FeatureDefinition definition)
         {
             definition.Enable = true;
+
+            return definition;
+        }
+
+        public static FeatureDefinition Disable(this FeatureDefinition definition)
+        {
+            definition.Enable = false;
 
             return definition;
         }
