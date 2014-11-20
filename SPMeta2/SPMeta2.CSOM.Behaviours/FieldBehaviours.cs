@@ -19,7 +19,7 @@ namespace SPMeta2.CSOM.Behaviours
 
         public static Field MakeChoices(this Field field, IEnumerable<string> choiceValues, bool cleanOldChoice = true)
         {
-            var choiceField = field as FieldMultiChoice;
+            var choiceField = field.Context.CastTo<FieldMultiChoice>(field);
 
             if (choiceField != null)
             {
@@ -40,7 +40,7 @@ namespace SPMeta2.CSOM.Behaviours
 
         public static Field MakeFillInChoice(this Field field, bool fillIn = true)
         {
-            var choiceField = field as FieldMultiChoice;
+            var choiceField = field.Context.CastTo <FieldMultiChoice>(field);
 
             if (choiceField != null)
                 choiceField.FillInChoice = fillIn;
@@ -50,7 +50,7 @@ namespace SPMeta2.CSOM.Behaviours
 
         public static Field MakeDateOnly(this Field field)
         {
-            var dateField = field as FieldDateTime;
+            var dateField = field.Context.CastTo<FieldDateTime>(field);
 
             if (dateField != null)
                 dateField.DisplayFormat = DateTimeFieldFormatType.DateOnly;
