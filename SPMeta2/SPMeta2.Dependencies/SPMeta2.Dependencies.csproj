@@ -29,6 +29,21 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1212|AnyCPU'">
+    <OutputPath>bin\1212\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -47,6 +62,9 @@
     <Content Include="HtmlAgilityPack\HtmlAgilityPack.1.4.6\Net20\HtmlAgilityPack.dll" />
     <Content Include="HtmlAgilityPack\HtmlAgilityPack.1.4.6\Net20\HtmlAgilityPack.pdb" />
     <Content Include="HtmlAgilityPack\HtmlAgilityPack.1.4.6\Net20\HtmlAgilityPack.xml" />
+    <Content Include="Images\SubPointSolutions_2014_240.png" />
+    <Content Include="Images\SubPointSolutions_2014_64.png" />
+    <Content Include="Nintex\2013 - 3.0.0\Nintex.Workflow.dll" />
     <Content Include="SharePoint\O365 - 16.0.2617.1200\Microsoft.Office.Client.Policy.dll" />
     <Content Include="SharePoint\O365 - 16.0.2617.1200\Microsoft.Office.Client.Policy.Portable.dll" />
     <Content Include="SharePoint\O365 - 16.0.2617.1200\Microsoft.Office.Client.TranslationServices.dll" />
@@ -113,6 +131,17 @@
     <Content Include="SharePoint\SP2013 - 15.0.4569.1000\CSOM\Microsoft.SharePoint.Client.Taxonomy.dll" />
     <Content Include="SharePoint\SP2013 - 15.0.4569.1000\CSOM\Microsoft.SharePoint.Client.UserProfiles.dll" />
     <Content Include="SharePoint\SP2013 - 15.0.4569.1000\CSOM\Microsoft.SharePoint.Client.WorkflowServices.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.BusinessData.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.IdentityModel.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.IdentityModel.WindowsTokenService.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.DocumentManagement.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.SecureStoreService.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.Applications.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.Connector.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.ExchangeAdapter.dll" />
+    <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.UserProfiles.dll" />
     <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.dll" />
     <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.Linq.dll" />
     <Content Include="SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.Portal.dll" />

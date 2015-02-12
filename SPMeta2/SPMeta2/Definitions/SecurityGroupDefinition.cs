@@ -16,8 +16,18 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class SecurityGroupDefinition : DefinitionBase
     {
+        #region  constructors
+
+        public SecurityGroupDefinition()
+        {
+
+        }
+
+        #endregion
+
         #region properties
 
         /// <summary>
@@ -47,6 +57,12 @@ namespace SPMeta2.Definitions
         /// 
         [ExpectValidation]
         public string DefaultUser { get; set; }
+
+        /// <summary>
+        /// Membership view options.
+        /// </summary>
+        [ExpectValidation]
+        public bool OnlyAllowMembersViewMembership { get; set; }
 
         /// <summary>
         /// Flag to mimic out of the box AssociatedOwnerGroup

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
 
@@ -35,11 +36,27 @@ namespace SPMeta2.SSOM.ModelHandlers
             DeploySolution(farmModelHost, solutionModel);
         }
 
+        protected SPSolution FindExistingSolution(FarmModelHost modelHost, FarmSolutionDefinition definition)
+        {
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall,
+                "Resolving farm solution by SolutionId: [{0}] and Name: [{1}]",
+                 new object[]
+                    {
+                        definition.SolutionId,
+                        definition.FileName
+                    });
+
+            var farm = modelHost.HostFarm;
+
+            return farm.Solutions.FirstOrDefault(s =>
+                s.Name.ToUpper() == definition.FileName.ToUpper() ||
+                definition.SolutionId != Guid.Empty && s.SolutionId == definition.SolutionId);
+        }
+
         private void DeploySolution(FarmModelHost modelHost, FarmSolutionDefinition definition)
         {
             var farm = modelHost.HostFarm;
-
-            var existringSolution = farm.Solutions.FirstOrDefault(s => s.Name.ToLower() == definition.FileName.ToLower());
+            var existringSolution = FindExistingSolution(modelHost, definition);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -52,21 +69,23 @@ namespace SPMeta2.SSOM.ModelHandlers
                 ModelHost = modelHost
             });
 
+            var tmpWspDirectory = string.Format("{0}_{1}", Path.GetFileNameWithoutExtension(definition.FileName), Guid.NewGuid().ToString("N"));
+            var tmpWspDirectoryPath = Path.Combine(Path.GetTempPath(), tmpWspDirectory);
+
+            Directory.CreateDirectory(tmpWspDirectoryPath);
+
+            var tmpWspFilPath = Path.Combine(tmpWspDirectoryPath, definition.FileName);
+            File.WriteAllBytes(tmpWspFilPath, definition.Content);
+
             if (existringSolution == null)
             {
-                var tmpWspDirectory = string.Format("{0}_{1}", Path.GetFileNameWithoutExtension(definition.FileName), Guid.NewGuid().ToString("N"));
-                var tmpWspDirectoryPath = Path.Combine(Path.GetTempPath(), tmpWspDirectory);
-
-                Directory.CreateDirectory(tmpWspDirectoryPath);
-
-                var tmpWspFilPath = Path.Combine(tmpWspDirectoryPath, definition.FileName);
-                File.WriteAllBytes(tmpWspFilPath, definition.Content);
-
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new farm solution");
                 existringSolution = farm.Solutions.Add(tmpWspFilPath, (uint)definition.LCID);
             }
             else
             {
-
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Upgrading existing farm solution");
+                existringSolution.Upgrade(tmpWspFilPath);
             }
 
             InvokeOnModelEvent(this, new ModelEventArgs

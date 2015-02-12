@@ -23,7 +23,7 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
-
+    [ExpectWithExtensionMethod]
     public class SandboxSolutionDefinition : SolutionDefinitionBase
     {
         #region constructors
@@ -36,9 +36,6 @@ namespace SPMeta2.Definitions
         #endregion
 
         #region properties
-
-        [ExpectValidation]
-        public Guid SolutionId { get; set; }
 
         /// <summary>
         /// Should the solution be activated.

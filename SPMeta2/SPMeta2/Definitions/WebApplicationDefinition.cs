@@ -19,8 +19,9 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(FarmDefinition))]
     [DefaultParentHostAttribute(typeof(FarmDefinition))]
 
+    [ExpectAddHostExtensionMethod]
     [Serializable]
-
+    [ExpectWithExtensionMethod]
     public class WebApplicationDefinition : DefinitionBase
     {
         #region properties

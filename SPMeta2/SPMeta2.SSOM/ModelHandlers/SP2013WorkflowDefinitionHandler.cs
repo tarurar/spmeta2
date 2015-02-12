@@ -8,6 +8,7 @@ using Microsoft.SharePoint.WorkflowServices;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
 
@@ -36,13 +37,22 @@ namespace SPMeta2.SSOM.ModelHandlers
             DeployWorkflowDefinition(modelHost, web, workflowDefinitionModel);
         }
 
-        private void DeployWorkflowDefinition(object host, SPWeb web, SP2013WorkflowDefinition workflowDefinitionModel)
+        protected WorkflowDefinition GetCurrentWorkflowDefinition(SPWeb web,
+            SP2013WorkflowDefinition workflowDefinitionModel)
         {
             var workflowServiceManager = new WorkflowServicesManager(web);
             var workflowDeploymentService = workflowServiceManager.GetWorkflowDeploymentService();
 
             var publishedWorkflows = workflowDeploymentService.EnumerateDefinitions(false);
-            var currentWorkflowDefinition = publishedWorkflows.FirstOrDefault(w => w.DisplayName == workflowDefinitionModel.DisplayName);
+            return publishedWorkflows.FirstOrDefault(w => w.DisplayName == workflowDefinitionModel.DisplayName);
+        }
+
+        private void DeployWorkflowDefinition(object host, SPWeb web, SP2013WorkflowDefinition workflowDefinitionModel)
+        {
+            var workflowServiceManager = new WorkflowServicesManager(web);
+            var workflowDeploymentService = workflowServiceManager.GetWorkflowDeploymentService();
+
+            var currentWorkflowDefinition = GetCurrentWorkflowDefinition(web, workflowDefinitionModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -57,13 +67,16 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (currentWorkflowDefinition == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new SP2013 workflow definition");
+
                 var workflowDefinition = new WorkflowDefinition()
                 {
                     Xaml = workflowDefinitionModel.Xaml,
                     DisplayName = workflowDefinitionModel.DisplayName
                 };
 
-                workflowDeploymentService.SaveDefinition(workflowDefinition);
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling SaveDefinition()");
+                var wfId = workflowDeploymentService.SaveDefinition(workflowDefinition);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -76,12 +89,17 @@ namespace SPMeta2.SSOM.ModelHandlers
                     ModelHost = host
                 });
 
-                workflowDeploymentService.PublishDefinition(workflowDefinition.Id);
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling PublishDefinition()");
+                workflowDeploymentService.PublishDefinition(wfId);
             }
             else
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing SP2013 workflow definition");
+
                 if (workflowDefinitionModel.Override)
                 {
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Override = true. Overriding workflow definition");
+
                     currentWorkflowDefinition.Xaml = workflowDefinitionModel.Xaml;
 
                     InvokeOnModelEvent(this, new ModelEventArgs
@@ -95,11 +113,16 @@ namespace SPMeta2.SSOM.ModelHandlers
                         ModelHost = host
                     });
 
-                    workflowDeploymentService.SaveDefinition(currentWorkflowDefinition);
-                    workflowDeploymentService.PublishDefinition(currentWorkflowDefinition.Id);
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling SaveDefinition()");
+                    var wfId = workflowDeploymentService.SaveDefinition(currentWorkflowDefinition);
+
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling PublishDefinition()");
+                    workflowDeploymentService.PublishDefinition(wfId);
                 }
                 else
                 {
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Override = false. Skipping workflow definition");
+
                     InvokeOnModelEvent(this, new ModelEventArgs
                     {
                         CurrentModelNode = null,
@@ -111,6 +134,7 @@ namespace SPMeta2.SSOM.ModelHandlers
                         ModelHost = host
                     });
 
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling PublishDefinition()");
                     workflowDeploymentService.PublishDefinition(currentWorkflowDefinition.Id);
                 }
             }

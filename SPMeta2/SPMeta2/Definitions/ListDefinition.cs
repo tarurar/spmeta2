@@ -16,7 +16,9 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(WebDefinition))]
     [DefaultParentHostAttribute(typeof(WebDefinition))]
 
+    [ExpectAddHostExtensionMethod]
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class ListDefinition : DefinitionBase
     {
         public ListDefinition()
@@ -34,6 +36,14 @@ namespace SPMeta2.Definitions
         [ExpectValidation]
         public string Title { get; set; }
 
+        [ExpectValidation]
+        public bool? IrmEnabled { get; set; }
+
+        [ExpectValidation]
+        public bool? IrmExpire { get; set; }
+
+        [ExpectValidation]
+        public bool? IrmReject { get; set; }
 
         /// <summary>
         /// Description of the target list.

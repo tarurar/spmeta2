@@ -42,6 +42,38 @@ namespace SPMeta2.Containers
 
         #endregion
 
+        #region property bags
+
+        #region webs
+
+        public static ModelNode AddRandomPropertyBag(this ModelNode model)
+        {
+            return AddRandomPropertyBag(model, null);
+        }
+
+        public static ModelNode AddRandomPropertyBag(this ModelNode model, Action<ModelNode> action)
+        {
+            return model.AddRandomDefinition<PropertyDefinition>(action);
+        }
+
+        #endregion
+
+        #region user custom action
+
+        public static ModelNode AddRandomUserCustomAction(this ModelNode model)
+        {
+            return AddRandomUserCustomAction(model, null);
+        }
+
+        public static ModelNode AddRandomUserCustomAction(this ModelNode model, Action<ModelNode> action)
+        {
+            return model.AddRandomDefinition<UserCustomActionDefinition>(action);
+        }
+
+        #endregion
+
+        #endregion
+
         #region webpart pages
 
         public static ModelNode AddRandomWebPartPage(this ModelNode model)
@@ -83,6 +115,62 @@ namespace SPMeta2.Containers
         }
 
         #endregion
+
+        #region audit settings
+
+        public static ModelNode AddRandomAuditSetting(this ModelNode model)
+        {
+            return AddRandomAuditSetting(model, null);
+        }
+
+        public static ModelNode AddRandomAuditSetting(this ModelNode model, Action<ModelNode> action)
+        {
+            return model.AddRandomDefinition<AuditSettingsDefinition>(action);
+        }
+
+        #endregion
+
+        #region list item
+
+
+
+        public static ModelNode AddRandomListItem(this ModelNode model)
+        {
+            return AddRandomListItem(model, null);
+        }
+
+        public static ModelNode AddRandomListItem(this ModelNode model, Action<ModelNode> action)
+        {
+            return model.AddRandomDefinition<ListItemDefinition>(action);
+        }
+
+        #endregion
+
+
+        public static ModelNode AddRandomModuleFile(this ModelNode model)
+        {
+            return AddRandomModuleFile(model, null);
+        }
+
+        public static ModelNode AddRandomModuleFile(this ModelNode model, Action<ModelNode> action)
+        {
+            return model.AddRandomDefinition<ModuleFileDefinition>(action);
+        }
+
+        #region fodlers
+
+        public static ModelNode AddRandomFolder(this ModelNode model)
+        {
+            return AddRandomFolder(model, null);
+        }
+
+        public static ModelNode AddRandomFolder(this ModelNode model, Action<ModelNode> action)
+        {
+            return model.AddRandomDefinition<FolderDefinition>(action);
+        }
+
+        #endregion
+
 
         #region web parts
 
@@ -126,7 +214,7 @@ namespace SPMeta2.Containers
 
         #endregion
 
-     
+
 
         #endregion
 

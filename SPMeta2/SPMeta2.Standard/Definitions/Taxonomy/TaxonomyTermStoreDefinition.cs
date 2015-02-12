@@ -18,13 +18,18 @@ namespace SPMeta2.Standard.Definitions.Taxonomy
     [DefaultRootHost(typeof(SiteDefinition))]
 
     [Serializable]
+    [ExpectAddHostExtensionMethod]
     public class TaxonomyTermStoreDefinition : DefinitionBase
     {
         #region properties
 
+        [ExpectValidation]
         public string Name { get; set; }
+
+        [ExpectValidation]
         public Guid? Id { get; set; }
 
+        [ExpectValidation]
         public bool? UseDefaultSiteCollectionTermStore { get; set; }
 
         #endregion

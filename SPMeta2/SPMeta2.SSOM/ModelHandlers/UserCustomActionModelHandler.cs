@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SharePoint;
+using Microsoft.SharePoint.BusinessData.Administration;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Enumerations;
 using SPMeta2.ModelHandlers;
+using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
 
@@ -33,22 +36,40 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             var customAction = model.WithAssertAndCast<UserCustomActionDefinition>("model", value => value.RequireNotNull());
 
-            var siteModelHost = modelHost.WithAssertAndCast<SiteModelHost>("modelHost", value => value.RequireNotNull());
-            var site = siteModelHost.HostSite;
-
-            DeploySiteCustomAction(modelHost, site, customAction);
+            DeploySiteCustomAction(modelHost, customAction);
         }
 
-        protected SPUserCustomAction GetCurrentCustomUserAction(SPSite site, UserCustomActionDefinition customActionModel)
+        protected SPUserCustomAction GetCurrentCustomUserAction(object modelHost,
+            UserCustomActionDefinition customActionModel)
         {
-            return site.UserCustomActions.FirstOrDefault(a => a.Name == customActionModel.Name);
+            SPUserCustomActionCollection userCustomActions = null;
+
+            return GetCurrentCustomUserAction(modelHost, customActionModel, out userCustomActions);
+        }
+
+        private SPUserCustomAction GetCurrentCustomUserAction(object modelHost, UserCustomActionDefinition customActionModel
+            , out SPUserCustomActionCollection userCustomActions)
+        {
+            if (modelHost is SiteModelHost)
+                userCustomActions = (modelHost as SiteModelHost).HostSite.UserCustomActions;
+            else if (modelHost is WebModelHost)
+                userCustomActions = (modelHost as WebModelHost).HostWeb.UserCustomActions;
+            else if (modelHost is ListModelHost)
+                userCustomActions = (modelHost as ListModelHost).HostList.UserCustomActions;
+            else
+            {
+                throw new Exception(string.Format("modelHost of type {0} is not supported.", modelHost.GetType()));
+            }
+
+            return userCustomActions.FirstOrDefault(a => !string.IsNullOrEmpty(a.Name) && a.Name.ToUpper() == customActionModel.Name.ToUpper());
         }
 
         private void DeploySiteCustomAction(
             object modelHost,
-            SPSite site, UserCustomActionDefinition customActionModel)
+            UserCustomActionDefinition customActionModel)
         {
-            var existingAction = GetCurrentCustomUserAction(site, customActionModel);
+            SPUserCustomActionCollection userCustomActions = null;
+            var existingAction = GetCurrentCustomUserAction(modelHost, customActionModel, out userCustomActions);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -62,7 +83,14 @@ namespace SPMeta2.SSOM.ModelHandlers
             });
 
             if (existingAction == null)
-                existingAction = site.UserCustomActions.Add();
+            {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new user custom action");
+                existingAction = userCustomActions.Add();
+            }
+            else
+            {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing user custom action");
+            }
 
             MapCustomAction(existingAction, customActionModel);
 
@@ -82,6 +110,8 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         private void MapCustomAction(SPUserCustomAction existringAction, UserCustomActionDefinition customAction)
         {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Updating user custom action properties.");
+
             existringAction.Description = customAction.Description;
             existringAction.Group = customAction.Group;
             existringAction.Location = customAction.Location;
@@ -97,7 +127,16 @@ namespace SPMeta2.SSOM.ModelHandlers
                 existringAction.RegistrationId = customAction.RegistrationId;
 
             if (!string.IsNullOrEmpty(customAction.RegistrationType))
-                existringAction.RegistrationType = (SPUserCustomActionRegistrationType)Enum.Parse(typeof(SPUserCustomActionRegistrationType), customAction.RegistrationType, true);
+            {
+                // skipping setup for List script 
+                // System.NotSupportedException: Setting this property is not supported.  A value of List has already been set and cannot be changed.
+                if (existringAction.RegistrationType != SPUserCustomActionRegistrationType.List)
+                {
+                    existringAction.RegistrationType =
+                        (SPUserCustomActionRegistrationType)
+                            Enum.Parse(typeof(SPUserCustomActionRegistrationType), customAction.RegistrationType, true);
+                }
+            }
 
             var permissions = SPBasePermissions.EmptyMask;
 
@@ -112,7 +151,10 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         private bool IsValidHostModelHost(object modelHost)
         {
-            return modelHost is SiteModelHost;
+            return
+                modelHost is SiteModelHost ||
+                modelHost is WebModelHost ||
+                modelHost is ListModelHost;
         }
 
         #endregion

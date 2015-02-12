@@ -4,6 +4,7 @@ using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.ModelHandlers;
+using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
 using SPMeta2.Exceptions;
@@ -77,24 +78,31 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (securityGroupLinkModel.IsAssociatedMemberGroup)
             {
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "IsAssociatedMemberGroup = true. Resolving AssociatedMemberGroup");
                 securityGroup = web.AssociatedMemberGroup;
             }
             else if (securityGroupLinkModel.IsAssociatedOwnerGroup)
             {
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "IsAssociatedOwnerGroup = true. Resolving IsAssociatedOwnerGroup");
                 securityGroup = web.AssociatedOwnerGroup;
             }
             else if (securityGroupLinkModel.IsAssociatedVisitorGroup)
             {
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "IsAssociatedVisitorGroup = true. Resolving IsAssociatedVisitorGroup");
                 securityGroup = web.AssociatedVisitorGroup;
             }
             else if (!string.IsNullOrEmpty(securityGroupLinkModel.SecurityGroupName))
             {
-                securityGroup =web.SiteGroups[securityGroupLinkModel.SecurityGroupName];
+                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Resolving group by name: [{0}]", securityGroupLinkModel.SecurityGroupName);
+                securityGroup = web.SiteGroups[securityGroupLinkModel.SecurityGroupName];
             }
             else
             {
-                throw new ArgumentException("securityGroupLinkModel");
+                TraceService.Error((int)LogEventId.ModelProvisionCoreCall, "IsAssociatedMemberGroup/IsAssociatedOwnerGroup/IsAssociatedVisitorGroup/SecurityGroupName should be defined. Throwing SPMeta2Exception");
+
+                throw new SPMeta2Exception("securityGroupLinkModel");
             }
+
             return securityGroup;
         }
 
@@ -105,7 +113,8 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (!securableObject.HasUniqueRoleAssignments)
             {
-                throw new SPMeta2Exception("securableObject does not have HasUniqueRoleAssignments. Please use BreakRoleInheritanceDefinition object or break role inheritable manually before deploying SecurityGroupLinkDefinition.");
+                TraceService.Information((int)LogEventId.ModelProvisionCoreCall, "securableObject.HasUniqueRoleAssignments = false. Breaking with false-false options.");
+                securableObject.BreakRoleInheritance(false, false);
             }
 
             var web = GetWebFromSPSecurableObject(securableObject);
@@ -119,8 +128,15 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (roleAssignment == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject,
+                    "Processing new security group link");
+
                 roleAssignment = new SPRoleAssignment(securityGroup);
                 isNewRoleAssignment = true;
+            }
+            else
+            {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing security group link");
             }
 
             InvokeOnModelEvent(this, new ModelEventArgs
@@ -136,30 +152,13 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (isNewRoleAssignment)
             {
-                // default one, it will be removed later
-                // we need at least one role for a new role assignment created
-                // it will be deleted later
-
-                var dummyRole = web.RoleDefinitions.GetByType(SPRoleType.Reader);
-
-                if (!roleAssignment.RoleDefinitionBindings.Contains(dummyRole))
-                    roleAssignment.RoleDefinitionBindings.Add(dummyRole);
+                // add default guest role as hidden one
+                // we need to at least one role in order to create assignment 
+                // further provision will chech of there is only one role - Reader, and will remove it
+                roleAssignment.RoleDefinitionBindings.Add(web.RoleDefinitions.GetByType(SPRoleType.Reader));
             }
 
             securableObject.RoleAssignments.Add(roleAssignment);
-
-            if (isNewRoleAssignment)
-            {
-                // removing dummy role for a new assignment created
-                var tmpAssignment = securableObject.RoleAssignments
-                                                       .OfType<SPRoleAssignment>()
-                                                       .FirstOrDefault(a => a.Member.ID == securityGroup.ID);
-
-                while (tmpAssignment.RoleDefinitionBindings.Count > 0)
-                    tmpAssignment.RoleDefinitionBindings.Remove(0);
-
-                tmpAssignment.Update();
-            }
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -175,26 +174,7 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         protected SPSecurableObject ExtractSecurableObject(object modelHost)
         {
-            if (modelHost is SPSecurableObject)
-                return modelHost as SPSecurableObject;
-
-            if (modelHost is SiteModelHost)
-                return (modelHost as SiteModelHost).HostSite.RootWeb;
-
-            if (modelHost is WebModelHost)
-                return (modelHost as WebModelHost).HostWeb;
-
-            if (modelHost is ListModelHost)
-                return (modelHost as ListModelHost).HostList;
-
-            if (modelHost is FolderModelHost)
-                return (modelHost as FolderModelHost).CurrentLibraryFolder.Item;
-
-            if (modelHost is WebpartPageModelHost)
-                return (modelHost as WebpartPageModelHost).PageListItem;
-
-            throw new SPMeta2NotImplementedException(string.Format("Model host of type:[{0}] is not supported by SecurityGroupLinkModelHandler yet.",
-                modelHost.GetType()));
+            return SecurableHelper.ExtractSecurableObject(modelHost);
         }
 
         protected SPWeb GetWebFromSPSecurableObject(SPSecurableObject securableObject)
@@ -236,5 +216,39 @@ namespace SPMeta2.SSOM.ModelHandlers
         }
 
         #endregion
+    }
+
+    internal static class SecurableHelper
+    {
+        public static SPSecurableObject ExtractSecurableObject(object modelHost)
+        {
+            if (modelHost is SPSecurableObject)
+                return modelHost as SPSecurableObject;
+
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList;
+
+            if (modelHost is FolderModelHost)
+            {
+                var folderHost = (modelHost as FolderModelHost);
+
+                if (folderHost.CurrentLibraryFolder != null)
+                    return folderHost.CurrentLibraryFolder.Item;
+                else
+                    return folderHost.CurrentListItem;
+            }
+
+            if (modelHost is WebpartPageModelHost)
+                return (modelHost as WebpartPageModelHost).PageListItem;
+
+            throw new SPMeta2NotImplementedException(string.Format("Model host of type:[{0}] is not supported by SecurityGroupLinkModelHandler yet.",
+                modelHost.GetType()));
+        }
     }
 }

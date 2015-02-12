@@ -3,10 +3,12 @@ using System.Linq;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
 using SPMeta2.Common;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.CSOM.Standard.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Services;
 using SPMeta2.Standard.Definitions.Taxonomy;
 using SPMeta2.Utils;
 
@@ -69,9 +71,14 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
 
             if (currentTermSet == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new Term Set");
+
                 currentTermSet = termSetModel.Id.HasValue
                     ? termGroup.CreateTermSet(termSetModel.Name, termSetModel.Id.Value, termSetModel.LCID)
                     : termGroup.CreateTermSet(termSetModel.Name, Guid.NewGuid(), termSetModel.LCID);
+
+                currentTermSet.IsAvailableForTagging = termSetModel.IsAvailableForTagging;
+                currentTermSet.Description = termSetModel.Description;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -86,6 +93,11 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
             }
             else
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing Term Set");
+
+                currentTermSet.IsAvailableForTagging = termSetModel.IsAvailableForTagging;
+                currentTermSet.Description = termSetModel.Description;
+
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
                     CurrentModelNode = null,
@@ -97,6 +109,9 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
                     ModelHost = modelHost
                 });
             }
+
+            termStore.CommitAll();
+            termStore.Context.ExecuteQuery();
         }
 
         protected TermSet FindTermSet(TermGroup termGroup, TaxonomyTermSetDefinition termSetModel)
@@ -106,16 +121,24 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
             var context = termGroup.Context;
 
             context.Load(termGroup.TermSets);
-            context.ExecuteQuery();
-
-            //if (termSetModel.Id.HasValue)
-            //    result = termGroup.TermSets.FirstOrDefault(t => t.Id == termSetModel.Id.Value);
-            //else if (!string.IsNullOrEmpty(termSetModel.Name))
-            //    result = termGroup.TermSets.FirstOrDefault(t => t.Name.ToUpper() == termSetModel.Name.ToUpper());
+            context.ExecuteQueryWithTrace();
 
             if (termSetModel.Id.HasValue)
             {
-                result = termGroup.TermSets.GetById(termSetModel.Id.Value);
+                var scope = new ExceptionHandlingScope(context);
+                using (scope.StartScope())
+                {
+                    using (scope.StartTry())
+                    {
+                        result = termGroup.TermSets.GetById(termSetModel.Id.Value);
+                        context.Load(result);
+                    }
+
+                    using (scope.StartCatch())
+                    {
+
+                    }
+                }
             }
             else if (!string.IsNullOrEmpty(termSetModel.Name))
             {
@@ -135,7 +158,7 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
                 }
             }
 
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             if (result != null && result.ServerObjectIsNull == false)
             {
@@ -143,7 +166,7 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
                 //context.Load(result, g => g.Id);
                 //context.Load(result, g => g.Name);
 
-                context.ExecuteQuery();
+                context.ExecuteQueryWithTrace();
 
                 return result;
             }

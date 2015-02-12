@@ -1,4 +1,5 @@
-﻿using SPMeta2.Attributes;
+﻿using System.Collections.ObjectModel;
+using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
@@ -20,8 +21,18 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(WebApplicationDefinition))]
 
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class JobDefinition : DefinitionBase
     {
+        #region constructors
+
+        public JobDefinition()
+        {
+            ConstructorParams = new Collection<JobDefinitionCtorParams>();
+        }
+
+        #endregion
+
         #region properties
 
         /// <summary>
@@ -31,6 +42,9 @@ namespace SPMeta2.Definitions
 
         [ExpectValidation]
         public string Name { get; set; }
+
+        [ExpectValidation]
+        public string Title { get; set; }
 
         /// <summary>
         /// Type of the target timer job.
@@ -50,6 +64,8 @@ namespace SPMeta2.Definitions
         [ExpectValidation]
         public string ScheduleString { get; set; }
 
+        public Collection<JobDefinitionCtorParams> ConstructorParams { get; set; }
+
         #endregion
 
         #region methods
@@ -64,5 +80,11 @@ namespace SPMeta2.Definitions
         }
 
         #endregion
+    }
+
+    public enum JobDefinitionCtorParams
+    {
+        WebApplication,
+        JobName
     }
 }

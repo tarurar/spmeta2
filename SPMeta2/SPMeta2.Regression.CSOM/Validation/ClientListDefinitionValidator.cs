@@ -1,13 +1,13 @@
 ﻿using Microsoft.SharePoint.Client;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SPMeta2.Containers.Assertion;
 using SPMeta2.CSOM.DefaultSyntax;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.CSOM.Utils;
 using SPMeta2.Definitions;
-using SPMeta2.Definitions.Base;
 using SPMeta2.Exceptions;
-using SPMeta2.Regression.Utils;
+using SPMeta2.Services;
 using SPMeta2.Utils;
 
 
@@ -39,8 +39,26 @@ namespace SPMeta2.Regression.CSOM.Validation
             assert
                 .ShouldBeEqual(m => m.Title, o => o.Title)
                 .ShouldBeEqual(m => m.Description, o => o.Description)
+                //.ShouldBeEqual(m => m.IrmEnabled, o => o.IrmEnabled)
+                //.ShouldBeEqual(m => m.IrmExpire, o => o.IrmExpire)
+                //.ShouldBeEqual(m => m.IrmReject, o => o.IrmReject)
                 .ShouldBeEndOf(m => m.GetServerRelativeUrl(web), m => m.Url, o => o.GetServerRelativeUrl(), o => o.GetServerRelativeUrl())
                 .ShouldBeEqual(m => m.ContentTypesEnabled, o => o.ContentTypesEnabled);
+
+            if (definition.IrmEnabled.HasValue)
+                assert.ShouldBeEqual(m => m.IrmEnabled, o => o.IrmEnabled);
+            else
+                assert.SkipProperty(m => m.IrmEnabled, "Skipping from validation. IrmEnabled IS NULL");
+
+            if (definition.IrmExpire.HasValue)
+                assert.ShouldBeEqual(m => m.IrmExpire, o => o.IrmExpire);
+            else
+                assert.SkipProperty(m => m.IrmExpire, "Skipping from validation. IrmExpire IS NULL");
+
+            if (definition.IrmReject.HasValue)
+                assert.ShouldBeEqual(m => m.IrmReject, o => o.IrmReject);
+            else
+                assert.SkipProperty(m => m.IrmReject, "Skipping from validation. IrmReject IS NULL");
 
             if (definition.TemplateType > 0)
             {
@@ -53,7 +71,26 @@ namespace SPMeta2.Regression.CSOM.Validation
 
             if (!string.IsNullOrEmpty(definition.TemplateName))
             {
-                throw new SPMeta2NotImplementedException("TemplateName validation for List is not supported yet.");
+                context.Load(web, tmpWeb => tmpWeb.ListTemplates);
+                context.ExecuteQueryWithTrace();
+
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Fetching all list templates and matching target one.");
+                var listTemplate = FindListTemplateByInternalName(web.ListTemplates, definition.TemplateName);
+
+                assert.ShouldBeEqual((p, s, d) =>
+                {
+                    var srcProp = s.GetExpressionValue(m => m.TemplateName);
+
+                    return new PropertyValidationResult
+                    {
+                        Tag = p.Tag,
+                        Src = srcProp,
+                        Dst = null,
+                        IsValid =
+                            (spObject.TemplateFeatureId == listTemplate.FeatureId) &&
+                            (spObject.BaseTemplate == (int)listTemplate.ListTemplateTypeKind)
+                    };
+                });
             }
             else
             {

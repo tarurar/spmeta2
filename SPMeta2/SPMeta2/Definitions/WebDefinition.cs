@@ -9,7 +9,6 @@ namespace SPMeta2.Definitions
     /// <summary>
     /// Allows too define and deploy SharePoint web site.
     /// </summary>
-    /// 
 
     [SPObjectTypeAttribute(SPObjectModelType.SSOM, "Microsoft.SharePoint.SPWeb", "Microsoft.SharePoint")]
     [SPObjectTypeAttribute(SPObjectModelType.CSOM, "Microsoft.SharePoint.Client.Web", "Microsoft.SharePoint.Client")]
@@ -18,7 +17,9 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
     [DefaultParentHostAttribute(typeof(SiteDefinition))]
 
+    [ExpectAddHostExtensionMethod]
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class WebDefinition : DefinitionBase
     {
         #region constructors
@@ -38,6 +39,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Title { get; set; }
 
         /// <summary>
@@ -45,6 +47,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Description { get; set; }
 
         /// <summary>
@@ -52,6 +55,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public uint LCID { get; set; }
 
         /// <summary>

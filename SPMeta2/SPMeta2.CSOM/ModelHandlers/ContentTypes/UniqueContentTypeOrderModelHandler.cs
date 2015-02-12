@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint.Client;
 using SPMeta2.Common;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHandlers.ContentTypes.Base;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
@@ -41,7 +42,7 @@ namespace SPMeta2.CSOM.ModelHandlers.ContentTypes
             context.Load(list, l => l.ContentTypes);
             context.Load(folder, f => f.ContentTypeOrder);
 
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             var oldContentTypeOrder = folder.ContentTypeOrder;
             var newContentTypeOrder = new List<ContentTypeId>();
@@ -82,7 +83,8 @@ namespace SPMeta2.CSOM.ModelHandlers.ContentTypes
                     newContentTypeOrder.Add(oldCt);
             }
 
-            folder.UniqueContentTypeOrder = newContentTypeOrder;
+            if (newContentTypeOrder.Count() > 0)
+                folder.UniqueContentTypeOrder = newContentTypeOrder;
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -96,7 +98,7 @@ namespace SPMeta2.CSOM.ModelHandlers.ContentTypes
             });
 
             folder.Update();
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
         }
 
         #endregion

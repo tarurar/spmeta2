@@ -1,10 +1,12 @@
 ﻿using System;
 using Microsoft.SharePoint.Client;
 using SPMeta2.Common;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
+using SPMeta2.Services;
 using SPMeta2.Utils;
 
 namespace SPMeta2.CSOM.ModelHandlers
@@ -47,10 +49,10 @@ namespace SPMeta2.CSOM.ModelHandlers
             var web = ExtractWeb(securityGroupModelHost.SecurableObject);
 
             var context = group.Context;
-            var existingRoleAssignments = web.RoleAssignments;
+            var existingRoleAssignments = securableObject.RoleAssignments;
 
             context.Load(existingRoleAssignments, r => r.Include(d => d.Member, d => d.RoleDefinitionBindings));
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             RoleAssignment existingRoleAssignment = null;
 
@@ -63,12 +65,10 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
             }
 
-
-
             var currentRoleDefinition = ResolveSecurityRole(web, securityRoleLinkModel);
 
             context.Load(currentRoleDefinition, r => r.Id, r => r.Name);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -85,6 +85,9 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             if (existingRoleAssignment == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new security role link");
+
+
                 var roleBindings = new RoleDefinitionBindingCollection(context);
                 roleBindings.Add(currentRoleDefinition);
                 existingRoleAssignment = web.RoleAssignments.Add(group, roleBindings);
@@ -100,11 +103,15 @@ namespace SPMeta2.CSOM.ModelHandlers
                     ModelHost = modelHost
                 });
 
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling existingRoleAssignment.Update()");
                 existingRoleAssignment.Update();
-                context.ExecuteQuery();
+
+                context.ExecuteQueryWithTrace();
             }
             else
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing security role link");
+
                 var ensureDefinition = true;
 
                 foreach (var t in existingRoleAssignment.RoleDefinitionBindings)
@@ -118,6 +125,14 @@ namespace SPMeta2.CSOM.ModelHandlers
 
                 if (ensureDefinition)
                 {
+                    // pre-remove Edit if it is the only one - this is default role def in order to create binding
+
+                    if (existingRoleAssignment.RoleDefinitionBindings.Count == 1
+                        && existingRoleAssignment.RoleDefinitionBindings[0].RoleTypeKind == RoleType.Reader)
+                    {
+                        existingRoleAssignment.RoleDefinitionBindings.RemoveAll();
+                    }
+
                     existingRoleAssignment.RoleDefinitionBindings.Add(currentRoleDefinition);
 
                     InvokeOnModelEvent(this, new ModelEventArgs
@@ -131,8 +146,10 @@ namespace SPMeta2.CSOM.ModelHandlers
                         ModelHost = modelHost
                     });
 
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling existingRoleAssignment.Update()");
                     existingRoleAssignment.Update();
-                    context.ExecuteQuery();
+
+                    context.ExecuteQueryWithTrace();
                 }
                 else
                 {
@@ -156,7 +173,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             var roleDefinitions = web.RoleDefinitions;
 
             context.Load(roleDefinitions, r => r.Include(l => l.Name, l => l.Id));
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             if (!string.IsNullOrEmpty(rolDefinitionModel.SecurityRoleName))
             {

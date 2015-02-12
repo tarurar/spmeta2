@@ -1,10 +1,28 @@
-﻿using SPMeta2.Attributes;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Common;
 
 namespace SPMeta2.Definitions
 {
+    public class FieldAttributeValue : KeyNameValue
+    {
+        public FieldAttributeValue()
+        {
+
+        }
+
+        public FieldAttributeValue(string name, string value)
+        {
+            Name = name;
+            Value = value;
+        }
+    }
+
+
     /// <summary>
     /// Allows to define and deploy SharePoint field.
     /// </summary>
@@ -15,6 +33,7 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class FieldDefinition : DefinitionBase
     {
         #region constructors
@@ -23,11 +42,28 @@ namespace SPMeta2.Definitions
         {
             // it needs to be string.Empty to avoid challenges with null VS string.Empty test cases for strings
             Description = string.Empty;
+            Group = string.Empty;
+
+            RawXml = string.Empty;
+
+            AdditionalAttributes = new List<FieldAttributeValue>();
         }
 
         #endregion
 
         #region properties
+
+        /// <summary>
+        /// Raw field XML to be used during the first provision
+        /// </summary>
+        [ExpectValidation]
+        public string RawXml { get; set; }
+
+        /// <summary>
+        /// Additional attributes to be written for Field XML during the first provision
+        /// </summary>
+        [ExpectValidation]
+        public List<FieldAttributeValue> AdditionalAttributes { get; set; }
 
         /// <summary>
         /// Internal name of the target field.
@@ -41,6 +77,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Title { get; set; }
 
         /// <summary>
@@ -48,6 +85,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Description { get; set; }
 
         /// <summary>
@@ -55,6 +93,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Group { get; set; }
 
         /// <summary>
@@ -77,7 +116,60 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
         public bool Required { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public string JSLink { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public string DefaultValue { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool Hidden { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? ShowInDisplayForm { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? ShowInEditForm { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? ShowInListSettings { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? ShowInNewForm { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? ShowInVersionHistory { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? ShowInViewForms { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool? AllowDeletion { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public bool Indexed { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public string ValidationFormula { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        public string ValidationMessage { get; set; }
 
         #endregion
 

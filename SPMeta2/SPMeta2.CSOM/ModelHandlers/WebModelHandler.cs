@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.Remoting.Contexts;
 using Microsoft.SharePoint.Client;
 using SPMeta2.Common;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.ModelHandlers;
@@ -9,6 +11,7 @@ using SPMeta2.ModelHosts;
 using SPMeta2.Utils;
 using SPMeta2.Exceptions;
 using SPMeta2.CSOM.Utils;
+using SPMeta2.Services;
 
 namespace SPMeta2.CSOM.ModelHandlers
 {
@@ -60,7 +63,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             var action = modelHostContext.Action;
 
             var parentWeb = ExtractWeb(modelHost);
-            var hostClientContext = ExtractHostClientContext(modelHost);
+            var hostclientContext = ExtractHostClientContext(modelHost);
             var hostSite = ExtractHostSite(modelHost);
 
             var webModel = model.WithAssertAndCast<WebDefinition>("model", value => value.RequireNotNull());
@@ -70,7 +73,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             context.Load(parentWeb, w => w.Url);
             //context.Load(parentWeb, w => w.RootFolder);
             context.Load(parentWeb, w => w.ServerRelativeUrl);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             var currentWebUrl = GetCurrentWebUrl(context, parentWeb, webModel);
             var currentWeb = GetExistingWeb(hostSite, parentWeb, currentWebUrl);
@@ -88,7 +91,7 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             var tmpWebModelHost = new WebModelHost
             {
-                HostClientContext = hostClientContext,
+                HostClientContext = hostclientContext,
                 HostSite = hostSite,
                 HostWeb = currentWeb
             };
@@ -107,7 +110,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             });
 
             currentWeb.Update();
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
         }
 
         private Site ExtractHostSite(object modelHost)
@@ -148,22 +151,10 @@ namespace SPMeta2.CSOM.ModelHandlers
             return parentWeb;
         }
 
-        //protected Web GetWeb(Web parentWeb, WebDefinition definition)
-        //{
-        //    var currentWebUrl = GetCurrentWebUrl(parentWeb.Context, parentWeb, definition);
-
-        //    var tmp = new ClientContext(currentWebUrl);
-
-        //    tmp.Credentials = parentWeb.Context.Credentials;
-
-        //    tmp.Load(tmp.Web);
-        //    tmp.ExecuteQuery();
-
-        //    return tmp.Web;
-        //}
-
         protected Web GetExistingWeb(Site site, Web parentWeb, string currentWebUrl)
         {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Entering GetExistingWeb()");
+
             var result = false;
             var srcUrl = currentWebUrl.ToLower().Trim('/').Trim('\\');
 
@@ -190,36 +181,59 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
             }
 
-            context.ExecuteQuery();
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+            context.ExecuteQueryWithTrace();
 
             if (!scope.HasException && web != null && web.ServerObjectIsNull == false)
             {
+                TraceService.InformationFormat((int)LogEventId.ModelProvisionCoreCall, "Found web with URL: [{0}]", currentWebUrl);
+
                 context.Load(web);
-                context.ExecuteQuery();
+
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+                context.ExecuteQueryWithTrace();
+
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Exciting GetExistingWeb()");
 
                 return web;
             }
+
+            TraceService.InformationFormat((int)LogEventId.ModelProvisionCoreCall, "Can't find web with URL: [{0}]. Returning NULL.", currentWebUrl);
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Exciting GetExistingWeb()");
 
             return null;
         }
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Extracting web from modelhost");
             var parentWeb = ExtractWeb(modelHost);
-            var hostClientContext = ExtractHostClientContext(modelHost);
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Extracting host client context from model host");
+            var hostclientContext = ExtractHostClientContext(modelHost);
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Casting web model definition");
             var webModel = model.WithAssertAndCast<WebDefinition>("model", value => value.RequireNotNull());
 
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Loading Url/ServerRelativeUrl");
             var context = parentWeb.Context;
 
             context.Load(parentWeb, w => w.Url);
             //context.Load(parentWeb, w => w.RootFolder);
             context.Load(parentWeb, w => w.ServerRelativeUrl);
-            context.ExecuteQuery();
 
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+            context.ExecuteQueryWithTrace();
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Extracting current web URL");
             var currentWebUrl = GetCurrentWebUrl(context, parentWeb, webModel);
 
-            Web currentWeb = GetExistingWeb(hostClientContext.Site, parentWeb, currentWebUrl);
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Current web URL: [{0}].", currentWebUrl);
 
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Loading existing web.");
+            var currentWeb = GetExistingWeb(hostclientContext.Site, parentWeb, currentWebUrl);
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionUpdatingEventCall, "Calling OnUpdating event.");
             InvokeOnModelEvent(this, new ModelEventArgs
             {
                 CurrentModelNode = null,
@@ -230,10 +244,13 @@ namespace SPMeta2.CSOM.ModelHandlers
                 ObjectDefinition = model,
                 ModelHost = modelHost
             });
+
             InvokeOnModelEvent<WebDefinition, Web>(currentWeb, ModelEventType.OnUpdating);
 
             if (currentWeb == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new web");
+
                 var newWebInfo = new WebCreationInformation
                 {
                     Title = webModel.Title,
@@ -244,11 +261,14 @@ namespace SPMeta2.CSOM.ModelHandlers
                     Language = (int)webModel.LCID
                 };
 
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Adding new web to the web collection and calling ExecuteQuery.");
                 var newWeb = parentWeb.Webs.Add(newWebInfo);
-                context.ExecuteQuery();
+                context.ExecuteQueryWithTrace();
 
                 context.Load(newWeb);
-                context.ExecuteQuery();
+
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+                context.ExecuteQueryWithTrace();
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -260,10 +280,15 @@ namespace SPMeta2.CSOM.ModelHandlers
                     ObjectDefinition = model,
                     ModelHost = modelHost
                 });
+
                 InvokeOnModelEvent<WebDefinition, Web>(newWeb, ModelEventType.OnUpdated);
             }
             else
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Current web is not null. Updating Title/Description.");
+
+                currentWeb.Title = webModel.Title;
+                currentWeb.Description = webModel.Description ?? string.Empty;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -276,6 +301,11 @@ namespace SPMeta2.CSOM.ModelHandlers
                     ModelHost = modelHost
                 });
                 InvokeOnModelEvent<WebDefinition, Web>(currentWeb, ModelEventType.OnUpdated);
+
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "currentWeb.Update()");
+                currentWeb.Update();
+
+                context.ExecuteQueryWithTrace();
             }
         }
 
@@ -292,7 +322,7 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             context.Load(parentWeb, w => w.RootFolder);
             context.Load(parentWeb, w => w.ServerRelativeUrl);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             var currentWebUrl = GetCurrentWebUrl(context, parentWeb, webModel);
 
@@ -307,7 +337,7 @@ namespace SPMeta2.CSOM.ModelHandlers
                     webContext.Load(tmpWeb);
                     tmpWeb.DeleteObject();
 
-                    webContext.ExecuteQuery();
+                    webContext.ExecuteQueryWithTrace();
                 }
             }
             catch (ClientRequestException)

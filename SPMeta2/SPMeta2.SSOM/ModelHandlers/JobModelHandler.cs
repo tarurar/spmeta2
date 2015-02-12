@@ -46,12 +46,39 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
         }
 
+        protected SPJobDefinition FindWebApplicationJob(object modelHost, SPWebApplication webApp, JobDefinition jobDefinition)
+        {
+            var jobNameInUpperCase = jobDefinition.Name.ToUpper();
+            return webApp.JobDefinitions.FirstOrDefault(j => !string.IsNullOrEmpty(j.Name) && j.Name.ToUpper() == jobNameInUpperCase);
+        }
+
+        protected Type ResolveJobType(JobDefinition jobDefinition)
+        {
+            Type jobType = null;
+
+            var subType = jobDefinition.JobType.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (subType.Length == 2)
+            {
+                var typeName = subType[0].Trim();
+                var assemblyName = subType[1].Trim();
+
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+                var targetAssembly = assemblies.FirstOrDefault(a => a.FullName.Split(',')[0].ToUpper() == assemblyName.ToUpper());
+                jobType = targetAssembly.GetType(typeName);
+            }
+            else
+            {
+                jobType = Type.GetType(jobDefinition.JobType);
+            }
+
+            return jobType;
+        }
+
         private void DeployWebApplicationJob(object modelHost, SPWebApplication webApp, JobDefinition jobDefinition)
         {
-            var jobDefinitions = webApp.JobDefinitions;
-
-            var jobNameInUpperCase = jobDefinition.Name.ToUpper();
-            var currentJobInstance = jobDefinitions.FirstOrDefault(j => !string.IsNullOrEmpty(j.Name) && j.Name.ToUpper() == jobNameInUpperCase);
+            var currentJobInstance = FindWebApplicationJob(modelHost, webApp, jobDefinition);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -66,35 +93,44 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             if (currentJobInstance == null)
             {
-                Type jobType = null;
-
                 // install one
-                var subType = jobDefinition.JobType.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                var jobType = ResolveJobType(jobDefinition);
 
-                if (subType.Length == 2)
+                // expecting only as timerjob is under web application
+                //public cstr(string jobName, SPWebApplication webapp)
+
+                if (jobDefinition.ConstructorParams.Count() == 0)
                 {
-                    var typeName = subType[0].Trim();
-                    var assemblyName = subType[1].Trim();
-
-                    var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-                    var targetAssembly = assemblies.FirstOrDefault(a => a.FullName.Split(',')[0].ToUpper() == assemblyName.ToUpper());
-                    jobType = targetAssembly.GetType(typeName);
+                    currentJobInstance = (SPJobDefinition)Activator.CreateInstance(jobType);
                 }
                 else
                 {
-                    jobType = Type.GetType(jobDefinition.JobType);
-                }
+                    var parameters = new List<object>();
 
-                // TODO
-                // sort out job host - SPWebApp, SPServer
-                currentJobInstance = (SPJobDefinition)Activator.CreateInstance(jobType);
-                //, jobDefinition.Name, webApp);
+                    foreach (var param in jobDefinition.ConstructorParams)
+                    {
+                        switch (param)
+                        {
+                            case JobDefinitionCtorParams.JobName:
+                                parameters.Add(jobDefinition.Name);
+                                break;
+
+                            case JobDefinitionCtorParams.WebApplication:
+                                parameters.Add(webApp);
+                                break;
+
+                            default:
+                                throw new SPMeta2NotImplementedException(string.Format("Job cstr parameter [{0}] is not supported yet."));
+                        }
+                    }
+
+                    currentJobInstance = (SPJobDefinition)Activator.CreateInstance(jobType, parameters.ToArray());
+                }
 
                 if (!string.IsNullOrEmpty(jobDefinition.ScheduleString))
-                {
                     currentJobInstance.Schedule = SPSchedule.FromString(jobDefinition.ScheduleString);
-                }
+
+                currentJobInstance.Title = jobDefinition.Title;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -112,9 +148,9 @@ namespace SPMeta2.SSOM.ModelHandlers
             else
             {
                 if (!string.IsNullOrEmpty(jobDefinition.ScheduleString))
-                {
                     currentJobInstance.Schedule = SPSchedule.FromString(jobDefinition.ScheduleString);
-                }
+
+                currentJobInstance.Title = jobDefinition.Title;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {

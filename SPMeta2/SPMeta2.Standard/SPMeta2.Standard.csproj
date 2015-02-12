@@ -30,11 +30,51 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Debug40\SPMeta2.Standard.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <OutputPath>bin\Debug45\</OutputPath>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Debug45\SPMeta2.Standard.XML</DocumentationFile>
+  </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>SPMeta2.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1212|AnyCPU'">
+    <OutputPath>bin\1212\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>bin\Debug\SPMeta2.Standard.XML</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -47,13 +87,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuiltInDefinitions\BuiltInPublishingFieldDefinitions.cs" />
+    <Compile Include="Definitions\CustomDocumentIdProviderDefinition.cs" />
+    <Compile Include="Definitions\PageLayoutAndSiteTemplateSettingsDefinition.cs" />
+    <Compile Include="Definitions\AudienceDefinition.cs" />
     <Compile Include="Definitions\Fields\TaxonomyFieldDefinition.cs" />
     <Compile Include="Definitions\ImageRenditionDefinition.cs" />
+    <Compile Include="Definitions\PublishingPageLayoutDefinition.cs" />
     <Compile Include="Definitions\PublishingPageDefinition.cs" />
+    <Compile Include="Definitions\SearchConfigurationDefinition.cs" />
+    <Compile Include="Definitions\SearchResultDefinition.cs" />
+    <Compile Include="Definitions\SearchSettingsDefinition.cs" />
     <Compile Include="Definitions\WebNavigationSettingsDefinition.cs" />
     <Compile Include="Definitions\Webparts\ContactFieldControlDefinition.cs" />
     <Compile Include="Definitions\Webparts\ContentByQueryWebPartDefinition.cs" />
     <Compile Include="Definitions\Webparts\SiteFeedWebPartDefinition.cs" />
+    <Compile Include="Enumerations\BuiltInPublishingFieldTypes.cs" />
     <Compile Include="Enumerations\BuiltInInternalPublishingFieldNames.cs" />
     <Compile Include="Enumerations\BuiltInPublishingContentTypeId.cs" />
     <Compile Include="Enumerations\BuiltInPublishingFieldId.cs" />
@@ -68,12 +116,23 @@
     <Compile Include="Services\Webparts\ContentByQueryWebPart\SortByValue.cs" />
     <Compile Include="Services\Webparts\ContentByQueryWebPart\DataMappingValue.cs" />
     <Compile Include="Services\Webparts\ContentByQueryWebPart\DataMappingViewFieldValue.cs" />
+    <Compile Include="Syntax\SearchSettingsDefinitionSyntax.cs" />
+    <Compile Include="Syntax\CustomDocumentIdProviderDefinitionSyntax.cs" />
+    <Compile Include="Syntax\AudienceDefinitionSyntax.cs" />
+    <Compile Include="Syntax\SearchResultDefinitionSyntax.cs" />
+    <Compile Include="Syntax\SearchConfigurationDefinitionSyntax.cs" />
+    <Compile Include="Syntax\PublishingPageLayoutDefinitionSyntax.cs" />
+    <Compile Include="Syntax\SiteFeedWebPartDefinitionSyntax.cs" />
     <Compile Include="Syntax\ContentByQueryWebPartDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ContactFieldControlDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ImageRenditionDefinitionSyntax.cs" />
     <Compile Include="Syntax\PublishingPageDefinitionSyntax.cs" />
+    <Compile Include="Syntax\TaxonomyFieldDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermGroupDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermSetDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermStoreDefinitionSyntax.cs" />
+    <Compile Include="Syntax\PageLayoutAndSiteTemplateSettingsDefinitionSyntax.cs" />
     <Compile Include="Syntax\WebNavigationSettingsDefinitionSyntax.cs" />
   </ItemGroup>
   <ItemGroup>

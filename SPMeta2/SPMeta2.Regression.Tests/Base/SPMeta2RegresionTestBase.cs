@@ -3,143 +3,207 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using SPMeta2.Attributes.Regression;
+using SPMeta2.Containers.Assertion;
+using SPMeta2.Containers.Exceptions;
+using SPMeta2.Containers.Services;
+using SPMeta2.Containers.Standard.DefinitionGenerators;
+using SPMeta2.Containers.Utils;
+using SPMeta2.Definitions;
+using SPMeta2.Exceptions;
+using SPMeta2.Extensions;
 using SPMeta2.Models;
-using SPMeta2.Regression.Runners;
-using SPMeta2.Regression.Runners.Consts;
-using SPMeta2.Regression.Runners.Utils;
+
+using SPMeta2.Regression.Tests.Services;
 using SPMeta2.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SPMeta2.Validation.Services;
 
 namespace SPMeta2.Regression.Tests.Base
 {
     public class SPMeta2RegresionTestBase
     {
-        public TestContext TestContext { get; set; }
-
         #region constructors
 
         public SPMeta2RegresionTestBase()
         {
-            ProvisionGenerationCount = 1;
+            RegressionService.EnableDefinitionProvision = true;
+            RegressionService.EnableDefinitionValidation = true;
 
-            ProvisionRunners = new List<ProvisionRunnerBase>();
-            ProvisionRunnerAssemblies = new List<string>();
+            //EnablePropertyUpdateValidation = false;
+        }
 
-            EnableDefinitionValidation = true;
+        #endregion
 
-            InitConfig();
+        #region static
+
+        protected static void InternalCleanup()
+        {
+
+        }
+
+        protected static void InternalInit()
+        {
+            RegressionAssertService.OnPropertyValidated += OnModelPropertyValidated;
+        }
+
+        protected static void OnModelPropertyValidated(object sender, OnPropertyValidatedEventArgs e)
+        {
+            RegressionService.OnModelPropertyValidated(sender, e);
+        }
+
+        static SPMeta2RegresionTestBase()
+        {
+            RegressionService = new RegressionTestService();
+
+            RegressionService.AssertService = new VSAssertService();
+
+            RegressionService.EnableDefinitionValidation = true;
+            RegressionService.ModelGeneratorService.RegisterDefinitionGenerators(typeof(ImageRenditionDefinitionGenerator).Assembly);
         }
 
         #endregion
 
         #region properties
 
-        public int ProvisionGenerationCount { get; set; }
+        public bool EnablePropertyUpdateValidation { get; set; }
 
-        protected void InitLazyRunnerConnection()
+        public static RegressionTestService RegressionService { get; set; }
+
+        public ModelGeneratorService ModelGeneratorService
         {
-            InitRunnerImplementations();
-
-            foreach (var runner in ProvisionRunners)
-                runner.InitLazyRunnerConnection();
+            get { return RegressionService.ModelGeneratorService; }
         }
-
-        protected void DisposeLazyRunnerConnection()
-        {
-            foreach (var runner in ProvisionRunners)
-                runner.DisposeLazyRunnerConnection();
-        }
-
-        protected bool EnableDefinitionValidation { get; set; }
-
-        public List<ProvisionRunnerBase> ProvisionRunners { get; set; }
-        public List<string> ProvisionRunnerAssemblies { get; set; }
 
         #endregion
 
-        protected virtual void InitConfig()
+        #region testing API
+
+        protected void TestRandomDefinition<TDefinition>()
+           where TDefinition : DefinitionBase, new()
         {
-            InitRunnerTypes();
-            InitRunnerImplementations();
+            TestRandomDefinition<TDefinition>(null);
         }
 
-        private bool _hasInit = false;
-
-        protected virtual void InitRunnerImplementations()
+        protected void TestRandomDefinition<TDefinition>(Action<TDefinition> definitionSetup)
+            where TDefinition : DefinitionBase, new()
         {
-            if (_hasInit) return;
+            var model = RegressionService.TestRandomDefinition(definitionSetup);
 
-            foreach (var asmFileName in ProvisionRunnerAssemblies)
+            if (EnablePropertyUpdateValidation)
             {
-                var asmImpl = Assembly.LoadFrom(asmFileName);
-
-                var types = ReflectionUtils.GetTypesFromAssembly<ProvisionRunnerBase>(asmImpl);
-
-                foreach (var type in types)
-                {
-                    var runnerImpl = Activator.CreateInstance(type) as ProvisionRunnerBase;
-
-                    ProvisionRunners.Add(runnerImpl);
-                }
+                ProcessPropertyUpdateValidation(new[] { model });
+                RegressionService.TestModels(new[] { model });
             }
-
-            _hasInit = true;
         }
 
-        protected virtual void InitRunnerTypes()
+        protected void WithSPMeta2NotSupportedExceptions(Action action)
         {
-            var runnerLibraries = RunnerEnvironment.GetEnvironmentVariable(EnvironmentConsts.RunnerLibraries);
+            WithExcpectedExceptions(new Type[] {
+                typeof(SPMeta2NotSupportedException)
+             
+            }, action);
+        }
 
-            Trace.WriteLine(string.Format("Testing with runner libraries: [{0}]", runnerLibraries));
+        protected void WithExpectedUnsupportedCSOMnO365RunnerExceptions(Action action)
+        {
+            WithExcpectedExceptions(new Type[] {
+                typeof(SPMeta2UnsupportedCSOMRunnerException),
+                typeof(SPMeta2UnsupportedO365RunnerException)
+            }, action);
+        }
 
-            if (!string.IsNullOrEmpty(runnerLibraries))
+        protected void WithExcpectedExceptions(IEnumerable<Type> exceptionTypes, Action action)
+        {
+            RegressionService.WithExcpectedExceptions(exceptionTypes, action);
+        }
+
+        protected void TestModel(ModelNode model)
+        {
+            TestModels(new[] { model });
+        }
+
+        protected void TestModel(ModelNode firstModel, ModelNode secondModel)
+        {
+            TestModels(new[] { firstModel, secondModel });
+        }
+
+        protected void TestModels(IEnumerable<ModelNode> models)
+        {
+            RegressionService.TestModels(models);
+
+            if (EnablePropertyUpdateValidation)
             {
-                var libs = runnerLibraries.Split(',');
-
-                foreach (var lib in libs)
-                    ProvisionRunnerAssemblies.Add(lib);
+                ProcessPropertyUpdateValidation(models);
+                RegressionService.TestModels(models);
             }
-
-            if (ProvisionRunnerAssemblies.Count == 0)
-                throw new ArgumentException("Cannot find any test runners. Please configure test runners via SPMeta2.Regression.Environment.ps1 script.");
-
-            // Test runners should be managed via SPMeta2.Regression.Environment.ps1
-            // Manual adding is for internal use only.
-
-            //  ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.O365.dll");
-            //  ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.CSOM.dll");
-            //  ProvisionRunnerAssemblies.Add("SPMeta2.Regression.Runners.SSOM.dll");
         }
 
-        protected ProvisionRunnerBase CurrentProvisionRunner;
-
-        protected void WithProvisionRunnerContext(Action<ProvisionRunnerContext> action)
+        private void ProcessPropertyUpdateValidation(IEnumerable<ModelNode> models)
         {
-            foreach (var provisionRunner in ProvisionRunners)
+            foreach (var model in models)
             {
-                var type = provisionRunner.GetType().FullName;
-
-                provisionRunner.ProvisionGenerationCount = ProvisionGenerationCount;
-                provisionRunner.EnableDefinitionValidation = EnableDefinitionValidation;
-
-                CurrentProvisionRunner = provisionRunner;
-
-                Trace.WriteLine(string.Format("[INF]    Testing with runner impl: [{0}]", type));
-                Trace.WriteLine(string.Format("[INF]        - ProvisionGenerationCount: [{0}]", ProvisionGenerationCount));
-                Trace.WriteLine(string.Format("[INF]        - EnableDefinitionValidation: [{0}]", EnableDefinitionValidation));
-
-                action(new ProvisionRunnerContext
+                model.WithNodesOfType<DefinitionBase>(node =>
                 {
-                    Runner = provisionRunner
+                    var def = node.Value;
+                    ProcessDefinitionsPropertyUpdateValidation(def);
                 });
             }
         }
-    }
+
+        private void ProcessDefinitionsPropertyUpdateValidation(DefinitionBase def)
+        {
+            var updatableProps = def.GetType()
+                .GetProperties()
+                .Where(p => p.GetCustomAttributes(typeof(ExpectUpdate), true).Count() > 0);
 
 
-    public class ProvisionRunnerContext
-    {
-        public ProvisionRunnerBase Runner { get; set; }
+            TraceUtils.WithScope(trace =>
+            {
+                trace.WriteLine("");
 
+                trace.WriteLine(string.Format("[INF]\tPROPERTY UPDATE VALIDATION"));
+                trace.WriteLine(string.Format("[INF]\tModel of type: [{0}] - [{1}]", def.GetType(), def));
+
+                if (updatableProps.Count() == 0)
+                {
+                    trace.WriteLine(string.Format("[INF]\tNo properties to be validated. Skipping."));
+                }
+                else
+                {
+                    foreach (var prop in updatableProps)
+                    {
+                        object newValue = null;
+
+                        if (prop.PropertyType == typeof(string))
+                            newValue = RegressionService.RndService.String();
+                        else if (prop.PropertyType == typeof(bool))
+                            newValue = RegressionService.RndService.Bool();
+                        else if (prop.PropertyType == typeof(bool?))
+                            newValue = RegressionService.RndService.Bool() ? (bool?)null : RegressionService.RndService.Bool();
+                        else if (prop.PropertyType == typeof(int))
+                            newValue = RegressionService.RndService.Int();
+                        else if (prop.PropertyType == typeof(int?))
+                            newValue = RegressionService.RndService.Bool() ? (int?)null : RegressionService.RndService.Int();
+                        else if (prop.PropertyType == typeof(uint))
+                            newValue = (uint)RegressionService.RndService.Int();
+                        else if (prop.PropertyType == typeof(uint?))
+                            newValue = (uint?)(RegressionService.RndService.Bool() ? (uint?)null : (uint?)RegressionService.RndService.Int());
+                        else
+                        {
+                            throw new NotImplementedException(string.Format("Update validation for type: [{0}] is not supported yet", prop.PropertyType));
+                        }
+
+                        trace.WriteLine(string.Format("[INF]\t\tChanging property [{0}] from [{1}] to [{2}]", prop.Name, prop.GetValue(def), newValue));
+                        prop.SetValue(def, newValue);
+                    }
+                }
+
+                trace.WriteLine("");
+            });
+        }
+
+        #endregion
     }
 }
+

@@ -16,6 +16,7 @@ namespace SPMeta2.Standard.Definitions.Taxonomy
     [DefaultParentHost(typeof(TaxonomyTermGroupDefinition))]
     [DefaultRootHost(typeof(SiteDefinition))]
 
+    [ExpectAddHostExtensionMethod]
     [Serializable]
     public class TaxonomyTermSetDefinition : DefinitionBase
     {
@@ -24,16 +25,27 @@ namespace SPMeta2.Standard.Definitions.Taxonomy
         public TaxonomyTermSetDefinition()
         {
             LCID = 1033;
+            IsAvailableForTagging = true;
         }
 
         #endregion
 
         #region properties
 
+        [ExpectValidation]
         public string Name { get; set; }
+
+        [ExpectValidation]
+        public string Description { get; set; }
+
+        [ExpectValidation]
         public Guid? Id { get; set; }
 
+        [ExpectValidation]
         public int LCID { get; set; }
+
+        [ExpectValidation]
+        public bool IsAvailableForTagging { get; set; }
 
         #endregion
 

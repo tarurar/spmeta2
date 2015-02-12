@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.ModelHandlers;
 using SPMeta2.ModelHosts;
 using SPMeta2.Common;
+using SPMeta2.Services;
 using SPMeta2.Utils;
 using SPMeta2.Definitions.Base;
 using Microsoft.SharePoint.Client;
@@ -51,6 +53,8 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
         {
             if (modelHost is WebModelHost)
                 return LookupNavigationNode(GetNavigationNodeCollection((modelHost as WebModelHost).HostWeb), definition);
+            else if (modelHost is NavigationNodeModelHost)
+                return LookupNavigationNode((modelHost as NavigationNodeModelHost).HostNavigationNode.Children, definition);
             else if (modelHost is NavigationNode)
                 return LookupNavigationNode((modelHost as NavigationNode).Children, definition);
 
@@ -62,7 +66,7 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
             var context = nodes.Context;
 
             context.Load(nodes);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             var currentNode = nodes
                                 .OfType<NavigationNode>()
@@ -88,7 +92,7 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
             var context = navigationNodeModelHost.HostWeb.Context;
 
             context.Load(quickLaunch);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             var existingNode = LookupNavigationNode(quickLaunch, quickLaunchNode);
 
@@ -104,7 +108,7 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
             var context = navigationNodeModelHost.HostWeb.Context;
 
             context.Load(quickLaunch);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             var existingNode = LookupNavigationNode(quickLaunch, quickLaunchNode);
 
@@ -125,10 +129,11 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
                 {
                     Title = quickLaunchNode.Title,
                     IsExternal = quickLaunchNode.IsExternal,
-                    Url = quickLaunchNode.Url
+                    Url = quickLaunchNode.Url,
+                    AsLastNode = true
                 });
 
-                context.ExecuteQuery();
+                context.ExecuteQueryWithTrace();
             }
 
             existingNode.Title = quickLaunchNode.Title;
@@ -148,14 +153,14 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
 
             existingNode.Update();
 
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             return existingNode;
         }
 
         public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
         {
-            var quickLaunchNode = model as QuickLaunchNavigationNodeDefinition;
+            var quickLaunchNode = model as NavigationNodeDefinitionBase;
 
             if (modelHost is WebModelHost)
             {
@@ -211,7 +216,7 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
             rootNavigationNodes = GetNavigationNodeCollection(web);
 
             context.Load(rootNavigationNodes);
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             // TODO, crazy URL matching to find 'resolved URL'
 
@@ -245,6 +250,8 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
 
             if (existingNode == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new navigation node");
+
                 existingNode = quickLaunch.Add(new NavigationNodeCreationInformation
                 {
                     Title = navigationNodeModel.Title,
@@ -253,7 +260,11 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
                     PreviousNode = previousNode
                 });
 
-                context.ExecuteQuery();
+                context.ExecuteQueryWithTrace();
+            }
+            else
+            {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing navigation node");
             }
 
             existingNode.Title = navigationNodeModel.Title;
@@ -273,7 +284,7 @@ namespace SPMeta2.CSOM.ModelHandlers.Base
 
             existingNode.Update();
 
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             return existingNode;
         }

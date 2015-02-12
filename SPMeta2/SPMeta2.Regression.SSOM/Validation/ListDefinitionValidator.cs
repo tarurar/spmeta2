@@ -1,9 +1,11 @@
-﻿using Microsoft.SharePoint;
+﻿using System.Linq;
+using Microsoft.SharePoint;
 using Microsoft.SharePoint.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SPMeta2.Containers.Assertion;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
-using SPMeta2.Regression.Utils;
+
 using SPMeta2.SSOM.DefaultSyntax;
 using SPMeta2.SSOM.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
@@ -27,8 +29,26 @@ namespace SPMeta2.Regression.SSOM.Validation
             assert
                 .ShouldBeEqual(m => m.Title, o => o.Title)
                 .ShouldBeEqual(m => m.Description, o => o.Description)
+                //.ShouldBeEqual(m => m.IrmEnabled, o => o.IrmEnabled)
+                //.ShouldBeEqual(m => m.IrmExpire, o => o.IrmExpire)
+                //.ShouldBeEqual(m => m.IrmReject, o => o.IrmReject)
                 .ShouldBeEndOf(m => m.GetListUrl(), m => m.Url, o => o.GetServerRelativeUrl(), o => o.GetServerRelativeUrl())
                 .ShouldBeEqual(m => m.ContentTypesEnabled, o => o.ContentTypesEnabled);
+
+            if (definition.IrmEnabled.HasValue)
+                assert.ShouldBeEqual(m => m.IrmEnabled, o => o.IrmEnabled);
+            else
+                assert.SkipProperty(m => m.IrmEnabled, "Skipping from validation. IrmEnabled IS NULL");
+
+            if (definition.IrmExpire.HasValue)
+                assert.ShouldBeEqual(m => m.IrmExpire, o => o.IrmExpire);
+            else
+                assert.SkipProperty(m => m.IrmExpire, "Skipping from validation. IrmExpire IS NULL");
+
+            if (definition.IrmReject.HasValue)
+                assert.ShouldBeEqual(m => m.IrmReject, o => o.IrmReject);
+            else
+                assert.SkipProperty(m => m.IrmReject, "Skipping from validation. IrmReject IS NULL");
 
             if (definition.TemplateType > 0)
             {
@@ -39,8 +59,25 @@ namespace SPMeta2.Regression.SSOM.Validation
             else
             {
                 assert
-                    //.ShouldBeEqual(m => m.TemplateName, o => (int)o.BaseTemplate)
-                    .SkipProperty(m => m.TemplateType, "Skipping from validation. TemplateType should be > 0");
+                    .SkipProperty(m => m.TemplateType, "Skipping from validation. TemplateName should be empty");
+
+                assert.ShouldBeEqual((p, s, d) =>
+                {
+                    var srcProp = s.GetExpressionValue(m => m.TemplateName);
+                    var listTemplate = web.ListTemplates
+                                          .OfType<SPListTemplate>()
+                                          .FirstOrDefault(t => t.InternalName == definition.TemplateName);
+
+                    return new PropertyValidationResult
+                    {
+                        Tag = p.Tag,
+                        Src = srcProp,
+                        Dst = null,
+                        IsValid =
+                            (spObject.TemplateFeatureId == listTemplate.FeatureId) &&
+                            ((int)spObject.BaseTemplate == (int)listTemplate.Type)
+                    };
+                });
             }
         }
     }

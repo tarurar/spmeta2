@@ -16,7 +16,7 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(ContentTypeDefinition))]
 
     [Serializable]
-
+    [ExpectWithExtensionMethod]
     public class ContentTypeFieldLinkDefinition : DefinitionBase
     {
         #region properties
@@ -29,6 +29,19 @@ namespace SPMeta2.Definitions
 
         [ExpectValidation]
         public Guid FieldId { get; set; }
+
+        [ExpectValidation]
+        public bool? Required { get; set; }
+
+        [ExpectValidation]
+        public bool? Hidden { get; set; }
+
+        /// <summary>
+        /// Is not supported in CSOM yet!
+        /// https://officespdev.uservoice.com/forums/224641-general/suggestions/7024931-enhance-fieldlink-class-with-additional-properties
+        /// </summary>
+        [ExpectValidation]
+        public string DisplayName { get; set; }
 
         #endregion
 

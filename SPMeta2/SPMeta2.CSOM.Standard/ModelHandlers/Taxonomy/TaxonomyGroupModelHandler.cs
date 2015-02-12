@@ -3,10 +3,12 @@ using System.Linq;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
 using SPMeta2.Common;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.CSOM.Standard.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Services;
 using SPMeta2.Standard.Definitions.Taxonomy;
 using SPMeta2.Utils;
 
@@ -55,7 +57,22 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
             TermGroup currentGroup = null;
 
             if (groupModel.Id.HasValue)
-                currentGroup = termStore.GetGroup(groupModel.Id.Value);
+            {
+                var scope = new ExceptionHandlingScope(context);
+                using (scope.StartScope())
+                {
+                    using (scope.StartTry())
+                    {
+                        currentGroup = termStore.Groups.GetById(groupModel.Id.Value);
+                        context.Load(currentGroup);
+                    }
+
+                    using (scope.StartCatch())
+                    {
+
+                    }
+                }
+            }
             else if (!string.IsNullOrEmpty(groupModel.Name))
             {
                 var scope = new ExceptionHandlingScope(context);
@@ -74,14 +91,14 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
                 }
             }
 
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             if (currentGroup != null && currentGroup.ServerObjectIsNull == false)
             {
                 context.Load(currentGroup, g => g.Id);
                 context.Load(currentGroup, g => g.Name);
 
-                context.ExecuteQuery();
+                context.ExecuteQueryWithTrace();
 
                 return currentGroup;
             }
@@ -107,6 +124,8 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
 
             if (currentGroup == null)
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new Term Group");
+
                 currentGroup = groupModel.Id.HasValue
                                         ? termStore.CreateGroup(groupModel.Name, groupModel.Id.Value)
                                         : termStore.CreateGroup(groupModel.Name, Guid.NewGuid());
@@ -125,6 +144,8 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
             }
             else
             {
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing Term Group");
+
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
                     CurrentModelNode = null,
@@ -136,6 +157,9 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
                     ModelHost = modelHost
                 });
             }
+
+            termStore.CommitAll();
+            termStore.Context.ExecuteQuery();
         }
 
         #endregion

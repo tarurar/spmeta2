@@ -13,7 +13,9 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(WebDefinition))]
     [DefaultParentHostAttribute(typeof(ListDefinition))]
 
+    [ExpectAddHostExtensionMethod]
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class WebPartPageDefinition : PageDefinitionBase
     {
         #region constructors

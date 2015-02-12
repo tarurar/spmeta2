@@ -25,6 +25,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -34,12 +35,22 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1212|AnyCPU'">
+    <OutputPath>bin\1212\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.SharePoint.Client, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.SharePoint.Client.Runtime, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\CSOM\Microsoft.SharePoint.Client.Runtime.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
@@ -57,29 +68,56 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="Base\SPMeta2RegresionEventsTestBase.cs" />
-    <Compile Include="Common\EventHits.cs" />
     <Compile Include="Consts\RegWebparts.cs" />
     <Compile Include="Definitions\RegWebFeatures.cs" />
     <Compile Include="Definitions\RegSiteFeatures.cs" />
     <Compile Include="Definitions\RegWebs.cs" />
+    <Compile Include="Impl\Definitions\ChoiceFieldDefinitionTests.cs" />
+    <Compile Include="Impl\Definitions\TaxonomyTermSetDefinitionTests.cs" />
     <Compile Include="Impl\Definitions\DefinitionTests.cs" />
+    <Compile Include="Impl\Dependencies\ArtifactDependenciesTest.cs" />
     <Compile Include="Impl\Extensions\WebpartXmlExtensionsTest.cs" />
+    <Compile Include="Impl\Misc\ProvisionServiceTest.cs" />
     <Compile Include="Impl\Random\RandomDefinitionTest.cs" />
     <Compile Include="Impl\Scenarios\Base\SPMeta2RegresionScenarioTestBase.cs" />
     <Compile Include="Impl\Scenarios\BreakRoleInheritanceScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ContentTypeFieldLinkScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ContentTypeLinkScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ContentTypeScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\EventReceiverScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\Fields\LookupFieldScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\JobScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\AuditSettingsScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ListItemValueScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\PageLayoutAndSiteTemplateSettingsScenarios.cs" />
+    <Compile Include="Impl\Scenarios\PublishingPageLayoutScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\PublishingPageScenarios.cs" />
+    <Compile Include="Impl\Scenarios\SandboxSolutionScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\QuickLaunchNavigationNodeScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\TaxonomyFieldScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\TaxonomyTermStoreScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\TaxonomyTermScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\TaxonomyTermSetScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\TaxonomyTermGroupScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\TopNavigationNodeScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\UserCustomActionScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\FieldScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\FolderScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ListFieldLinkScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ListItemScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ListScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\FeatureScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\PropertyBagScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\TaxonomyScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ListViewScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ModuleFileScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\SP2013WorkflowScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\UniqueContentTypeFieldsScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\WebPartPageScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\WikiPageScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\WebpartScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\SecurityScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\WebConfigModificationScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\WebScenariosTest.cs" />
     <Compile Include="Impl\Upgrade\ListViewUpgradeTest.cs" />
     <Compile Include="Impl\Upgrade\ContentTypeUpgradeTest.cs" />
@@ -88,7 +126,7 @@
     <Compile Include="Impl\Misc\BuiltInWebpartTemplatesTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Base\SPMeta2RegresionTestBase.cs" />
-    <Compile Include="Services\ServiceFactory.cs" />
+    <Compile Include="Services\VSAssertService.cs" />
     <Compile Include="Utils\ResourceReaderUtils.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -100,13 +138,13 @@
       <Project>{091C48FB-27E3-4F84-897C-5DE7BB55A2D3}</Project>
       <Name>SPMeta2.Containers</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SPMeta2.Regression.Runners\SPMeta2.Regression.Runners.csproj">
-      <Project>{C69C8205-B0C7-4FDB-B1F6-F4FA77FF95AB}</Project>
-      <Name>SPMeta2.Regression.Runners</Name>
+    <ProjectReference Include="..\SPMeta2.CSOM.Behaviours\SPMeta2.CSOM.Behaviours.csproj">
+      <Project>{5d604b9f-4a28-424d-ab1d-d5f4b7cbe848}</Project>
+      <Name>SPMeta2.CSOM.Behaviours</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SPMeta2.Regression\SPMeta2.Regression.csproj">
-      <Project>{2b5ca105-8d61-4704-b9ce-c1cba53aaab0}</Project>
-      <Name>SPMeta2.Regression</Name>
+    <ProjectReference Include="..\SPMeta2.CSOM\SPMeta2.CSOM.csproj">
+      <Project>{6f7ebf0c-7124-44d6-b9ec-302a54a19fe4}</Project>
+      <Name>SPMeta2.CSOM</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Standard\SPMeta2.Standard.csproj">
       <Project>{F310878E-9B72-4C3C-AE5D-C60B3515E2FC}</Project>
@@ -126,6 +164,22 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\SPMeta2.Containers.CSOM\bin\Debug\SPMeta2.Containers.CSOM.dll">
+      <Link>SPMeta2.Containers.CSOM.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Containers.O365v16\bin\Debug\SPMeta2.Containers.O365v16.dll">
+      <Link>SPMeta2.Containers.O365v16.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Containers.O365\bin\Debug\SPMeta2.Containers.O365.dll">
+      <Link>SPMeta2.Containers.O365.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Containers.SSOM\bin\Debug\SPMeta2.Containers.SSOM.dll">
+      <Link>SPMeta2.Containers.SSOM.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\SPMeta2.CSOM.Standard\bin\Debug\SPMeta2.CSOM.Standard.dll">
       <Link>SPMeta2.CSOM.Standard.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -174,6 +228,46 @@
       <Link>Microsoft.SharePoint.Client.WorkflowServices.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.SecureStoreService.dll">
+      <Link>Microsoft.Office.SecureStoreService.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.dll">
+      <Link>Microsoft.Office.Server.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.Applications.dll">
+      <Link>Microsoft.Office.Server.Search.Applications.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.Connector.dll">
+      <Link>Microsoft.Office.Server.Search.Connector.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.dll">
+      <Link>Microsoft.Office.Server.Search.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.ExchangeAdapter.dll">
+      <Link>Microsoft.Office.Server.Search.ExchangeAdapter.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.UserProfiles.dll">
+      <Link>Microsoft.Office.Server.UserProfiles.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\microsoft.sharepoint.WorkflowActions.dll">
+      <Link>microsoft.sharepoint.WorkflowActions.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.WorkflowServices.dll">
+      <Link>Microsoft.SharePoint.WorkflowServices.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.WorkflowServicesBase.dll">
+      <Link>Microsoft.SharePoint.WorkflowServicesBase.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\SPMeta2.Regression.CSOM.Standard\bin\Debug\SPMeta2.Regression.CSOM.Standard.dll">
       <Link>SPMeta2.Regression.CSOM.Standard.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -182,32 +276,20 @@
       <Link>SPMeta2.Regression.CSOM.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\SPMeta2.Regression.Runners.CSOM\bin\Debug\SPMeta2.Regression.Runners.CSOM.dll">
-      <Link>SPMeta2.Regression.Runners.CSOM.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\SPMeta2.Regression.Runners.O365\bin\Debug\SPMeta2.Regression.Runners.O365.dll">
-      <Link>SPMeta2.Regression.Runners.O365.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\SPMeta2.Regression.Runners.SSOM\bin\Debug\SPMeta2.Regression.Runners.SSOM.dll">
-      <Link>SPMeta2.Regression.Runners.SSOM.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\SPMeta2.Regression.Runners.SSOM\bin\Debug\SPMeta2.Regression.SSOM.dll">
-      <Link>SPMeta2.Regression.SSOM.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\SPMeta2.Regression.Runners.SSOM\bin\Debug\SPMeta2.SSOM.dll">
-      <Link>SPMeta2.SSOM.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="..\SPMeta2.Regression.SSOM.Standard\bin\Debug\SPMeta2.Regression.SSOM.Standard.dll">
       <Link>SPMeta2.Regression.SSOM.Standard.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\SPMeta2.Regression.SSOM\bin\Debug\SPMeta2.Regression.SSOM.dll">
+      <Link>SPMeta2.Regression.SSOM.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\SPMeta2.SSOM.Standard\bin\Debug\SPMeta2.SSOM.Standard.dll">
       <Link>SPMeta2.SSOM.Standard.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\SPMeta2.SSOM\bin\Debug\SPMeta2.SSOM.dll">
+      <Link>SPMeta2.SSOM.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="..\SPMeta2.Syntax.Default\bin\Debug\SPMeta2.Syntax.Default.dll">
@@ -225,6 +307,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Templates\Webparts\Base\ContentEditor.webpart" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SPMeta2.Regression.Tests.dll.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

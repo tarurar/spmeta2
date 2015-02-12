@@ -7,7 +7,10 @@ using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Enumerations;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
+using SPMeta2.Services;
 using SPMeta2.Utils;
 using SPMeta2.SSOM.ModelHosts;
 
@@ -28,37 +31,63 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var listModelHost = modelHost.WithAssertAndCast<ListModelHost>("modelHost", value => value.RequireNotNull());
             var listItemModel = model.WithAssertAndCast<ListItemDefinition>("model", value => value.RequireNotNull());
 
-            var list = listModelHost.HostList;
+            if (modelHost is ListModelHost)
+            {
+                var list = (modelHost as ListModelHost).HostList;
+                var rootFolder = (modelHost as ListModelHost).HostList.RootFolder;
 
-            DeployInternall(list, listItemModel);
+                DeployInternall(list, rootFolder, listItemModel);
+            }
+            else if (modelHost is FolderModelHost)
+            {
+                // suppose it is a list, ir must be
+                var list = (modelHost as FolderModelHost).CurrentList;
+                var rootFolder = (modelHost as FolderModelHost).CurrentListItem.Folder;
+
+                DeployInternall(list, rootFolder, listItemModel);
+            }
+            else
+            {
+                throw new SPMeta2UnsupportedModelHostException("modeHost should be either ListModelHost or FolderModelHost");
+            }
         }
 
-        private void DeployInternall(SPList list, ListItemDefinition listItemModel)
+        private void DeployInternall(SPList list, SPFolder folder, ListItemDefinition listItemModel)
         {
             if (IsDocumentLibray(list))
             {
-                throw new NotImplementedException("Please use ModuleFileDefinition to deploy files to the document libraries");
+                TraceService.Error((int)LogEventId.ModelProvisionCoreCall, "Please use ModuleFileDefinition to deploy files to the document libraries. Throwing SPMeta2NotImplementedException");
+
+                throw new SPMeta2NotImplementedException("Please use ModuleFileDefinition to deploy files to the document libraries");
             }
 
-            EnsureListItem(list, listItemModel);
+            EnsureListItem(list, folder, listItemModel);
         }
 
-        protected SPListItem GetListItem(SPList list, ListItemDefinition listItemModel)
+        protected SPListItem GetListItem(SPList list, SPFolder folder, ListItemDefinition listItemModel)
         {
-            // TODO, lazy to query
-            // BIG TODO, don't tell me, I know that
+            var items = list.GetItems(new SPQuery
+            {
+                Folder = folder,
+                Query = string.Format(@"<Where>
+                             <Eq>
+                                 <FieldRef Name='Title'/>
+                                 <Value Type='Text'>{0}</Value>
+                             </Eq>
+                            </Where>", listItemModel.Title)
+            });
 
-            return list.Items
-                            .OfType<SPListItem>()
-                            .FirstOrDefault(i => i.Title == listItemModel.Title);
+            if (items.Count > 0)
+                return items[0];
+
+            return null;
         }
 
-        private SPListItem EnsureListItem(SPList list, ListItemDefinition listItemModel)
+        private SPListItem EnsureListItem(SPList list, SPFolder folder, ListItemDefinition listItemModel)
         {
-            var currentItem = GetListItem(list, listItemModel);
+            var currentItem = GetListItem(list, folder, listItemModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -68,14 +97,15 @@ namespace SPMeta2.SSOM.ModelHandlers
                 Object = currentItem,
                 ObjectType = typeof(SPListItem),
                 ObjectDefinition = listItemModel,
-                ModelHost = list
+                ModelHost = folder
             });
 
             if (currentItem == null)
             {
-                var newItem = list.AddItem();
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new list item");
 
-                newItem["Title"] = listItemModel.Title;
+                var newItem = list.Items.Add(folder.ServerRelativeUrl, SPFileSystemObjectType.File, null);
+                newItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -85,7 +115,7 @@ namespace SPMeta2.SSOM.ModelHandlers
                     Object = newItem,
                     ObjectType = typeof(SPListItem),
                     ObjectDefinition = listItemModel,
-                    ModelHost = list
+                    ModelHost = folder
                 });
 
                 newItem.Update();
@@ -94,7 +124,9 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
             else
             {
-                currentItem["Title"] = listItemModel.Title;
+                TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing list item");
+
+                currentItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -104,7 +136,7 @@ namespace SPMeta2.SSOM.ModelHandlers
                     Object = currentItem,
                     ObjectType = typeof(SPListItem),
                     ObjectDefinition = listItemModel,
-                    ModelHost = list
+                    ModelHost = folder
                 });
 
                 currentItem.Update();
@@ -118,19 +150,32 @@ namespace SPMeta2.SSOM.ModelHandlers
             var listModelHost = modelHost.WithAssertAndCast<ListModelHost>("modelHost", value => value.RequireNotNull());
             var listItemModel = model.WithAssertAndCast<ListItemDefinition>("model", value => value.RequireNotNull());
 
-            var list = listModelHost.HostList;
-            var item = EnsureListItem(list, listItemModel);
+            SPListItem item = null;
+            SPList list = null;
 
-            if (childModelType == typeof(ListItemFieldValueDefinition))
+            if (modelHost is ListModelHost)
             {
-                // naaaaah, just gonna get a new one list item
-                // keep it simple and safe, really really really safe with all that SharePoint stuff...
-                var currentItem = list.GetItemById(item.ID);
+                list = (modelHost as ListModelHost).HostList;
+                var rootFolder = (modelHost as ListModelHost).HostList.RootFolder;
 
-                action(currentItem);
-
-                currentItem.Update();
+                item = EnsureListItem(list, rootFolder, listItemModel);
             }
+            else if (modelHost is FolderModelHost)
+            {
+                // suppose it is a list, ir must be
+                list = (modelHost as FolderModelHost).CurrentList;
+                var rootFolder = (modelHost as FolderModelHost).CurrentListItem.Folder;
+
+                item = EnsureListItem(list, rootFolder, listItemModel);
+            }
+
+            // naaaaah, just gonna get a new one list item
+            // keep it simple and safe, really really really safe with all that SharePoint stuff...
+            var currentItem = list.GetItemById(item.ID);
+
+            action(currentItem);
+
+            currentItem.Update();
         }
 
 

@@ -34,7 +34,35 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1212|AnyCPU'">
+    <OutputPath>bin\1212\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>bin\Debug\SPMeta2.Regression.SSOM.XML</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.BusinessData, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.BusinessData.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.IdentityModel, Version=3.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.IdentityModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.SecureStoreService, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.SecureStoreService.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.SharePoint, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.dll</HintPath>
@@ -42,6 +70,18 @@
     <Reference Include="Microsoft.SharePoint.Security, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="microsoft.sharepoint.WorkflowActions, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\microsoft.sharepoint.WorkflowActions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SharePoint.WorkflowServices, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.WorkflowServices.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SharePoint.WorkflowServicesBase, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.WorkflowServicesBase.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
@@ -57,11 +97,39 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceFactory.cs" />
     <Compile Include="SSOMValidationService.cs" />
+    <Compile Include="Validation\AuditSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\DocumentParserDefinitionValidator.cs" />
+    <Compile Include="Validation\TreeViewSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\TargetApplicationDefinitionValidator.cs" />
+    <Compile Include="Validation\SecureStoreApplicationDefinitionValidator.cs" />
+    <Compile Include="Validation\AlternateUrlDefinitionValidator.cs" />
     <Compile Include="Validation\AppDefinitionValidator.cs" />
     <Compile Include="Validation\BreakRoleInheritanceDefinitionValidator.cs" />
     <Compile Include="Validation\AppPrincipalDefinitionValidator.cs" />
+    <Compile Include="Validation\ContentDatabaseDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\URLFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\InformationRightsManagementSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\JobDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\BooleanFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\CalculatedFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\ComputedFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\DateTimeFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\GuidFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\LookupFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\MultiChoiceFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\NoteFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\NumberFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\TextFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\CurrencyFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\ChoiceFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\UserFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\EventReceiverDefinitionValidator.cs" />
     <Compile Include="Validation\MasterPageSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\FarmSolutionDefinitionValidator.cs" />
+    <Compile Include="Validation\RegionalSettingsDefinitionValidator.cs" />
     <Compile Include="Validation\SandboxSolutionDefinitionValidator.cs" />
+    <Compile Include="Validation\WebConfigModificationDefinitionValidator.cs" />
+    <Compile Include="Validation\RootWebDefinitionValidator.cs" />
     <Compile Include="Validation\WelcomePageDefinitionValidator.cs" />
     <Compile Include="Validation\ContentTypeDefinitionValidator.cs" />
     <Compile Include="Validation\ContentTypeFieldLinkDefinitionValidator.cs" />
@@ -108,9 +176,9 @@
     <Compile Include="Validation\WikiPageDefinitionValidator.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SPMeta2.Regression\SPMeta2.Regression.csproj">
-      <Project>{2b5ca105-8d61-4704-b9ce-c1cba53aaab0}</Project>
-      <Name>SPMeta2.Regression</Name>
+    <ProjectReference Include="..\SPMeta2.Containers\SPMeta2.Containers.csproj">
+      <Project>{091C48FB-27E3-4F84-897C-5DE7BB55A2D3}</Project>
+      <Name>SPMeta2.Containers</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.SSOM\SPMeta2.SSOM.csproj">
       <Project>{FBD78AC1-B766-4332-A9B1-C73EE64FD5C6}</Project>

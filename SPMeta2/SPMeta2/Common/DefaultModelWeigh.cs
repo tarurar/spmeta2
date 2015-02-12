@@ -43,6 +43,8 @@ namespace SPMeta2.Common
                 typeof(FolderDefinition),
                 new[]
                 {
+                    typeof (BreakRoleInheritanceDefinition),
+                    typeof (SecurityRoleLinkDefinition),
                     typeof (PropertyDefinition)
                 }));
         }
@@ -53,12 +55,26 @@ namespace SPMeta2.Common
                 typeof(ListDefinition),
                 new[]
                 {
+                    typeof (BreakRoleInheritanceDefinition),
+                    typeof (SecurityRoleLinkDefinition),
+
                     typeof (PropertyDefinition),
+                    
+                    // list scoped fields should be deployed first as well as content type links
+                    typeof (FieldDefinition),
+                    typeof (ListFieldLinkDefinition),
+
+                    typeof (ContentTypeDefinition),
                     typeof (ContentTypeLinkDefinition),
+
                     typeof (SP2013WorkflowSubscriptionDefinition),
+                    
                     typeof (FolderDefinition),
+                    
                     typeof (ListViewDefinition),
                     typeof (ModuleFileDefinition),
+
+                    typeof (ListItemFieldValueDefinition),
                 }));
         }
 
@@ -69,11 +85,24 @@ namespace SPMeta2.Common
                 new[]
                 {
                     typeof (FeatureDefinition),
+
+                    typeof (SecurityGroupDefinition),
+
+                    typeof (BreakRoleInheritanceDefinition),
+                    typeof (SecurityRoleLinkDefinition),
+
                     typeof (PropertyDefinition),
+                    
                     typeof (FieldDefinition),
                     typeof (ContentTypeDefinition),
+                    
                     typeof (SP2013WorkflowDefinition),
+                    
                     typeof (ListDefinition),
+                    // goes after list definitions to make sure you get history/task lists 
+                    typeof (SP2013WorkflowSubscriptionDefinition),
+
+                    typeof (MasterPageSettingsDefinition),
                     typeof (WelcomePageDefinition)
                 }));
         }
@@ -85,10 +114,19 @@ namespace SPMeta2.Common
                 typeof(SiteDefinition),
                 new[]
                 {
+                    typeof (SandboxSolutionDefinition),
                     typeof (FeatureDefinition),
+                    
                     typeof (PropertyDefinition),
+
+                    typeof (SecurityGroupDefinition),
+                    typeof (SecurityRoleDefinition),
+
+                    typeof (UserCustomActionDefinition),
+
                     typeof (FieldDefinition),
                     typeof (ContentTypeDefinition),
+                    
                     typeof (WebDefinition)
                 }));
         }

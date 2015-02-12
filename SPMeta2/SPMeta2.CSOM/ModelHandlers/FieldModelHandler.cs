@@ -1,9 +1,16 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
+using System.Xml.Linq;
 using Microsoft.SharePoint.Client;
 using SPMeta2.Common;
+using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
+using SPMeta2.Enumerations;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
+using SPMeta2.Services;
 using SPMeta2.Utils;
 
 namespace SPMeta2.CSOM.ModelHandlers
@@ -17,31 +24,57 @@ namespace SPMeta2.CSOM.ModelHandlers
             get { return typeof(FieldDefinition); }
         }
 
-        // TODO, replace with XElement generation later.
-        private static string MinimalSPFieldTemplate =
-                                @"<Field " +
-                                    "ID=\"{0}\" " +
-                                    "StaticName=\"{1}\" " +
-                                    "DisplayName=\"{2}\" " +
-                                    "Title=\"{3}\" " +
-                                    "Name=\"{4}\" " +
-                                    "Type=\"{5}\" " +
-                                    "Group=\"{6}\" " +
-                                    "/>";
+        protected SiteModelHost CurrentSiteModelHost { get; set; }
 
         #endregion
 
         #region methods
 
-        protected SiteModelHost CurrentSiteModelHost { get; set; }
+        protected static XElement GetNewMinimalSPFieldTemplate()
+        {
+            return new XElement("Field",
+                new XAttribute(BuiltInFieldAttributes.ID, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.StaticName, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.DisplayName, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.Title, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.Name, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.Type, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.Group, String.Empty));
+        }
+
+        #endregion
+
+        #region methods
+
+        protected Field FindField(object modelHost, FieldDefinition definition)
+        {
+            if (modelHost is SiteModelHost)
+                return FindExistingSiteField(modelHost as SiteModelHost, definition);
+
+            if (modelHost is ListModelHost)
+                return FindExistingListField((modelHost as ListModelHost).HostList, definition);
+
+            TraceService.ErrorFormat((int)LogEventId.ModelProvisionCoreCall, "FindField() does not support modelHost of type: [{0}]. Throwing SPMeta2NotSupportedException", modelHost);
+
+            throw new SPMeta2NotSupportedException(
+                string.Format("Validation for artifact of type [{0}] under model host [{1}] is not supported.",
+                    definition.GetType(),
+                    modelHost.GetType()));
+        }
+
+        protected virtual Type GetTargetFieldType(FieldDefinition model)
+        {
+            return typeof(Field);
+        }
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            if (!(modelHost is SiteModelHost || modelHost is List))
-                throw new ArgumentException("modelHost needs to be SiteModelHost/List instance.");
+            if (!(modelHost is SiteModelHost || modelHost is ListModelHost))
+                throw new ArgumentException("modelHost needs to be SiteModelHost/ListModelHost instance.");
 
             CurrentSiteModelHost = modelHost as SiteModelHost;
 
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Casting field model definition");
             var fieldModel = model.WithAssertAndCast<FieldDefinition>("model", value => value.RequireNotNull());
 
             Field currentField = null;
@@ -53,7 +86,7 @@ namespace SPMeta2.CSOM.ModelHandlers
                 Model = null,
                 EventType = ModelEventType.OnProvisioning,
                 Object = null,
-                ObjectType = typeof(Field),
+                ObjectType = GetTargetFieldType(fieldModel),
                 ObjectDefinition = model,
                 ModelHost = modelHost
             });
@@ -66,36 +99,53 @@ namespace SPMeta2.CSOM.ModelHandlers
 
                 currentField = DeploySiteField(siteHost as SiteModelHost, fieldModel);
             }
-            else if (modelHost is List)
+            else if (modelHost is ListModelHost)
             {
-                var listHost = modelHost as List;
-                context = listHost.Context;
+                var listHost = modelHost as ListModelHost;
+                context = listHost.HostList.Context;
 
-                currentField = DeployListField(modelHost as List, fieldModel);
+                currentField = DeployListField(modelHost as ListModelHost, fieldModel);
             }
 
-            currentField.Required = fieldModel.Required;
+            object typedField = null;
+
+            // emulate context.CastTo<>() call for typed field type
+            if (GetTargetFieldType(fieldModel) != currentField.GetType())
+            {
+                var targetFieldType = GetTargetFieldType(fieldModel);
+
+                TraceService.InformationFormat((int)LogEventId.ModelProvisionCoreCall, "Calling context.CastTo() to field type: [{0}]", targetFieldType);
+
+                var method = context.GetType().GetMethod("CastTo");
+                var generic = method.MakeGenericMethod(targetFieldType);
+
+                typedField = generic.Invoke(context, new object[] { currentField });
+            }
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
                 CurrentModelNode = null,
                 Model = null,
                 EventType = ModelEventType.OnProvisioned,
-                Object = currentField,
-                ObjectType = typeof(Field),
+                Object = typedField ?? currentField,
+                ObjectType = GetTargetFieldType(fieldModel),
                 ObjectDefinition = model,
                 ModelHost = modelHost
             });
             InvokeOnModelEvent<FieldDefinition, Field>(currentField, ModelEventType.OnUpdated);
 
-
-
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "UpdateAndPushChanges(true)");
             currentField.UpdateAndPushChanges(true);
-            context.ExecuteQuery();
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+            context.ExecuteQueryWithTrace();
         }
 
-        private Field DeployListField(List list, FieldDefinition fieldModel)
+        private Field DeployListField(ListModelHost modelHost, FieldDefinition fieldModel)
         {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying list field");
+
+            var list = modelHost.HostList;
             var context = list.Context;
 
             var scope = new ExceptionHandlingScope(context);
@@ -116,13 +166,33 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
             }
 
-            context.ExecuteQuery();
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+            context.ExecuteQueryWithTrace();
 
-            return EnsureField(context, field, list.Fields, fieldModel);
+            if (!scope.HasException)
+            {
+                field = list.Fields.GetById(fieldModel.Id);
+                context.Load(field);
+
+                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Found site list with Id: [{0}]", fieldModel.Id);
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+
+                context.ExecuteQueryWithTrace();
+
+                return EnsureField(context, field, list.Fields, fieldModel);
+            }
+
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Cannot find list field with Id: [{0}]", fieldModel.Id);
+            return EnsureField(context, null, list.Fields, fieldModel);
         }
 
-        private Field FindExistingSiteField(Web rootWeb, Guid id)
+        protected Field FindExistingSiteField(SiteModelHost siteHost, FieldDefinition fieldDefinition)
         {
+            var id = fieldDefinition.Id;
+            var rootWeb = siteHost.HostSite.RootWeb;
+
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "FindExistingSiteField with Id: [{0}]", id);
+
             var context = rootWeb.Context;
             var scope = new ExceptionHandlingScope(context);
 
@@ -141,13 +211,22 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
             }
 
-            context.ExecuteQuery();
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+            context.ExecuteQueryWithTrace();
 
             if (!scope.HasException)
             {
                 field = rootWeb.Fields.GetById(id);
                 context.Load(field);
-                context.ExecuteQuery();
+
+                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Found site field with Id: [{0}]", id);
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+
+                context.ExecuteQueryWithTrace();
+            }
+            else
+            {
+                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Cannot find site field with Id: [{0}]", id);
             }
 
             return field;
@@ -155,10 +234,12 @@ namespace SPMeta2.CSOM.ModelHandlers
 
         private Field DeploySiteField(SiteModelHost siteModelHost, FieldDefinition fieldModel)
         {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying site field");
+
             var site = siteModelHost.HostSite;
             var context = site.Context;
 
-            var field = FindExistingSiteField(site.RootWeb, fieldModel.Id);
+            var field = FindExistingSiteField(siteModelHost, fieldModel);
 
             return EnsureField(context, field, site.RootWeb.Fields, fieldModel);
         }
@@ -169,12 +250,19 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             field.Description = fieldModel.Description ?? string.Empty;
             field.Group = fieldModel.Group ?? string.Empty;
+
+            field.Required = fieldModel.Required;
         }
 
-        private Field EnsureField(ClientRuntimeContext context, Field currentField, FieldCollection fieldCollection, FieldDefinition fieldModel)
+        private Field EnsureField(ClientRuntimeContext context, Field currentField, FieldCollection fieldCollection,
+            FieldDefinition fieldModel)
         {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "EnsureField()");
+
             if (currentField == null)
             {
+                TraceService.Verbose((int)LogEventId.ModelProvisionProcessingNewObject, "Current field is NULL. Creating new");
+
                 var fieldDef = GetTargetSPFieldXmlDefinition(fieldModel);
                 var resultField = fieldCollection.AddFieldAsXml(fieldDef, false, AddFieldOptions.DefaultValue);
 
@@ -184,14 +272,18 @@ namespace SPMeta2.CSOM.ModelHandlers
             }
             else
             {
+                TraceService.Verbose((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing field");
+
                 ProcessFieldProperties(currentField, fieldModel);
 
                 return currentField;
             }
         }
 
-        protected Field FindListField(List list, FieldDefinition fieldModel)
+        protected Field FindExistingListField(List list, FieldDefinition fieldModel)
         {
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "FindListField with Id: [{0}]", fieldModel.Id);
+
             var context = list.Context;
 
             Field field;
@@ -212,71 +304,89 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
             }
 
-            context.ExecuteQuery();
-
-            return field;
-        }
-
-        protected Field FindSiteField(SiteModelHost siteModelHost, FieldDefinition fieldModel)
-        {
-            var site = siteModelHost.HostSite;
-
-            var context = site.Context;
-            var rootWeb = site.RootWeb;
-
-            var scope = new ExceptionHandlingScope(context);
-            Field field = null;
-
-            using (scope.StartScope())
-            {
-                using (scope.StartTry())
-                {
-                    rootWeb.Fields.GetById(fieldModel.Id);
-                }
-                using (scope.StartCatch())
-                {
-
-                }
-            }
-
-            context.ExecuteQuery();
+            context.ExecuteQueryWithTrace();
 
             if (!scope.HasException)
             {
-                field = rootWeb.Fields.GetById(fieldModel.Id);
+                field = list.Fields.GetById(fieldModel.Id);
                 context.Load(field);
-                context.ExecuteQuery();
+
+                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Found list field with Id: [{0}]", fieldModel.Id);
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "ExecuteQuery()");
+
+                context.ExecuteQueryWithTrace();
+            }
+            else
+            {
+                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Cannot find list field with Id: [{0}]", fieldModel.Id);
             }
 
             return field;
-
-            //return FindExistingField(rootWeb.Fields, fieldModel.InternalName);
         }
 
-        //protected Field FindExistingField(FieldCollection fields, string internalFieldName)
-        //{
-        //    foreach (var field in fields)
-        //    {
-        //        if (String.Compare(field.InternalName, internalFieldName, StringComparison.OrdinalIgnoreCase) == 0)
-        //            return field;
-        //    }
+        protected virtual void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)
+        {
+            // minimal set
+            fieldTemplate
+              .SetAttribute(BuiltInFieldAttributes.ID, fieldModel.Id.ToString("B"))
+              .SetAttribute(BuiltInFieldAttributes.StaticName, fieldModel.InternalName)
+              .SetAttribute(BuiltInFieldAttributes.DisplayName, fieldModel.Title)
+              .SetAttribute(BuiltInFieldAttributes.Title, fieldModel.Title)
+              .SetAttribute(BuiltInFieldAttributes.Name, fieldModel.InternalName)
+              .SetAttribute(BuiltInFieldAttributes.Type, fieldModel.FieldType)
+              .SetAttribute(BuiltInFieldAttributes.Group, fieldModel.Group ?? string.Empty);
 
-        //    return null;
-        //}
+            // additions
+            if (!String.IsNullOrEmpty(fieldModel.JSLink))
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.JSLink, fieldModel.JSLink);
 
+            if (!string.IsNullOrEmpty(fieldModel.DefaultValue))
+                fieldTemplate.SetSubNode("Default", fieldModel.DefaultValue);
+
+            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Hidden, fieldModel.Hidden.ToString().ToUpper());
+
+            // ShowIn* settings
+            if (fieldModel.ShowInDisplayForm.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.ShowInDisplayForm, fieldModel.ShowInDisplayForm.Value.ToString().ToUpper());
+
+            if (fieldModel.ShowInEditForm.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.ShowInEditForm, fieldModel.ShowInEditForm.Value.ToString().ToUpper());
+
+            if (fieldModel.ShowInListSettings.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.ShowInListSettings, fieldModel.ShowInListSettings.Value.ToString().ToUpper());
+
+            if (fieldModel.ShowInNewForm.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.ShowInNewForm, fieldModel.ShowInNewForm.Value.ToString().ToUpper());
+
+            if (fieldModel.ShowInVersionHistory.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.ShowInVersionHistory, fieldModel.ShowInVersionHistory.Value.ToString().ToUpper());
+
+            if (fieldModel.ShowInViewForms.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.ShowInViewForms, fieldModel.ShowInViewForms.Value.ToString().ToUpper());
+
+            // misc
+            if (fieldModel.AllowDeletion.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.AllowDeletion, fieldModel.AllowDeletion.Value.ToString().ToUpper());
+
+            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Indexed, fieldModel.Indexed.ToString().ToUpper());
+
+        }
 
         protected virtual string GetTargetSPFieldXmlDefinition(FieldDefinition fieldModel)
         {
-            return string.Format(MinimalSPFieldTemplate, new string[]
-                                                                         {
-                                                                             fieldModel.Id.ToString("B"),
-                                                                             fieldModel.InternalName,
-                                                                             fieldModel.Title,
-                                                                             fieldModel.Title,
-                                                                             fieldModel.InternalName,
-                                                                             fieldModel.FieldType,
-                                                                             fieldModel.Group ?? string.Empty
-                                                                         });
+            var fieldTemplate = GetNewMinimalSPFieldTemplate();
+            
+            if (!string.IsNullOrEmpty(fieldModel.RawXml))
+                fieldTemplate = XDocument.Parse(fieldModel.RawXml).Root;
+
+            ProcessSPFieldXElement(fieldTemplate, fieldModel);
+
+            // add up additional attributes
+            if (fieldModel.AdditionalAttributes.Any())
+                foreach (var fieldAttr in fieldModel.AdditionalAttributes)
+                    fieldTemplate.SetAttribute(fieldAttr.Name, fieldAttr.Value);
+
+            return fieldTemplate.ToString();
         }
 
         #endregion

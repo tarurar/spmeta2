@@ -30,7 +30,43 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1212|AnyCPU'">
+    <OutputPath>bin\1212\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>bin\Debug\SPMeta2.Regression.SSOM.Standard.XML</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Office.Server, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Server.Search, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Server.Search.Applications, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.Applications.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Server.Search.Connector, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.Search.Connector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Server.UserProfiles, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.Office.Server.UserProfiles.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.SharePoint, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SPMeta2.Dependencies\SharePoint\SP2013 - 15.0.4569.1000\SSOM\Microsoft.SharePoint.dll</HintPath>
@@ -61,6 +97,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Validation\CustomDocumentIdProviderDefinitionValidator.cs" />
+    <Compile Include="Validation\PageLayoutAndSiteTemplateSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\AudienceDefinitionValidator.cs" />
+    <Compile Include="Validation\PublishingPageLayoutDefinitionValidator.cs" />
+    <Compile Include="Validation\SearchResultDefinitionValidator.cs" />
+    <Compile Include="Validation\SearchConfigurationDefinitionValidator.cs" />
     <Compile Include="Validation\ImageRenditionDefinitionValidator.cs" />
     <Compile Include="Validation\PublishingPageDefinitionValidator.cs">
       <SubType>
@@ -77,13 +119,17 @@
     <Compile Include="Validation\Webparts\SiteFeedWebPartDefinitionValidator.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SPMeta2.Containers.Standard\SPMeta2.Containers.Standard.csproj">
+      <Project>{5793019F-7514-4B1F-B31D-A5E472FD034D}</Project>
+      <Name>SPMeta2.Containers.Standard</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SPMeta2.Containers\SPMeta2.Containers.csproj">
+      <Project>{091C48FB-27E3-4F84-897C-5DE7BB55A2D3}</Project>
+      <Name>SPMeta2.Containers</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Regression.SSOM\SPMeta2.Regression.SSOM.csproj">
       <Project>{00E1581F-31D9-493E-AD16-C188AE966458}</Project>
       <Name>SPMeta2.Regression.SSOM</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SPMeta2.Regression\SPMeta2.Regression.csproj">
-      <Project>{2B5CA105-8D61-4704-B9CE-C1CBA53AAAB0}</Project>
-      <Name>SPMeta2.Regression</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.SSOM.Standard\SPMeta2.SSOM.Standard.csproj">
       <Project>{7D095A0D-0BDE-446D-8093-13E5685F1D3C}</Project>

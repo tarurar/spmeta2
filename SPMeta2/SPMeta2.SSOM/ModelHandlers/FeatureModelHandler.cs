@@ -7,7 +7,9 @@ using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
+using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
 using Microsoft.SharePoint.Administration;
@@ -63,6 +65,8 @@ namespace SPMeta2.SSOM.ModelHandlers
             var webModelHost = modelHost.WithAssertAndCast<WebModelHost>("modelHost", value => value.RequireNotNull());
             var web = webModelHost.HostWeb;
 
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying web feature.");
+
             ProcessFeature(modelHost, web.Features, featureModel);
         }
 
@@ -71,29 +75,38 @@ namespace SPMeta2.SSOM.ModelHandlers
             var siteModelHost = modelHost.WithAssertAndCast<SiteModelHost>("modelHost", value => value.RequireNotNull());
             var site = siteModelHost.HostSite;
 
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying site feature.");
+
             ProcessFeature(modelHost, site.Features, featureModel);
         }
 
         private void DeployWebApplicationFeature(object modelHost, FeatureDefinition featureModel)
         {
-            var webApplication = modelHost.WithAssertAndCast<SPWebApplication>("modelHost", value => value.RequireNotNull());
+            var webApplicationModelHost = modelHost.WithAssertAndCast<WebApplicationModelHost>("modelHost", value => value.RequireNotNull());
+            var webApplication = webApplicationModelHost.HostWebApplication;
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying web application feature.");
+
             ProcessFeature(modelHost, webApplication.Features, featureModel);
         }
 
         private void DeployFarmFeature(object modelHost, FeatureDefinition featureModel)
         {
-            throw new NotImplementedException("SPFarm feature activation has not implemented yet");
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying farm feature.");
 
-            //var farm = modelHost.WithAssertAndCast<SPFarm>("modelHost", value => value.RequireNotNull());
-            //ProcessFeature(farm.FeatureDefinitions, featureModel);
+            var farmModelHost = modelHost.WithAssertAndCast<FarmModelHost>("modelHost", value => value.RequireNotNull());
+            var farm = farmModelHost.HostFarm;
+
+            var adminService = SPWebService.AdministrationService;
+            ProcessFeature(modelHost, adminService.Features, featureModel);
         }
 
         #region utils
 
         private static bool IsValidHost(object modelHost)
         {
-            return modelHost is SPFarm ||
-                   modelHost is SPWebApplication ||
+            return modelHost is SPFarm || modelHost is FarmModelHost ||
+                   modelHost is SPWebApplication || modelHost is WebApplicationModelHost ||
                    modelHost is SiteModelHost ||
                    modelHost is WebModelHost;
         }
@@ -126,10 +139,13 @@ namespace SPMeta2.SSOM.ModelHandlers
                 ModelHost = modelHost
             });
 
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Is feature activated: [{0}]", featureActivated);
+
             if (!featureActivated)
             {
                 if (featureModel.Enable)
                 {
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Enabling feature");
                     var f = features.Add(featureModel.Id, featureModel.ForceActivate);
 
                     InvokeOnModelEvent(this, new ModelEventArgs
@@ -161,6 +177,8 @@ namespace SPMeta2.SSOM.ModelHandlers
             {
                 if (featureModel.Enable && featureModel.ForceActivate)
                 {
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Feature enabled, but ForceActivate = true. Force activating.");
+
                     var f = features.Add(featureModel.Id, featureModel.ForceActivate);
 
                     InvokeOnModelEvent(this, new ModelEventArgs
@@ -176,6 +194,8 @@ namespace SPMeta2.SSOM.ModelHandlers
                 }
                 else if (!featureModel.Enable)
                 {
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Removing feature.");
+
                     features.Remove(featureModel.Id, featureModel.ForceActivate);
 
                     InvokeOnModelEvent(this, new ModelEventArgs

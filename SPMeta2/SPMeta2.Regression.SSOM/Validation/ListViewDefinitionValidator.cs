@@ -2,14 +2,15 @@
 using System.Linq;
 using Microsoft.SharePoint;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SPMeta2.Containers.Assertion;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
-using SPMeta2.Regression.Utils;
+
 using SPMeta2.SSOM.Extensions;
 using SPMeta2.SSOM.ModelHandlers;
 using SPMeta2.Utils;
 using SPMeta2.SSOM.ModelHosts;
-using SPMeta2.Regression.Assertion;
+
 
 namespace SPMeta2.Regression.SSOM.Validation
 {
@@ -31,6 +32,12 @@ namespace SPMeta2.Regression.SSOM.Validation
                                .ShouldBeEqual(m => m.RowLimit, o => (int)o.RowLimit)
                                .ShouldBeEqual(m => m.IsPaged, o => o.Paged);
 
+            if (string.IsNullOrEmpty(definition.Url))
+                assert.SkipProperty(m => m.Url, "Url is null or empty. Skipping.");
+            else
+                assert.ShouldBePartOf(m => m.Url, o => o.ServerRelativeUrl);
+
+            assert.ShouldBePartOf(m => m.JSLink, o => o.JSLink);
 
             assert.ShouldBeEqual((p, s, d) =>
             {
@@ -41,7 +48,14 @@ namespace SPMeta2.Regression.SSOM.Validation
 
                 foreach (var srcField in s.Fields)
                 {
-                    if (!d.ViewFields.ToStringCollection().Contains(srcField))
+                    var listField = d.ParentList.Fields.OfType<SPField>().FirstOrDefault(f => f.StaticName == srcField);
+
+                    // if list-scoped field we need to check by internal name
+                    // internal name is changed for list scoped-fields
+                    // that's why to check by BOTH, definition AND real internal name
+
+                    if (!d.ViewFields.ToStringCollection().Contains(srcField) &&
+                        !d.ViewFields.ToStringCollection().Contains(listField.InternalName))
                         hasAllFields = false;
                 }
 

@@ -16,7 +16,8 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
-
+    [ExpectAddHostExtensionMethod]
+    [ExpectWithExtensionMethod]
     public class ContentTypeDefinition : DefinitionBase
     {
         #region properties
@@ -53,6 +54,7 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Description { get; set; }
 
         /// <summary>
@@ -61,6 +63,7 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [ExpectUpdate]
         public string Group { get; set; }
 
         /// <summary>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.SharePoint.Administration;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.SSOM.ModelHandlers;
@@ -31,15 +32,23 @@ namespace SPMeta2.Regression.SSOM.Validation
                 case FeatureDefinitionScope.Farm:
                     assert.SkipProperty(m => m.Scope, "Correct farm scope");
 
-                    throw new SPMeta2NotImplementedException("Farm features are not supported yet.");
+                    var farmModelHost = modelHost.WithAssertAndCast<FarmModelHost>("modelHost", value => value.RequireNotNull());
+                    var farm = farmModelHost.HostFarm;
+
+                    var adminService = SPWebService.AdministrationService;
+
+                    features = adminService.Features;
+
                     break;
 
                 case FeatureDefinitionScope.WebApplication:
 
                     assert.SkipProperty(m => m.Scope, "Correct web app scope");
 
-                    var webApplication = modelHost.WithAssertAndCast<WebApplicationModelHost>("modelHost", value => value.RequireNotNull());
-                    features = webApplication.HostWebApplication.Features;
+                    var webApplicationModelHost = modelHost.WithAssertAndCast<WebApplicationModelHost>("modelHost", value => value.RequireNotNull());
+                    var webApplication = webApplicationModelHost.HostWebApplication;
+
+                    features = webApplication.Features;
 
                     break;
 
@@ -69,7 +78,7 @@ namespace SPMeta2.Regression.SSOM.Validation
             if (definition.ForceActivate)
             {
                 assert
-                    .SkipProperty(m => m.Enable, "ForceActivate = true. Expect not null feature instance.")
+                    .SkipProperty(m => m.ForceActivate, "ForceActivate = true. Expect not null feature instance.")
                     .ShouldNotBeNull(spObject);
             }
             else

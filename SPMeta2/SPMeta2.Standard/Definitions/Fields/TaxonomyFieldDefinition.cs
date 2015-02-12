@@ -12,7 +12,7 @@ namespace SPMeta2.Standard.Definitions.Fields
     /// </summary>
     /// 
     [SPObjectType(SPObjectModelType.SSOM, "Microsoft.SharePoint.Taxonomy.TaxonomyField", "Microsoft.SharePoint.Taxonomy")]
-    //[SPObjectTypeAttribute(SPObjectModelType.CSOM, "Microsoft.SharePoint.Client.Field", "Microsoft.SharePoint.Client")]
+    [SPObjectType(SPObjectModelType.CSOM, "Microsoft.SharePoint.Client.Taxonomy.TaxonomyField", "Microsoft.SharePoint.Client.Taxonomy")]
 
     [DefaultParentHost(typeof(SiteDefinition))]
     [DefaultRootHost(typeof(SiteDefinition))]
@@ -34,18 +34,34 @@ namespace SPMeta2.Standard.Definitions.Fields
 
         #region properties
 
+        [ExpectValidation]
         public bool IsMulti { get; set; }
 
+        [ExpectValidation]
         public string SspName { get; set; }
+
+        [ExpectValidation]
         public Guid? SspId { get; set; }
+
+        [ExpectValidation]
         public bool? UseDefaultSiteCollectionTermStore { get; set; }
 
+        [ExpectValidation]
         public string TermSetName { get; set; }
+
+        [ExpectValidation]
         public Guid? TermSetId { get; set; }
+
+        [ExpectValidation]
         public int TermSetLCID { get; set; }
 
+        [ExpectValidation]
         public string TermName { get; set; }
+
+        [ExpectValidation]
         public Guid? TermId { get; set; }
+
+        [ExpectValidation]
         public int TermLCID { get; set; }
 
         #endregion
@@ -57,7 +73,7 @@ namespace SPMeta2.Standard.Definitions.Fields
             return new ToStringResult<TaxonomyFieldDefinition>(this, base.ToString())
 
                           .AddPropertyValue(p => p.IsMulti)
-                
+
                           .AddPropertyValue(p => p.SspName)
                           .AddPropertyValue(p => p.SspId)
                           .AddPropertyValue(p => p.UseDefaultSiteCollectionTermStore)

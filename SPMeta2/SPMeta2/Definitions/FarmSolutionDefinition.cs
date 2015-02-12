@@ -22,7 +22,7 @@ namespace SPMeta2.Definitions
     [DefaultRootHost(typeof(FarmDefinition))]
 
     [Serializable]
-
+    [ExpectWithExtensionMethod]
     public class FarmSolutionDefinition : SolutionDefinitionBase
     {
         #region constructors
@@ -50,6 +50,7 @@ namespace SPMeta2.Definitions
         {
             return new ToStringResult<FarmSolutionDefinition>(this)
                           .AddPropertyValue(p => p.FileName)
+                          .AddPropertyValue(p => p.SolutionId)
                           .AddPropertyValue(p => p.LCID)
                           .ToString();
         }

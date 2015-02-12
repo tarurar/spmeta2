@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios.Base
 {
-    public class SPMeta2RegresionScenarioTestBase : SPMeta2RegresionEventsTestBase
+    public class SPMeta2RegresionScenarioTestBase : SPMeta2RegresionTestBase
     {
         #region constructors
 
         public SPMeta2RegresionScenarioTestBase()
         {
-            ProvisionGenerationCount = 2;
+           RegressionService.ProvisionGenerationCount = 2;
             Rnd = new DefaultRandomService();
         }
 

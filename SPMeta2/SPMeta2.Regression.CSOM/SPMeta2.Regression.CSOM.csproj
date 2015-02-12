@@ -34,6 +34,22 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1212|AnyCPU'">
+    <OutputPath>bin\1212\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>bin\Debug\SPMeta2.Regression.CSOM.XML</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.SharePoint.Client, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -63,6 +79,7 @@
     <Compile Include="Base\CSOMTestBase.cs" />
     <Compile Include="CSOMValidationService.cs" />
     <Compile Include="ServiceFactory.cs" />
+    <Compile Include="Utils\FieldSchemaXmlUtils.cs" />
     <Compile Include="Validation\ClientAppDefinitionValidator.cs" />
     <Compile Include="Validation\ClientBreakRoleInheritanceDefinitionValidator.cs" />
     <Compile Include="Validation\ClientListFieldLinkDefinitionValidator.cs" />
@@ -101,7 +118,26 @@
     <Compile Include="Validation\ContentTypes\RemoveContentTypeLinksDefinitionValidator.cs" />
     <Compile Include="Validation\ContentTypes\UniqueContentTypeFieldsOrderDefinitionValidator.cs" />
     <Compile Include="Validation\ContentTypes\UniqueContentTypeOrderDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientEventReceiverDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\ComputedFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\CalculatedFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\GuidFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\NumberFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\URLFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\UserFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\LookupFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\BooleanFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\ChoiceFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\DateTimeFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\NoteFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\TextFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\CurrencyFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\MultiChoiceFieldDefinitionValidator.cs" />
     <Compile Include="Validation\Fields\BusinessDataFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientRegionalSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientInformationRightsManagementSettingsDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientRootWebDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientTreeViewSettingsDefinitionValidator.cs" />
     <Compile Include="Validation\WebApplicationModelHost.cs" />
     <Compile Include="Validation\Webparts\ClientWebPartDefinitionValidator.cs" />
     <Compile Include="Validation\Webparts\ContactFieldControlDefinitionValidator.cs" />
@@ -112,13 +148,13 @@
     <Compile Include="Validation\Webparts\ClientContentEditorWebpartDefinitionValidator.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SPMeta2.Containers\SPMeta2.Containers.csproj">
+      <Project>{091C48FB-27E3-4F84-897C-5DE7BB55A2D3}</Project>
+      <Name>SPMeta2.Containers</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SPMeta2.CSOM\SPMeta2.CSOM.csproj">
       <Project>{6F7EBF0C-7124-44D6-B9EC-302A54A19FE4}</Project>
       <Name>SPMeta2.CSOM</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SPMeta2.Regression\SPMeta2.Regression.csproj">
-      <Project>{2b5ca105-8d61-4704-b9ce-c1cba53aaab0}</Project>
-      <Name>SPMeta2.Regression</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Standard\SPMeta2.Standard.csproj">
       <Project>{F310878E-9B72-4C3C-AE5D-C60B3515E2FC}</Project>

@@ -18,6 +18,7 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(ListDefinition))]
 
     [Serializable]
+    [ExpectWithExtensionMethod]
     public class ListViewDefinition : DefinitionBase
     {
         #region constructors
@@ -28,6 +29,7 @@ namespace SPMeta2.Definitions
             IsPaged = true;
             RowLimit = 30;
 
+            Url = string.Empty;
             Query = string.Empty;
         }
 
@@ -42,6 +44,15 @@ namespace SPMeta2.Definitions
 
         [ExpectValidation]
         public string Title { get; set; }
+
+        /// <summary>
+        /// Allows to define URL of the target view.
+        /// 
+        /// If not empty, them LIstView will be created with "Url" value title and then renamed with "Title" values.
+        /// It helps to create "english" urls in non-english locales.
+        /// </summary>
+        [ExpectValidation]
+        public string Url { get; set; }
 
         /// <summary>
         /// RowLimit of the target list view.
@@ -77,6 +88,9 @@ namespace SPMeta2.Definitions
         /// 
         [ExpectValidation]
         public Collection<string> Fields { get; set; }
+
+        [ExpectValidation]
+        public string JSLink { get; set; }
 
         #endregion
 

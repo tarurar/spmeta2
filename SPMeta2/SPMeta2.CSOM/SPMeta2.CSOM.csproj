@@ -37,6 +37,49 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+	<DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Debug40\SPMeta2.CSOM.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <OutputPath>bin\Debug45\</OutputPath>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+	<DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Debug45\SPMeta2.CSOM.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>SPMeta2.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+    <OutputPath>bin\Debug40\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>bin\Debug\SPMeta2.CSOM.XML</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.SharePoint.Client, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -68,6 +111,7 @@
     <Compile Include="DefaultSyntax\WebPartDefinitionSyntax.cs" />
     <Compile Include="DefaultSyntax\WebtDefinitionSyntax.cs" />
     <Compile Include="Extensions\CamlQueryTemplates.cs" />
+    <Compile Include="Extensions\ClientRuntimeContextExtensions.cs" />
     <Compile Include="Extensions\ContentTypeExtensions.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />
     <Compile Include="Extensions\WebExtensions.cs" />
@@ -89,20 +133,35 @@
     <Compile Include="ModelHandlers\ContentTypes\RemoveContentTypeLinksModelHandler.cs" />
     <Compile Include="ModelHandlers\ContentTypes\UniqueContentTypeOrderModelHandler.cs" />
     <Compile Include="ModelHandlers\CSOMModelHandlerBase.cs" />
+    <Compile Include="ModelHandlers\EventReceiverModelHandler.cs" />
     <Compile Include="ModelHandlers\FeatureModelHandler.cs" />
     <Compile Include="ModelHandlers\FieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\CalculatedFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\ComputedFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\NumberFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\GuidFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\URLFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\UserFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\LookupFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\BooleanFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\DateTimeFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\MultiChoiceFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\TextFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\NoteFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\CurrencyFieldModelHandler.cs" />
+    <Compile Include="ModelHandlers\Fields\ChoiceFieldModelHandler.cs" />
     <Compile Include="ModelHandlers\Fields\BusinessDataFieldModelHandler.cs" />
     <Compile Include="ModelHandlers\FolderModelHandler.cs" />
+    <Compile Include="ModelHandlers\InformationRightsManagementSettingsModelHandler.cs" />
     <Compile Include="ModelHandlers\ListFieldLinkModelHandler.cs" />
     <Compile Include="ModelHandlers\ListItemFieldValueModelHandler.cs" />
     <Compile Include="ModelHandlers\ListItemModelHandler.cs" />
     <Compile Include="ModelHandlers\ListModelHandler.cs" />
-    <Compile Include="ModelHandlers\ListPropertyModelHandler.cs" />
     <Compile Include="ModelHandlers\ListViewModelHandler.cs" />
     <Compile Include="ModelHandlers\MasterPageSettingsModelHandler.cs" />
-    <Compile Include="ModelHandlers\PageDefinition.cs" />
     <Compile Include="ModelHandlers\PropertyModelHandler.cs" />
     <Compile Include="ModelHandlers\QuickLaunchNavigationNodeModelHandler.cs" />
+    <Compile Include="ModelHandlers\RegionalSettingsModelHandler.cs" />
     <Compile Include="ModelHandlers\SecurityGroupLinkModelHandler.cs" />
     <Compile Include="ModelHandlers\SecurityGroupModelHandler.cs" />
     <Compile Include="ModelHandlers\SecurityRoleLinkModelHandler.cs" />
@@ -110,7 +169,9 @@
     <Compile Include="ModelHandlers\SiteModelHandler.cs" />
     <Compile Include="ModelHandlers\SP2013WorkflowSubscriptionDefinitionModelHandler.cs" />
     <Compile Include="ModelHandlers\TopNavigationNodeModelHandler.cs" />
+    <Compile Include="ModelHandlers\TreeViewSettingsModelHandler.cs" />
     <Compile Include="ModelHandlers\UserCustomActionModelHandler.cs" />
+    <Compile Include="ModelHandlers\RootWebModelHandler.cs" />
     <Compile Include="ModelHandlers\WebModelHandler.cs" />
     <Compile Include="ModelHandlers\WebPartModelHandler.cs" />
     <Compile Include="ModelHandlers\WebPartPageModelHandler.cs" />
@@ -143,7 +204,6 @@
     </Compile>
     <Compile Include="Services\CSOMProvisionService.cs" />
     <Compile Include="ModelHandlers\SP2013WorkflowDefinitionHandler.cs" />
-    <Compile Include="Services\CSOMWebModelProvisionService.cs" />
     <Compile Include="Utils\UrlUtility.cs" />
     <Compile Include="WebPartPageTemplates.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -183,7 +243,9 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="SPMeta2.snk" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
