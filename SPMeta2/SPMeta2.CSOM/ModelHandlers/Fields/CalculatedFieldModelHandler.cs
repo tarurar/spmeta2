@@ -44,9 +44,9 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
             var typedFieldModel = fieldModel.WithAssertAndCast<CalculatedFieldDefinition>("model", value => value.RequireNotNull());
 
             fieldTemplate.SetAttribute(BuiltInFieldAttributes.LCID, typedFieldModel.CurrencyLocaleId);
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Formula, typedFieldModel.Formula);
 
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, (int)Enum.Parse(typeof(DateTimeFieldFormatType), typedFieldModel.DateFormat));
+            var dateFormat = String.IsNullOrEmpty(typedFieldModel.DateFormat) ? DateTimeFieldFormatType.DateOnly : Enum.Parse(typeof(DateTimeFieldFormatType), typedFieldModel.DateFormat);
+            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, dateFormat);
 
             if (typedFieldModel.ShowAsPercentage.HasValue)
                 fieldTemplate.SetAttribute(BuiltInFieldAttributes.Percentage, typedFieldModel.ShowAsPercentage.Value.ToString().ToUpper());
@@ -55,6 +55,9 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
                 fieldTemplate.SetAttribute(BuiltInFieldAttributes.Decimals, NumberFieldModelHandler.GetDecimalsValue(typedFieldModel.DisplayFormat));
 
             fieldTemplate.SetAttribute(BuiltInFieldAttributes.ResultType, typedFieldModel.OutputType);
+
+            var formulaNode = new XElement(BuiltInFieldAttributes.Formula, typedFieldModel.Formula);
+            fieldTemplate.Add(formulaNode);
 
             if (typedFieldModel.FieldReferences.Count > 0)
             {
