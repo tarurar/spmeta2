@@ -19,6 +19,12 @@ namespace SPMeta2.CSOM.Behaviours
             return view;
         }
 
+        public static View MakeHidden(this View view)
+        {
+            view.Hidden = true;
+
+            return view;
+        }
         #endregion
     }
 }
