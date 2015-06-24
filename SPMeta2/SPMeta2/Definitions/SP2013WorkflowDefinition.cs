@@ -1,4 +1,5 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Net.Configuration;
 using System.Text;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -20,8 +22,11 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(WebDefinition))]
     [DefaultParentHostAttribute(typeof(WebDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class SP2013WorkflowDefinition : DefinitionBase
     {
         #region constructors
@@ -40,6 +45,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string DisplayName { get; set; }
 
         /// <summary>
@@ -47,6 +55,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public string Xaml { get; set; }
 
         /// <summary>
@@ -54,6 +64,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool Override { get; set; }
 
         #endregion

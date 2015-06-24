@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions;
 using SPMeta2.Models;
 using SPMeta2.Syntax.Default.Extensions;
@@ -20,9 +20,17 @@ namespace SPMeta2.Syntax.Default
 
         public static ModelNode AddListFieldLink(this ModelNode model, FieldDefinition definition, Action<ModelNode> action)
         {
+            if (definition.Id != default(Guid))
+            {
+                return model.AddDefinitionNode(new ListFieldLinkDefinition
+                {
+                    FieldId = definition.Id
+                }, action);
+            }
+
             return model.AddDefinitionNode(new ListFieldLinkDefinition
             {
-                FieldId = definition.Id
+                FieldInternalName = definition.InternalName
             }, action);
         }
 
@@ -38,6 +46,24 @@ namespace SPMeta2.Syntax.Default
 
         #endregion
 
-      
+        #region array overload
+
+        public static ModelNode AddListFieldLinks(this ModelNode model, IEnumerable<ListFieldLinkDefinition> definitions)
+        {
+            foreach (var definition in definitions)
+                model.AddDefinitionNode(definition);
+
+            return model;
+        }
+
+        public static ModelNode AddListFieldLinks(this ModelNode model, IEnumerable<FieldDefinition> definitions)
+        {
+            foreach (var definition in definitions)
+                model.AddListFieldLink(definition);
+
+            return model;
+        }
+
+        #endregion
     }
 }

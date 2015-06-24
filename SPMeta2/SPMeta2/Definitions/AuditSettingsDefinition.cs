@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -18,7 +20,8 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
     [DefaultParentHost(typeof(SiteDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
 
     public class AuditSettingsDefinition : DefinitionBase
     {
@@ -34,6 +37,8 @@ namespace SPMeta2.Definitions
         #region properties
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public Collection<string> AuditFlags { get; set; }
 
         #endregion

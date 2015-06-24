@@ -1,12 +1,14 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,12 +23,15 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(FarmDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class ManagedAccountDefinition : DefinitionBase
     {
         #region properties
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string LoginName { get; set; }
 
         #endregion

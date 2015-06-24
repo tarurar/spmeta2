@@ -1,9 +1,11 @@
 ﻿using System;
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Standard.Definitions.Taxonomy
 {
@@ -18,6 +20,9 @@ namespace SPMeta2.Standard.Definitions.Taxonomy
 
     [ExpectAddHostExtensionMethod]
     [Serializable]
+    [DataContract]
+    [ExpectArrayExtensionMethod]
+
     public class TaxonomyTermDefinition : DefinitionBase
     {
         #region constructors
@@ -32,15 +37,22 @@ namespace SPMeta2.Standard.Definitions.Taxonomy
         #region properties
 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public string Description { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public Guid? Id { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public int LCID { get; set; }
 
         #endregion

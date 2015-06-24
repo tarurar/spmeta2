@@ -11,12 +11,18 @@ namespace SPMeta2.SSOM.ModelHandlers
 {
     public class FarmModelHandler : SSOMModelHandlerBase
     {
-        #region methods
+        #region properties
 
         public override Type TargetType
         {
             get { return typeof(FarmDefinition); }
         }
+
+        public static int ConcurrencyUpdateAttempts = 10;
+
+        #endregion
+
+        #region methods
 
         public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
         {
@@ -24,15 +30,31 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             action(farmModelHost);
 
-            try
+            if (farmModelHost.ShouldUpdateHost)
             {
-                farmModelHost.HostFarm.Update();
+                var count = 0;
+
+                while (count < ConcurrencyUpdateAttempts)
+                {
+                    try
+                    {
+                        farmModelHost.HostFarm.Update();
+                        farmModelHost.HostFarm = SPFarm.Local;
+
+                        break;
+                    }
+                    catch (SPUpdatedConcurrencyException)
+                    {
+                        count++;
+                        if (count > ConcurrencyUpdateAttempts)
+                        {
+                            throw;
+                        }
+                    }
+                }
             }
-            catch (SPUpdatedConcurrencyException )
-            {
-                farmModelHost.HostFarm.Update();
-            }
-            
+
+            farmModelHost.HostFarm = SPFarm.Local;
         }
 
         public override void DeployModel(object modelHost, DefinitionBase model)

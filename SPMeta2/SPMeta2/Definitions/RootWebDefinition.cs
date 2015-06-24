@@ -1,7 +1,9 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -16,10 +18,28 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectAddHostExtensionMethod]
     [ExpectWithExtensionMethod]
     public class RootWebDefinition : DefinitionBase
     {
+        #region properties
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
+        [IdentityKey]
+        [ExpectNullable]
+        public string Title { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
+        [ExpectNullable]
+        public string Description { get; set; }
+
+        #endregion
+
         #region methods
 
         public override string ToString()

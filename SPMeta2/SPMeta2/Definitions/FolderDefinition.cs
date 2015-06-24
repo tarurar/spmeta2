@@ -1,4 +1,5 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Text;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -20,8 +22,11 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(WebDefinition))]
     [DefaultParentHostAttribute(typeof(ListDefinition))]
     [ExpectAddHostExtensionMethod]
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class FolderDefinition : DefinitionBase
     {
         #region properties
@@ -32,6 +37,9 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         #endregion

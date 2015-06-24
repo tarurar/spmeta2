@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Utils;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Exceptions;
@@ -141,12 +141,59 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         private void ProcessWebModuleFile(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
         {
-            throw new SPMeta2NotImplementedException("Module provision under web folders is not implemented yet.");
+            var folder = folderHost.CurrentWebFolder;
+
+            var currentFile = folder.ParentWeb.GetFile(GetSafeFileUrl(folder, moduleFile));
+
+            InvokeOnModelEvent(this, new ModelEventArgs
+            {
+                CurrentModelNode = null,
+                Model = null,
+                EventType = ModelEventType.OnProvisioning,
+                Object = currentFile.Exists ? currentFile : null,
+                ObjectType = typeof(SPFile),
+                ObjectDefinition = moduleFile,
+                ModelHost = folderHost
+            });
+
+            if (moduleFile.Overwrite)
+            {
+                var file = folder.Files.Add(moduleFile.FileName, moduleFile.Content, moduleFile.Overwrite);
+
+                InvokeOnModelEvent(this, new ModelEventArgs
+                {
+                    CurrentModelNode = null,
+                    Model = null,
+                    EventType = ModelEventType.OnProvisioned,
+                    Object = file,
+                    ObjectType = typeof(SPFile),
+                    ObjectDefinition = moduleFile,
+                    ModelHost = folderHost
+                });
+            }
+            else
+            {
+                InvokeOnModelEvent(this, new ModelEventArgs
+                {
+                    CurrentModelNode = null,
+                    Model = null,
+                    EventType = ModelEventType.OnProvisioned,
+                    Object = currentFile.Exists ? currentFile : null,
+                    ObjectType = typeof(SPFile),
+                    ObjectDefinition = moduleFile,
+                    ModelHost = folderHost
+                });
+            }
+
+            folder.Update();
         }
 
         private string GetSafeFileUrl(SPFolder folder, ModuleFileDefinition moduleFile)
         {
-            return folder.ServerRelativeUrl + "/" + moduleFile.FileName;
+            if (folder.ServerRelativeUrl != "/")
+                return folder.ServerRelativeUrl + "/" + moduleFile.FileName;
+
+            return moduleFile.FileName;
         }
 
         public static void WithSafeFileOperation(
@@ -164,14 +211,20 @@ namespace SPMeta2.SSOM.ModelHandlers
             if (onBeforeAction != null)
                 onBeforeAction(file);
 
-            if (list != null && (file.Exists && file.CheckOutType != SPFile.SPCheckOutType.None))
-                file.UndoCheckOut();
+            // are we inside ocument libary, so that check in stuff is needed?
+            var isDocumentLibrary = list != null && list.BaseType == SPBaseType.DocumentLibrary;
 
-            if (list != null && (list.EnableMinorVersions && file.Exists && file.Level == SPFileLevel.Published))
-                file.UnPublish("Provision");
+            if (isDocumentLibrary)
+            {
+                if (list != null && (file.Exists && file.CheckOutType != SPFile.SPCheckOutType.None))
+                    file.UndoCheckOut();
 
-            if (list != null && (file.Exists && file.CheckOutType == SPFile.SPCheckOutType.None))
-                file.CheckOut();
+                if (list != null && (list.EnableMinorVersions && file.Exists && file.Level == SPFileLevel.Published))
+                    file.UnPublish("Provision");
+
+                if (list != null && (file.Exists && file.CheckOutType == SPFile.SPCheckOutType.None))
+                    file.CheckOut();
+            }
 
             SPFile newFile;
 
@@ -185,15 +238,17 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             newFile.Update();
 
-            if (list != null && (file.Exists && file.CheckOutType != SPFile.SPCheckOutType.None))
-                newFile.CheckIn("Provision");
+            if (isDocumentLibrary)
+            {
+                if (list != null && (file.Exists && file.CheckOutType != SPFile.SPCheckOutType.None))
+                    newFile.CheckIn("Provision");
 
-            if (list != null && (list.EnableMinorVersions))
-                newFile.Publish("Provision");
+                if (list != null && (list.EnableMinorVersions))
+                    newFile.Publish("Provision");
 
-            if (list != null && list.EnableModeration)
-                newFile.Approve("Provision");
-
+                if (list != null && list.EnableModeration)
+                    newFile.Approve("Provision");
+            }
         }
 
         public static void DeployModuleFile(SPFolder folder,
@@ -204,7 +259,14 @@ namespace SPMeta2.SSOM.ModelHandlers
             Action<SPFile> beforeProvision,
             Action<SPFile> afterProvision)
         {
-            var list = folder.DocumentLibrary;
+            // doc libs
+            SPList list = folder.DocumentLibrary;
+
+            // fallback for the lists assuming deployment to Forms or other places
+            if (list == null)
+            {
+                list = folder.ParentWeb.Lists[folder.ParentListId];
+            }
 
             WithSafeFileOperation(list, folder, fileUrl, fileName, fileContent,
                 overwrite,
@@ -222,7 +284,8 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         private void ProcessFile(
             object modelHost,
-            SPFolder folder, ModuleFileDefinition moduleFile)
+            SPFolder folder,
+            ModuleFileDefinition moduleFile)
         {
             DeployModuleFile(
                 folder,
@@ -246,6 +309,26 @@ namespace SPMeta2.SSOM.ModelHandlers
                 },
                 after =>
                 {
+                    if (!string.IsNullOrEmpty(moduleFile.ContentTypeId) ||
+                        !string.IsNullOrEmpty(moduleFile.ContentTypeName))
+                    {
+                        var list = folder.ParentWeb.Lists[folder.ParentListId];
+
+                        if (!string.IsNullOrEmpty(moduleFile.ContentTypeId))
+                            after.ListItemAllFields["ContentTypeId"] = LookupListContentTypeById(list, moduleFile.ContentTypeId);
+
+                        if (!string.IsNullOrEmpty(moduleFile.ContentTypeName))
+                            after.ListItemAllFields["ContentTypeId"] = LookupListContentTypeByName(list, moduleFile.ContentTypeName);
+
+                        after.ListItemAllFields.Update();
+                    }
+
+                    if (moduleFile.DefaultValues.Count > 0)
+                    {
+                        EnsureDefaultValues(after.ListItemAllFields, moduleFile);
+                        after.ListItemAllFields.Update();
+                    }
+
                     InvokeOnModelEvent(this, new ModelEventArgs
                     {
                         CurrentModelNode = null,
@@ -257,6 +340,47 @@ namespace SPMeta2.SSOM.ModelHandlers
                         ModelHost = modelHost
                     });
                 });
+        }
+
+        private void EnsureDefaultValues(SPListItem newFileItem, ModuleFileDefinition definition)
+        {
+            foreach (var defaultValue in definition.DefaultValues)
+            {
+                if (!string.IsNullOrEmpty(defaultValue.FieldName))
+                {
+                    if (newFileItem.Fields.ContainsFieldWithStaticName(defaultValue.FieldName))
+                    {
+                        if (newFileItem[defaultValue.FieldName] == null)
+                            newFileItem[defaultValue.FieldName] = defaultValue.Value;
+                    }
+                }
+                else if (defaultValue.FieldId.HasValue && defaultValue.FieldId != default(Guid))
+                {
+                    if (newFileItem.Fields.OfType<SPField>().Any(f => f.Id == defaultValue.FieldId.Value))
+                    {
+                        if (newFileItem[defaultValue.FieldId.Value] == null)
+                            newFileItem[defaultValue.FieldId.Value] = defaultValue.Value;
+                    }
+                }
+            }
+        }
+
+        protected SPContentTypeId LookupListContentTypeByName(SPList targetList, string name)
+        {
+            var targetContentType = targetList.ContentTypes
+                   .OfType<SPContentType>()
+                   .FirstOrDefault(ct => ct.Name.ToUpper() == name.ToUpper());
+
+            if (targetContentType == null)
+                throw new SPMeta2Exception(string.Format("Cannot find content type by name ['{0}'] in list: [{1}]",
+                    name, targetList.Title));
+
+            return targetContentType.Id;
+        }
+
+        protected SPContentTypeId LookupListContentTypeById(SPList targetList, string contentTypeId)
+        {
+            return targetList.ContentTypes.BestMatch(new SPContentTypeId(contentTypeId));
         }
 
         #endregion

@@ -20,6 +20,7 @@ using SPMeta2.Models;
 using SPMeta2.Regression.CSOM;
 using SPMeta2.Regression.CSOM.Standard.Validation.Fields;
 using SPMeta2.Utils;
+using SPMeta2.Services.Impl;
 
 namespace SPMeta2.Containers.CSOM
 {
@@ -45,6 +46,9 @@ namespace SPMeta2.Containers.CSOM
         {
             _provisionService = new CSOMProvisionService();
             _validationService = new CSOMValidationService();
+
+            // TODO, setup a high level validation registration
+            _provisionService.PreDeploymentServices.Add(new DefaultRequiredPropertiesValidationService());
 
             var csomStandartAsm = typeof(TaxonomyFieldModelHandler).Assembly;
 
@@ -146,6 +150,28 @@ namespace SPMeta2.Containers.CSOM
         public override void DeployWebApplicationModel(ModelNode model)
         {
             throw new SPMeta2UnsupportedCSOMRunnerException();
+        }
+
+        public override void DeployListModel(ModelNode model)
+        {
+            foreach (var webUrl in WebUrls)
+            {
+                Trace.WriteLine(string.Format("[INF]    Running on web: [{0}]", webUrl));
+
+                WithCSOMContext(webUrl, context =>
+                {
+                    for (var provisionGeneration = 0;
+                        provisionGeneration < ProvisionGenerationCount;
+                        provisionGeneration++)
+                    {
+                        if (EnableDefinitionProvision)
+                            _provisionService.DeployModel(WebModelHost.FromClientContext(context), model);
+
+                        if (EnableDefinitionValidation)
+                            _validationService.DeployModel(WebModelHost.FromClientContext(context), model);
+                    }
+                });
+            }
         }
 
         /// <summary>

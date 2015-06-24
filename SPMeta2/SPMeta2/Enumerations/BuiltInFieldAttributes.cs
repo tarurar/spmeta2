@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SPMeta2.Enumerations
 {
@@ -13,6 +13,8 @@ namespace SPMeta2.Enumerations
     public static class BuiltInFieldAttributes
     {
         #region properties
+
+        public static string CanToggleHidden = "CanToggleHidden";
 
         public static string ID = "ID";
         public static string StaticName = "StaticName";

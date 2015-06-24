@@ -5,7 +5,6 @@ using Microsoft.SharePoint.Client;
 using SPMeta2.CSOM.DefaultSyntax;
 using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
-using SPMeta2.CSOM.Utils;
 using SPMeta2.Definitions;
 using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
@@ -13,6 +12,7 @@ using SPMeta2.ModelHosts;
 using SPMeta2.Services;
 using SPMeta2.Utils;
 using SPMeta2.Common;
+using UrlUtility = SPMeta2.Utils.UrlUtility;
 
 namespace SPMeta2.CSOM.ModelHandlers
 {
@@ -89,6 +89,7 @@ namespace SPMeta2.CSOM.ModelHandlers
                     }
                     else
                     {
+                        folderModelHost.CurrentLibraryFolder = list.RootFolder;
                         folderModelHost.CurrentListItem = null;
                     }
 
@@ -280,11 +281,8 @@ namespace SPMeta2.CSOM.ModelHandlers
                 {
                     TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Creating list by TemplateName: [{0}]", listModel.TemplateName);
 
-                    context.Load(web, tmpWeb => tmpWeb.ListTemplates);
-                    context.ExecuteQueryWithTrace();
 
-                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Fetching all list templates and matching target one.");
-                    var listTemplate = FindListTemplateByInternalName(web.ListTemplates, listModel.TemplateName);
+                    var listTemplate = ResolveListTemplate(webModelHost, listModel);
 
                     listInfo.TemplateFeatureId = listTemplate.FeatureId;
                     listInfo.TemplateType = listTemplate.ListTemplateTypeKind;
@@ -298,24 +296,18 @@ namespace SPMeta2.CSOM.ModelHandlers
 
                 var newList = web.Lists.Add(listInfo);
                 currentList = newList;
+
+                currentList.Update();
+                context.ExecuteQueryWithTrace();
+
+                currentList = LoadCurrentList(web, listModel);
             }
             else
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing list");
             }
 
-            if (listModel.IrmEnabled.HasValue)
-                currentList.IrmEnabled = listModel.IrmEnabled.Value;
-
-            if (listModel.IrmExpire.HasValue)
-                currentList.IrmExpire = listModel.IrmExpire.Value;
-
-            if (listModel.IrmReject.HasValue)
-                currentList.IrmReject = listModel.IrmReject.Value;
-
-            currentList.Title = listModel.Title;
-            currentList.Description = listModel.Description ?? string.Empty;
-            currentList.ContentTypesEnabled = listModel.ContentTypesEnabled;
+            MapListProperties(currentList, listModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -335,6 +327,116 @@ namespace SPMeta2.CSOM.ModelHandlers
             context.ExecuteQueryWithTrace();
         }
 
+        protected virtual ListTemplate ResolveListTemplate(WebModelHost host, ListDefinition listModel)
+        {
+            var context = host.HostClientContext;
+
+            var site = host.HostSite;
+            var web = host.HostWeb;
+
+            // internal names would be with '.STP', so just a little bit easier to define and find
+            var templateName = listModel.TemplateName.ToUpper().Replace(".STP", string.Empty);
+
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Fetching all web.ListTemplates");
+
+            context.Load(web, tmpWeb => tmpWeb.ListTemplates);
+            context.ExecuteQueryWithTrace();
+
+            var listTemplate = web.ListTemplates
+                                  .FirstOrDefault(t => t.InternalName.ToUpper().Replace(".STP", string.Empty) == templateName);
+
+            if (listTemplate == null)
+            {
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall,
+                    "Searching list template in Site.GetCustomListTemplates(web)");
+
+                var customListTemplates = site.GetCustomListTemplates(web);
+                context.Load(customListTemplates);
+                context.ExecuteQueryWithTrace();
+
+                listTemplate = customListTemplates
+                                  .FirstOrDefault(t => t.InternalName.ToUpper().Replace(".STP", string.Empty) == templateName);
+            }
+
+            if (listTemplate == null)
+            {
+                throw new SPMeta2Exception(string.Format("Can't find custom list template with internal Name:[{0}]",
+                    listModel.TemplateName));
+            }
+            return listTemplate;
+        }
+
+        private static void MapListProperties(List list, ListDefinition definition)
+        {
+            list.Title = definition.Title;
+            list.Description = definition.Description ?? string.Empty;
+            list.ContentTypesEnabled = definition.ContentTypesEnabled;
+
+            if (definition.Hidden.HasValue)
+                list.Hidden = definition.Hidden.Value;
+
+            if (!string.IsNullOrEmpty(definition.DraftVersionVisibility))
+            {
+                var draftOption = (DraftVisibilityType)Enum.Parse(typeof(DraftVisibilityType), definition.DraftVersionVisibility);
+                list.DraftVersionVisibility = draftOption;
+            }
+
+            // IRM
+            if (definition.IrmEnabled.HasValue)
+                list.IrmEnabled = definition.IrmEnabled.Value;
+
+            if (definition.IrmExpire.HasValue)
+                list.IrmExpire = definition.IrmExpire.Value;
+
+            if (definition.IrmReject.HasValue)
+                list.IrmReject = definition.IrmReject.Value;
+
+            // the rest
+            if (definition.EnableAttachments.HasValue)
+                list.EnableAttachments = definition.EnableAttachments.Value;
+
+            if (definition.EnableFolderCreation.HasValue)
+                list.EnableFolderCreation = definition.EnableFolderCreation.Value;
+
+            if (definition.EnableMinorVersions.HasValue)
+                list.EnableMinorVersions = definition.EnableMinorVersions.Value;
+
+            if (definition.EnableModeration.HasValue)
+                list.EnableModeration = definition.EnableModeration.Value;
+
+            if (definition.EnableVersioning.HasValue)
+                list.EnableVersioning = definition.EnableVersioning.Value;
+
+            if (definition.ForceCheckout.HasValue)
+                list.ForceCheckout = definition.ForceCheckout.Value;
+
+            if (definition.Hidden.HasValue)
+                list.Hidden = definition.Hidden.Value;
+
+            if (definition.NoCrawl.HasValue)
+                list.NoCrawl = definition.NoCrawl.Value;
+
+            if (definition.OnQuickLaunch.HasValue)
+                list.OnQuickLaunch = definition.OnQuickLaunch.Value;
+
+            if (definition.MajorVersionLimit.HasValue)
+            {
+                /// CSOM is not supported yet as M2 s build with SP2013 SP1+ assemblies.
+                /// https://officespdev.uservoice.com/forums/224641-general/suggestions/6016131-majorversionlimit-majorwithminorversionslimit-pr
+
+                //list.MajorVersionLimit = definition.MajorVersionLimit.Value;
+            }
+
+            if (definition.MajorWithMinorVersionsLimit.HasValue)
+            {
+                /// CSOM is not supported yet as M2 s build with SP2013 SP1+ assemblies.
+                /// https://officespdev.uservoice.com/forums/224641-general/suggestions/6016131-majorversionlimit-majorwithminorversionslimit-pr
+
+
+                //list.MajorWithMinorVersionsLimit = definition.MajorWithMinorVersionsLimit.Value;
+            }
+        }
+
         public static List FindListByUrl(IEnumerable<List> listCollection, string listUrl)
         {
             foreach (var list in listCollection)
@@ -346,27 +448,6 @@ namespace SPMeta2.CSOM.ModelHandlers
             return null;
         }
 
-        //protected List FindListByTitle(ListCollection listCollection, string listTitle)
-        //{
-        //    foreach (var list in listCollection)
-        //    {
-        //        if (System.String.Compare(list.Title, listTitle, System.StringComparison.OrdinalIgnoreCase) == 0)
-        //            return list;
-        //    }
-
-        //    return null;
-        //}
-
-        protected ListTemplate FindListTemplateByInternalName(IEnumerable<ListTemplate> listTemplateCollection, string listTemplateInternalName)
-        {
-            foreach (var listTemplate in listTemplateCollection)
-            {
-                if (System.String.Compare(listTemplate.InternalName, listTemplateInternalName, System.StringComparison.OrdinalIgnoreCase) == 0)
-                    return listTemplate;
-            }
-
-            return null;
-        }
 
         #endregion
 

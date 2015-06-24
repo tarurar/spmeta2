@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.Webparts
 {
@@ -20,18 +21,28 @@ namespace SPMeta2.Definitions.Webparts
     [DefaultParentHost(typeof(WebPartPageDefinition))]
 
     [Serializable]
+    [DataContract]
     public class ClientWebPartDefinition : WebPartDefinition
     {
         #region properties
 
+        [ExpectRequired]
+        [DataMember]
         public Guid FeatureId { get; set; }
+
+        [ExpectRequired]
+        [DataMember]
         public Guid ProductId { get; set; }
+
+        //[ExpectRequired]
+        [DataMember]
         public Guid ProductWebId { get; set; }
 
+        [ExpectRequired]
+        [DataMember]
         public string WebPartName { get; set; }
 
         #endregion
-
 
         #region methods
 

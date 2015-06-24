@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Standard.Definitions
 {
@@ -18,16 +20,21 @@ namespace SPMeta2.Standard.Definitions
     [DefaultParentHost(typeof(SiteDefinition))]
     [DefaultRootHost(typeof(SiteDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class AudienceDefinition : DefinitionBase
     {
         #region properties
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string AudienceName { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string AudienceDescription { get; set; }
 
         #endregion

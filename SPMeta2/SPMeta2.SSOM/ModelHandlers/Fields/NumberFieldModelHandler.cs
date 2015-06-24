@@ -31,8 +31,22 @@ namespace SPMeta2.SSOM.ModelHandlers.Fields
             // let base setting be setup
             base.ProcessFieldProperties(field, fieldModel);
 
-            field.ValidationMessage = fieldModel.ValidationMessage ?? string.Empty;
-            field.ValidationFormula = fieldModel.ValidationFormula ?? string.Empty;
+            if (!string.IsNullOrEmpty(fieldModel.ValidationMessage))
+                field.ValidationMessage = fieldModel.ValidationMessage;
+
+            if (!string.IsNullOrEmpty(fieldModel.ValidationFormula))
+                field.ValidationFormula = fieldModel.ValidationFormula;
+
+            var typedFieldModel = fieldModel.WithAssertAndCast<NumberFieldDefinition>("model", value => value.RequireNotNull());
+            var typedField = field as SPFieldNumber;
+
+            if (typedFieldModel.MinimumValue.HasValue)
+                typedField.MinimumValue = typedFieldModel.MinimumValue.Value;
+
+            if (typedFieldModel.MaximumValue.HasValue)
+                typedField.MaximumValue = typedFieldModel.MaximumValue.Value;
+
+            typedField.ShowAsPercentage = typedFieldModel.ShowAsPercentage;
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)

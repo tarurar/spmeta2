@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Microsoft.SharePoint;
 using Microsoft.SharePoint.Taxonomy;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
@@ -13,6 +13,7 @@ using SPMeta2.SSOM.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.SSOM.Standard.ModelHosts;
 using SPMeta2.Standard.Definitions.Taxonomy;
+using SPMeta2.Standard.Utils;
 using SPMeta2.Utils;
 
 namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
@@ -34,6 +35,14 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
         {
             var definition = model.WithAssertAndCast<TaxonomyTermDefinition>("model", value => value.RequireNotNull());
 
+            // TODO, move to common validator infrastructure
+            if (!TaxonomyUtility.IsValidTermName(definition.Name))
+            {
+                throw new SPMeta2Exception(
+                    string.Format("Term name [{0}] cannot contain any of the following characters: \" ; < > | and Tab",
+                        definition.Name));
+            }
+
             if (modelHost is TermModelHost)
                 DeployTermUnderTerm(modelHost, modelHost as TermModelHost, definition);
             else if (modelHost is TermSetModelHost)
@@ -52,6 +61,7 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
             Group group = null;
             TermSet termSet = null;
             TermStore termStore = null;
+            SPSite hostSite = null;
 
             if (modelHost is TermModelHost)
             {
@@ -60,6 +70,7 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
                 group = h.HostGroup;
                 termSet = h.HostTermSet;
                 termStore = h.HostTermStore;
+                hostSite = h.HostSite;
 
                 currentTerm = FindTermInTerm(h.HostTerm, definition);
             }
@@ -70,6 +81,7 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
                 termStore = h.HostTermStore;
                 group = h.HostGroup;
                 termSet = h.HostTermSet;
+                hostSite = h.HostSite;
 
                 currentTerm = FindTermInTermSet(h.HostTermSet, definition);
             }
@@ -78,10 +90,12 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
             {
                 HostGroup = group,
                 HostTermSet = termSet,
-                HostTerm = currentTerm
+                HostTerm = currentTerm,
+                HostTermStore = termStore,
+                HostSite = hostSite
             });
 
-            //termStore.CommitAll();
+            termStore.CommitAll();
         }
 
         private void DeployTermUnderTerm(object modelHost, TermModelHost termModelHost, TaxonomyTermDefinition termModel)
@@ -137,6 +151,8 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
                     ModelHost = modelHost
                 });
             }
+
+            termModelHost.HostTermStore.CommitAll();
         }
 
         private void DeployTermUnderTermSet(object modelHost, TermSetModelHost groupModelHost, TaxonomyTermDefinition termModel)
@@ -200,10 +216,8 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
         {
             Term result = null;
 
-            // TODO
-
             if (termModel.Id.HasValue)
-                result = term.Terms[termModel.Id.Value];
+                result = term.Terms.FirstOrDefault(t => t.Id == termModel.Id.Value);
             else if (!string.IsNullOrEmpty(termModel.Name))
                 result = term.Terms.FirstOrDefault(t => t.Name == termModel.Name);
 

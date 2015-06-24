@@ -62,13 +62,38 @@
     <Compile Include="Assertion\PropertyValidationResult.cs" />
     <Compile Include="Common\EventHits.cs" />
     <Compile Include="Consts\EnvironmentConsts.cs" />
+    <Compile Include="DefaultDwpWebpartTemplates.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DefaultDwpWebpartTemplates.resx</DependentUpon>
+    </Compile>
+    <Compile Include="DefaultMasterPagePreviewTemplates.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DefaultMasterPagePreviewTemplates.resx</DependentUpon>
+    </Compile>
+    <Compile Include="DefaultMasterPageTemplates.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DefaultMasterPageTemplates.resx</DependentUpon>
+    </Compile>
     <Compile Include="DefaultWebpartTemplates.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>DefaultWebpartTemplates.resx</DependentUpon>
     </Compile>
     <Compile Include="DefinitionGenerators\AuditSettingsDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ComposedLookItemLinkDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\DeleteWebPartsDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\DependentLookupFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\GeolocationFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\OutcomeChoiceFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ListItemFieldValuesDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\MasterPagePreviewDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\MasterPageDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ResetRoleInheritanceDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\DocumentParserDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ComposedLookItemDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\TreeViewSettingsDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\DiagnosticsServiceBaseDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\TargetApplicationDefinitionGenerator.cs" />
@@ -134,7 +159,10 @@
     <Compile Include="DefinitionGenerators\UserCustomActionDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\WebApplicationDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\RootWebDefinitionGenerator.cs" />
-    <Compile Include="DefinitionGenerators\Webparts\ContentByQueryWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\SilverlightWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\PageViewerWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\UserCodeWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\WebPartGalleryFileDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\WelcomePageDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\WebDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\Webparts\ClientWebPartDefinitionGenerator.cs" />
@@ -160,6 +188,11 @@
     <Compile Include="Services\RegressionAssertService.cs" />
     <Compile Include="Services\RegressionTestService.cs" />
     <Compile Include="Services\Rnd\DefaultRandomService.cs" />
+    <Compile Include="Templates\Documents\DocumentTemplates.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DocumentTemplates.resx</DependentUpon>
+    </Compile>
     <Compile Include="Utils\RunnerEnvironment.cs" />
     <Compile Include="Utils\TraceUtils.cs" />
     <Compile Include="WorkflowXAMLDefinitions.Designer.cs">
@@ -183,9 +216,25 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="DefaultDwpWebpartTemplates.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>DefaultDwpWebpartTemplates.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DefaultMasterPagePreviewTemplates.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>DefaultMasterPagePreviewTemplates.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DefaultMasterPageTemplates.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>DefaultMasterPageTemplates.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="DefaultWebpartTemplates.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>DefaultWebpartTemplates.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Templates\Documents\DocumentTemplates.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>DocumentTemplates.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="WorkflowXAMLDefinitions.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -193,13 +242,16 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Templates\Apps\SPMeta2.Sandbox.TestSPHostedApp.app" />
+    <None Include="Resources\SPMeta2-MSWord-Template.dotx" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Templates\Apps\SPMeta2.Sandbox.TestSandboxApp.wsp" />
+    <EmbeddedResource Include="Templates\Apps\SPMeta2.Containers.SandboxSolutionContainer.wsp" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Templates\Apps\SPMeta2.Sandbox.TestFarmApp.wsp" />
+    <None Include="Resources\Oslo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Seattle.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

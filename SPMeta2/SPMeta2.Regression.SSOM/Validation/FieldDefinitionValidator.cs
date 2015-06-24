@@ -3,8 +3,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.Containers.Assertion;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Enumerations;
 using SPMeta2.Exceptions;
-
 using SPMeta2.SSOM.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.Utils;
@@ -19,10 +19,18 @@ namespace SPMeta2.Regression.SSOM.Validation
             var definition = model.WithAssertAndCast<FieldDefinition>("model", value => value.RequireNotNull());
             var spObject = GetField(modelHost, definition);
 
+            HostList = ExtractListFromHost(modelHost);
+
             var assert = ServiceFactory.AssertService.NewAssert(model, definition, spObject);
 
             ValidateField(assert, spObject, definition);
         }
+
+        protected bool IsListScopedField
+        {
+            get { return HostList != null; }
+        }
+        protected SPList HostList { get; set; }
 
         protected virtual void CustomFieldTypeValidation(AssertPair<FieldDefinition, SPField> assert, SPField spObject,
             FieldDefinition definition)
@@ -37,12 +45,70 @@ namespace SPMeta2.Regression.SSOM.Validation
                 .ShouldBeEqual(m => m.Title, o => o.Title)
                 //.ShouldBeEqual(m => m.InternalName, o => o.InternalName)
                     .ShouldBeEqual(m => m.Id, o => o.Id)
-                    .ShouldBeEqual(m => m.Required, o => o.Required)
-                    .ShouldBeEqual(m => m.Description, o => o.Description)
-                //.ShouldBeEqual(m => m.FieldType, o => o.TypeAsString)
-                    .ShouldBeEqual(m => m.Group, o => o.Group);
+                    .ShouldBeEqual(m => m.Required, o => o.Required);
+            //.ShouldBeEqual(m => m.Description, o => o.Description)
+            //.ShouldBeEqual(m => m.FieldType, o => o.TypeAsString)
+            //.ShouldBeEqual(m => m.Group, o => o.Group);
+
+            if (!string.IsNullOrEmpty(definition.Group))
+                assert.ShouldBeEqual(m => m.Group, o => o.Group);
+            else
+                assert.SkipProperty(m => m.Group);
+
+            if (!string.IsNullOrEmpty(definition.StaticName))
+                assert.ShouldBeEqual(m => m.StaticName, o => o.StaticName);
+            else
+                assert.SkipProperty(m => m.StaticName);
+
+            if (!string.IsNullOrEmpty(definition.Description))
+                assert.ShouldBeEqual(m => m.Description, o => o.Description);
+            else
+                assert.SkipProperty(m => m.Description);
+
 
             CustomFieldTypeValidation(assert, spObject, definition);
+
+            if (definition.AddFieldOptions.HasFlag(BuiltInAddFieldOptions.DefaultValue))
+            {
+                assert.SkipProperty(m => m.AddFieldOptions, "BuiltInAddFieldOptions.DefaultValue. Skipping.");
+            }
+            else
+            {
+                // TODO
+            }
+
+            if (definition.AddToDefaultView)
+            {
+                if (IsListScopedField)
+                {
+                    assert.ShouldBeEqual((p, s, d) =>
+                    {
+                        var srcProp = s.GetExpressionValue(m => m.AddToDefaultView);
+                        var field = HostList.Fields[definition.Id];
+
+                        var isValid = HostList.DefaultView
+                            .ViewFields
+                            .ToStringCollection()
+                            .Contains(field.InternalName);
+
+                        return new PropertyValidationResult
+                        {
+                            Tag = p.Tag,
+                            Src = srcProp,
+                            Dst = null,
+                            IsValid = isValid
+                        };
+                    });
+                }
+                else
+                {
+                    assert.SkipProperty(m => m.AddToDefaultView, "IsListScopedField = true. AddToDefaultView is ignored. Skipping.");
+                }
+            }
+            else
+            {
+                assert.SkipProperty(m => m.AddToDefaultView, "AddToDefaultView is false. Skipping.");
+            }
 
             if (definition.AdditionalAttributes.Count == 0)
             {
@@ -131,8 +197,21 @@ namespace SPMeta2.Regression.SSOM.Validation
 
             assert.ShouldBeEqual(m => m.Hidden, o => o.Hidden);
 
-            assert.ShouldBeEqual(m => m.ValidationFormula, o => o.ValidationFormula);
-            assert.ShouldBeEqual(m => m.ValidationMessage, o => o.ValidationMessage);
+            if (definition.EnforceUniqueValues.HasValue)
+                assert.ShouldBeEqual(m => m.EnforceUniqueValues, o => o.EnforceUniqueValues);
+            else
+                assert.SkipProperty(m => m.EnforceUniqueValues, "EnforceUniqueValues is NULL");
+
+
+            if (!string.IsNullOrEmpty(definition.ValidationFormula))
+                assert.ShouldBeEqual(m => m.ValidationFormula, o => o.ValidationFormula);
+            else
+                assert.SkipProperty(m => m.ValidationFormula, string.Format("ValidationFormula value is not set. Skippping."));
+
+            if (!string.IsNullOrEmpty(definition.ValidationMessage))
+                assert.ShouldBeEqual(m => m.ValidationMessage, o => o.ValidationMessage);
+            else
+                assert.SkipProperty(m => m.ValidationMessage, string.Format("ValidationFormula value is not set. Skippping."));
 
             if (!string.IsNullOrEmpty(definition.DefaultValue))
                 assert.ShouldBePartOf(m => m.DefaultValue, o => o.DefaultValue);

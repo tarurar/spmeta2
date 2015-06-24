@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint.Taxonomy;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
@@ -27,9 +27,24 @@ namespace SPMeta2.Regression.SSOM.Standard.Validation.Taxonomy
             var assert = ServiceFactory.AssertService
                 .NewAssert(definition, spObject)
                 .ShouldNotBeNull(spObject)
-                .ShouldBeEqual(m => m.IsAvailableForTagging, o => o.IsAvailableForTagging)
-                .ShouldBeEqual(m => m.Name, o => o.Name)
-                .ShouldBeEqual(m => m.Description, o => o.Description);
+                //.ShouldBeEqual(m => m.IsAvailableForTagging, o => o.IsAvailableForTagging)
+                //.ShouldBeEqual(m => m.IsOpenForTermCreation, o => o.IsOpenForTermCreation)
+                .ShouldBeEqual(m => m.Name, o => o.Name);
+
+            if (definition.IsAvailableForTagging.HasValue)
+                assert.ShouldBeEqual(m => m.IsAvailableForTagging, o => o.IsAvailableForTagging);
+            else
+                assert.SkipProperty(m => m.IsAvailableForTagging, "IsAvailableForTagging is null. Skipping property.");
+
+            if (definition.IsOpenForTermCreation.HasValue)
+                assert.ShouldBeEqual(m => m.IsOpenForTermCreation, o => o.IsOpenForTermCreation);
+            else
+                assert.SkipProperty(m => m.IsOpenForTermCreation, "IsOpenForTermCreation is null. Skipping property.");
+
+            if (!string.IsNullOrEmpty(definition.Description))
+                assert.ShouldBeEqual(m => m.Description, o => o.Description);
+            else
+                assert.SkipProperty(m => m.Description, "Description is null. Skipping property.");
 
             assert.SkipProperty(m => m.LCID, "Can't get LCID withon OM. Should be set while provision.");
 

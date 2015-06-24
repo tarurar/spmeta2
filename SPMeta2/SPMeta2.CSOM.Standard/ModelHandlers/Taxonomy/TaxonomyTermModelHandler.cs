@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
@@ -12,6 +13,7 @@ using SPMeta2.Services;
 using SPMeta2.Standard.Definitions.Taxonomy;
 using SPMeta2.Utils;
 using SPMeta2.Exceptions;
+using SPMeta2.Standard.Utils;
 
 namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
 {
@@ -31,6 +33,14 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
             var definition = model.WithAssertAndCast<TaxonomyTermDefinition>("model", value => value.RequireNotNull());
+
+            // TODO, move to common validator infrastructure
+            if (!TaxonomyUtility.IsValidTermName(definition.Name))
+            {
+                throw new SPMeta2Exception(
+                    string.Format("Term name [{0}] cannot contain any of the following characters: \" ; < > | and Tab",
+                        definition.Name));
+            }
 
             if (modelHost is TermModelHost)
                 DeployTermUnderTerm(modelHost, modelHost as TermModelHost, definition);
@@ -213,38 +223,37 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
         protected Term FindTermInTerm(Term term, TaxonomyTermDefinition termModel)
         {
             Term result = null;
+            IEnumerable<Term> results = null;
 
             var context = term.Context;
             // TODO
 
             if (termModel.Id.HasValue)
             {
-                var scope = new ExceptionHandlingScope(context);
-                using (scope.StartScope())
-                {
-                    using (scope.StartTry())
-                    {
-                        result = term.Terms.GetById(termModel.Id.Value);
-                        context.Load(result);
-                    }
+                var id = termModel.Id.Value;
 
-                    using (scope.StartCatch())
-                    {
+                results = context.LoadQuery(term.Terms.Where(t => t.Id == id));
+                context.ExecuteQuery();
 
-                    }
-                }
             }
             else if (!string.IsNullOrEmpty(termModel.Name))
             {
-                var terms = term.Terms;
+                var name = termModel.Name;
 
-                context.Load(terms);
-                context.ExecuteQueryWithTrace();
+                //var terms = term.Terms;
 
-                result = term.Terms.FirstOrDefault(t => t.Name == termModel.Name);
+                //context.Load(terms);
+                //context.ExecuteQueryWithTrace();
+
+
+                results = context.LoadQuery(term.Terms.Where(t => t.Name == name));
+                context.ExecuteQuery();
+                //result = term.Terms.FirstOrDefault(t => t.Name == termModel.Name);
             }
 
-            if (result != null && result.ServerObjectIsNull == false)
+            result = results.FirstOrDefault();
+
+            if (result != null)
             {
                 context.Load(result);
                 context.ExecuteQueryWithTrace();

@@ -52,6 +52,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
@@ -68,32 +69,53 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Base\ListViewWebPartScenariosTestBase.cs" />
     <Compile Include="Consts\RegWebparts.cs" />
+    <Compile Include="Data\PageTemplates.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>PageTemplates.resx</DependentUpon>
+    </Compile>
     <Compile Include="Definitions\RegWebFeatures.cs" />
     <Compile Include="Definitions\RegSiteFeatures.cs" />
     <Compile Include="Definitions\RegWebs.cs" />
+    <Compile Include="Impl\Definitions\FieldDefinitionPropertyTests.cs" />
     <Compile Include="Impl\Definitions\ChoiceFieldDefinitionTests.cs" />
+    <Compile Include="Impl\Definitions\WebPartDefinitionTests.cs" />
+    <Compile Include="Impl\Definitions\ScriptEditorWebPartDefinitionTests.cs" />
     <Compile Include="Impl\Definitions\TaxonomyTermSetDefinitionTests.cs" />
     <Compile Include="Impl\Definitions\DefinitionTests.cs" />
     <Compile Include="Impl\Dependencies\ArtifactDependenciesTest.cs" />
     <Compile Include="Impl\Extensions\WebpartXmlExtensionsTest.cs" />
     <Compile Include="Impl\Misc\ProvisionServiceTest.cs" />
+    <Compile Include="Impl\ModelAPI\SPMeta2ModelTests.cs" />
     <Compile Include="Impl\Random\RandomDefinitionTest.cs" />
+    <Compile Include="Impl\RegressionAPI\RegressionAPITests.cs" />
+    <Compile Include="Impl\Reports\DefinitionReportTests.cs" />
     <Compile Include="Impl\Scenarios\Base\SPMeta2RegresionScenarioTestBase.cs" />
-    <Compile Include="Impl\Scenarios\BreakRoleInheritanceScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\Fields\DependentLookupFieldScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\Fields\CalculatedFieldScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\Fields\UserFieldScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\ListViewWebPartScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\ResetRoleInheritanceScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ContentTypeFieldLinkScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ContentTypeLinkScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ContentTypeScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\EventReceiverScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\Fields\ChoiceFieldScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\Fields\LookupFieldScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\JobScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\AuditSettingsScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\ListItemValueScenariousTest.cs" />
+    <Compile Include="Impl\Scenarios\MasterPageSettingsDefinitionScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\PageLayoutAndSiteTemplateSettingsScenarios.cs" />
     <Compile Include="Impl\Scenarios\PublishingPageLayoutScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\PublishingPageScenarios.cs" />
+    <Compile Include="Impl\Scenarios\ReusableItemScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\SandboxSolutionScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\QuickLaunchNavigationNodeScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\SecurityGroupScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\RootWebScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\TaxonomyFieldScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\TaxonomyTermStoreScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\TaxonomyTermScenariousTest.cs" />
@@ -114,20 +136,61 @@
     <Compile Include="Impl\Scenarios\SP2013WorkflowScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\UniqueContentTypeFieldsScenariousTest.cs" />
     <Compile Include="Impl\Scenarios\WebPartPageScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\Webparts\ContentEditorWebPartScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\Webparts\XsltListViewWebPartScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\WebNavigationSettingsScenariosTest.cs" />
+    <Compile Include="Impl\Scenarios\WelcomePageScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\WikiPageScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\WebpartScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\SecurityScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\WebConfigModificationScenariosTest.cs" />
     <Compile Include="Impl\Scenarios\WebScenariosTest.cs" />
-    <Compile Include="Impl\Upgrade\ListViewUpgradeTest.cs" />
-    <Compile Include="Impl\Upgrade\ContentTypeUpgradeTest.cs" />
-    <Compile Include="Impl\Upgrade\FieldUpgradeTest.cs" />
     <Compile Include="Impl\Validation\EmptyDefinitionValidationTest.cs" />
     <Compile Include="Impl\Misc\BuiltInWebpartTemplatesTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Base\SPMeta2RegresionTestBase.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsXsltListViewXslLinkUrlService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsXsltListViewXmlLinkUrlService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsXsltListViewXslService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsXsltListViewXmlDefinitionService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsDateTimeFieldCalendarTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateGenericTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsUIVersionService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsPublishingPageContentTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsBasePermissionService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAssCalculatedFieldReferencesService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAssCalculatedFieldOutputTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsCalculatedFieldFormulaService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsUrlFieldFormatService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsPageLayoutFileNameService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsInternalFieldNameService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsFileNameService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsUrlService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsIntRangeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsCamlQueryService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsByteService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsDateTimeFieldFriendlyDisplayFormatService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsDateTimeFieldDisplayFormatService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsChromeTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsCompatibleSearchDataTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsFieldUserSelectionModeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsChromeStateService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsWebPartPageLayoutTemplateService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsTargetControlTypeService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsStandaloneService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsUserService.cs" />
+    <Compile Include="Services\FakeInMemoryTraceService.cs" />
+    <Compile Include="Impl\Services\SerializationServicesTests.cs" />
+    <Compile Include="Services\ExpectUpdateGenericService.cs" />
+    <Compile Include="Services\ExpectUpdateServices\ExpectUpdateAsLCIDService.cs" />
+    <Compile Include="Services\ExpectUpdateValueServiceBase.cs" />
     <Compile Include="Services\VSAssertService.cs" />
     <Compile Include="Utils\ResourceReaderUtils.cs" />
+    <Compile Include="XsltStrings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>XsltStrings.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SPMeta2.Containers.Standard\SPMeta2.Containers.Standard.csproj">
@@ -135,7 +198,7 @@
       <Name>SPMeta2.Containers.Standard</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Containers\SPMeta2.Containers.csproj">
-      <Project>{091C48FB-27E3-4F84-897C-5DE7BB55A2D3}</Project>
+      <Project>{091c48fb-27e3-4f84-897c-5de7bb55a2d3}</Project>
       <Name>SPMeta2.Containers</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.CSOM.Behaviours\SPMeta2.CSOM.Behaviours.csproj">
@@ -147,7 +210,7 @@
       <Name>SPMeta2.CSOM</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Standard\SPMeta2.Standard.csproj">
-      <Project>{F310878E-9B72-4C3C-AE5D-C60B3515E2FC}</Project>
+      <Project>{f310878e-9b72-4c3c-ae5d-c60b3515e2fc}</Project>
       <Name>SPMeta2.Standard</Name>
     </ProjectReference>
     <ProjectReference Include="..\SPMeta2.Syntax.Default\SPMeta2.Syntax.Default.csproj">
@@ -300,19 +363,36 @@
       <Link>SPMeta2.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\XsltListViewWebPart_TestXsl.txt" />
+    <None Include="Resources\CustomAllItemsPage.txt" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Data\PageTemplates.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>PageTemplates.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="Templates\Webparts\v2\News Feed.dwp" />
     <EmbeddedResource Include="Templates\Webparts\v3\Team Tasks.webpart" />
+    <EmbeddedResource Include="XsltStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>XsltStrings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Templates\Webparts\Base\ContentEditor.webpart" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="PSScripts\100 - Ensure M2 Web Application.ps1" />
+    <None Include="PSScripts\200 - Configure M2 Test Environment.ps1" />
+    <None Include="PSScripts\_config.ps1" />
+    <None Include="PSScripts\_sys.common.ps1" />
     <None Include="SPMeta2.Regression.Tests.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Templates\STP\M2Template.stp" />
+    <EmbeddedResource Include="Templates\SandboxSolutions\SPMeta2.Containers.SandboxSolutionContainer.wsp" />
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

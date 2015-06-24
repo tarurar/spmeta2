@@ -1,10 +1,12 @@
-﻿using SPMeta2.Attributes.Regression;
+﻿using SPMeta2.Attributes.Identity;
+using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.Base
 {
@@ -13,6 +15,7 @@ namespace SPMeta2.Definitions.Base
     /// </summary>
     /// 
     [Serializable]
+    [DataContract]
     public abstract class NavigationNodeDefinitionBase : DefinitionBase
     {
         #region constructors
@@ -31,12 +34,18 @@ namespace SPMeta2.Definitions.Base
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Title { get; set; }
 
         /// <summary>
         /// URL of the target navigation node.
         /// </summary>
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Url { get; set; }
 
         /// <summary>
@@ -44,6 +53,7 @@ namespace SPMeta2.Definitions.Base
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool IsExternal { get; set; }
 
         /// <summary>
@@ -51,6 +61,7 @@ namespace SPMeta2.Definitions.Base
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool IsVisible { get; set; }
 
         #endregion

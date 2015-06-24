@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Models;
 using SPMeta2.Syntax.Default.Extensions;
 
@@ -22,6 +22,18 @@ namespace SPMeta2.Syntax.Default
         public static ModelNode AddContentDatabase(this ModelNode model, ContentDatabaseDefinition definition, Action<ModelNode> action)
         {
             return model.AddDefinitionNode(definition, action);
+        }
+
+        #endregion
+
+        #region array overload
+
+        public static ModelNode AddContentDatabases(this ModelNode model, IEnumerable<ContentDatabaseDefinition> definitions)
+        {
+            foreach (var definition in definitions)
+                model.AddDefinitionNode(definition);
+
+            return model;
         }
 
         #endregion

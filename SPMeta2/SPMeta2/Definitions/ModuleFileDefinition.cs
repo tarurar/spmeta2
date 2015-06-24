@@ -1,4 +1,5 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Text;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -20,7 +22,10 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(ListDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class ModuleFileDefinition : DefinitionBase
     {
         #region constructors
@@ -29,17 +34,36 @@ namespace SPMeta2.Definitions
         {
             Content = new byte[0];
             Overwrite = true;
+
+            DefaultValues = new List<FieldValue>();
         }
 
         #endregion
 
         #region properties
 
+        [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
+        public string ContentTypeId { get; set; }
+
+        [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
+        public string ContentTypeName { get; set; }
+
+        [ExpectValidation]
+        [DataMember]
+        public List<FieldValue> DefaultValues { get; set; }
+
         /// <summary>
         /// Target file name,
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string FileName { get; set; }
 
         /// <summary>
@@ -47,11 +71,16 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
+        [ExpectRequired]
+        [DataMember]
         public byte[] Content { get; set; }
 
         /// <summary>
         /// Overwrite flag
         /// </summary>
+        /// 
+        [DataMember]
         public bool Overwrite { get; set; }
 
         #endregion

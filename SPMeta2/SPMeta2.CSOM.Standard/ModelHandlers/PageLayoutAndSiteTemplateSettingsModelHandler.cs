@@ -105,10 +105,14 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers
                 context.ExecuteQuery();
             }
 
-            if (!web.AllProperties.FieldValues.ContainsKey(key))
-                web.AllProperties.FieldValues.Add(key, value);
-            else
-                web.AllProperties[key] = value;
+            // weird, this is incorrect
+            // https://lixuan0125.wordpress.com/2013/10/18/add-and-retrieve-property-bag-by-csom/
+
+            // if (!web.AllProperties.FieldValues.ContainsKey(key))
+            //    web.AllProperties.FieldValues.Add(key, value);
+            //else
+
+            web.AllProperties[key] = value;
 
             web.Update();
             context.ExecuteQuery();
@@ -222,7 +226,12 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers
             xmlAttribute.Value = pageLayout[BuiltInInternalFieldNames.UniqueId].ToString();
 
             var xmlAttribute2 = xmlDocument.CreateAttribute("url");
-            xmlAttribute2.Value = pageLayout[BuiltInInternalFieldNames.FileRef].ToString();
+
+            // remove starting slash
+            // https://github.com/SubPointSolutions/spmeta2/issues/544
+            var fileRef = pageLayout[BuiltInInternalFieldNames.FileRef].ToString();
+
+            xmlAttribute2.Value = UrlUtility.RemoveStartingSlash(fileRef);
 
             xmlNode.Attributes.SetNamedItem(xmlAttribute);
             xmlNode.Attributes.SetNamedItem(xmlAttribute2);
@@ -244,7 +253,12 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers
                 xmlAttribute.Value = pageLayout[BuiltInInternalFieldNames.UniqueId].ToString();
 
                 var xmlAttribute2 = xmlDocument.CreateAttribute("url");
-                xmlAttribute2.Value = pageLayout[BuiltInInternalFieldNames.FileRef].ToString();
+
+                // remove starting slash
+                // https://github.com/SubPointSolutions/spmeta2/issues/544
+                var fileRef = pageLayout[BuiltInInternalFieldNames.FileRef].ToString();
+
+                xmlAttribute2.Value = UrlUtility.RemoveStartingSlash(fileRef);
 
                 xmlNode.Attributes.SetNamedItem(xmlAttribute);
                 xmlNode.Attributes.SetNamedItem(xmlAttribute2);

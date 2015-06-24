@@ -10,7 +10,6 @@ using SPMeta2.ModelHandlers;
 using SPMeta2.ModelHosts;
 using SPMeta2.Utils;
 using SPMeta2.Exceptions;
-using SPMeta2.CSOM.Utils;
 using SPMeta2.Services;
 
 namespace SPMeta2.CSOM.ModelHandlers
@@ -57,7 +56,7 @@ namespace SPMeta2.CSOM.ModelHandlers
 
         public override void WithResolvingModelHost(ModelHostResolveContext modelHostContext)
         {
-            var modelHost = modelHostContext.ModelHost;
+            var modelHost = modelHostContext.ModelHost as ModelHostBase;
             var model = modelHostContext.Model;
             var childModelType = modelHostContext.ChildModelType;
             var action = modelHostContext.Action;
@@ -96,7 +95,20 @@ namespace SPMeta2.CSOM.ModelHandlers
                 HostWeb = currentWeb
             };
 
-            action(tmpWebModelHost);
+            if (childModelType == typeof (ModuleFileDefinition))
+            {
+                var folderModelHost = ModelHostBase.Inherit<FolderModelHost>(modelHost, m =>
+                {
+                    m.CurrentWeb = currentWeb;
+                    m.CurrentWebFolder = currentWeb.RootFolder; ;
+                });
+
+                action(folderModelHost);
+            }
+            else
+            {
+                action(tmpWebModelHost);
+            }
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -289,6 +301,8 @@ namespace SPMeta2.CSOM.ModelHandlers
 
                 currentWeb.Title = webModel.Title;
                 currentWeb.Description = webModel.Description ?? string.Empty;
+
+                //  locale is not available with CSOM yet
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {

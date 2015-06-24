@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Definitions.ContentTypes;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,7 +22,8 @@ namespace SPMeta2.Definitions
     [DefaultParentHost(typeof(FarmDefinition))]
     [DefaultRootHost(typeof(FarmDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class FarmSolutionDefinition : SolutionDefinitionBase
     {
@@ -40,6 +42,8 @@ namespace SPMeta2.Definitions
         /// <summary>
         /// Locale for the current solution.
         /// </summary>
+        /// 
+        [DataMember]
         public int LCID { get; set; }
 
         #endregion

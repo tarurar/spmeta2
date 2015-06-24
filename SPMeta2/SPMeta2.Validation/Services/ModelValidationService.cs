@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Extensions;
@@ -18,6 +18,7 @@ using System.Reflection;
 
 namespace SPMeta2.Validation.Services
 {
+    [Obsolete("Please use ValidationPreDeploymentService")]
     public class ModelValidationService : ModelServiceBase
     {
         #region constructors

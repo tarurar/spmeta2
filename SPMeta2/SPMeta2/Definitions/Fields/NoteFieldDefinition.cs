@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Enumerations;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.Fields
 {
@@ -33,7 +34,10 @@ namespace SPMeta2.Definitions.Fields
     [DefaultParentHost(typeof(SiteDefinition))]
     [DefaultRootHost(typeof(SiteDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
+    [ExpectArrayExtensionMethod]
+
     public class NoteFieldDefinition : FieldDefinition
     {
         #region constructors
@@ -48,21 +52,68 @@ namespace SPMeta2.Definitions.Fields
 
         #endregion
 
+
+        #region overrides
+
+        /// <summary>
+        /// Always returns false.
+        /// http://docs.subpointsolutions.com/spcafcontrib/csc515112/
+        /// </summary>
+         [DataMember]
+        public override bool Indexed
+        {
+            get
+            {
+                return false;
+            }
+            set
+            {
+                
+            }
+        }
+
+        [ExpectValidation]
+        [DataMember]
+        public override string ValidationMessage
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        [ExpectValidation]
+        [DataMember]
+        public override string ValidationFormula
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        #endregion
+
         #region properties
 
         [ExpectValidation]
+        [ExpectUpdateAsIntRange(MinValue = 10, MaxValue = 100)]
+        [DataMember]
         public int NumberOfLines { get; set; }
 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool RichText { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string RichTextMode { get; set; }
 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool AppendOnly { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public bool UnlimitedLengthInDocumentLibrary { get; set; }
 
         #endregion

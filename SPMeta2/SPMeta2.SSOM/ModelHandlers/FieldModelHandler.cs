@@ -26,7 +26,8 @@ namespace SPMeta2.SSOM.ModelHandlers
                 new XAttribute(BuiltInFieldAttributes.Title, String.Empty),
                 new XAttribute(BuiltInFieldAttributes.Name, String.Empty),
                 new XAttribute(BuiltInFieldAttributes.Type, String.Empty),
-                new XAttribute(BuiltInFieldAttributes.Group, String.Empty));
+                new XAttribute(BuiltInFieldAttributes.Group, String.Empty),
+                new XAttribute(BuiltInFieldAttributes.CanToggleHidden, "TRUE"));
         }
 
         public override Type TargetType
@@ -47,8 +48,25 @@ namespace SPMeta2.SSOM.ModelHandlers
             if (ModelHost is SiteModelHost)
                 return (ModelHost as SiteModelHost).HostSite;
 
+            if (ModelHost is WebModelHost)
+                return (ModelHost as WebModelHost).HostWeb.Site;
+
             if (ModelHost is ListModelHost)
                 return (ModelHost as ListModelHost).HostList.ParentWeb.Site;
+
+            return null;
+        }
+
+        protected SPWeb GetCurrentWeb()
+        {
+            if (ModelHost is SiteModelHost)
+                return (ModelHost as SiteModelHost).HostSite.RootWeb;
+
+            if (ModelHost is ListModelHost)
+                return (ModelHost as ListModelHost).HostList.ParentWeb;
+
+            if (ModelHost is WebModelHost)
+                return (ModelHost as WebModelHost).HostWeb;
 
             return null;
         }
@@ -69,7 +87,14 @@ namespace SPMeta2.SSOM.ModelHandlers
             var isListField = false;
 
             if (modelHost is SiteModelHost)
+            {
                 field = DeploySiteField((modelHost as SiteModelHost).HostSite, fieldModel);
+            }
+            else if (modelHost is WebModelHost)
+            {
+                field = DeployWebField((modelHost as WebModelHost).HostWeb, fieldModel);
+                isListField = true;
+            }
             else if (modelHost is ListModelHost)
             {
                 field = DeployListField((modelHost as ListModelHost).HostList, fieldModel);
@@ -77,7 +102,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
             else
             {
-                throw new ArgumentException("modelHost needs to be SPSite/SPList");
+                throw new ArgumentException("modelHost needs to be SiteModelHost/WebModelHost/ListModelHost");
             }
 
             ProcessFieldProperties(field, fieldModel);
@@ -106,21 +131,28 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
         }
 
+        private SPField DeployWebField(SPWeb web, FieldDefinition fieldModel)
+        {
+            TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying list field");
+
+            return EnsureFieldInFieldsCollection(web, web.Fields, fieldModel);
+        }
+
         private void CheckValidModelHost(object modelHost)
         {
             if (!(modelHost is SiteModelHost ||
                   modelHost is ListModelHost ||
+                  modelHost is WebModelHost ||
                   modelHost is SPSite ||
                   modelHost is SPList))
             {
-                throw new ArgumentException("modelHost needs to be SPSite/SPList");
+                throw new ArgumentException("modelHost needs to be SiteModelHost/WebModelHost/ListModelHost");
             }
         }
 
         private SPField DeployListField(SPList list, FieldDefinition fieldModel)
         {
             TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Deploying list field");
-
 
             return EnsureFieldInFieldsCollection(list, list.Fields, fieldModel);
         }
@@ -132,16 +164,44 @@ namespace SPMeta2.SSOM.ModelHandlers
             return EnsureFieldInFieldsCollection(site, site.RootWeb.Fields, fieldModel);
         }
 
+        protected SPList ExtractListFromHost(object modelHost)
+        {
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList;
+
+            return null;
+        }
+
+        protected SPWeb ExtractWebFromHost(object modelHost)
+        {
+            if (modelHost is ListModelHost)
+                return (modelHost as ListModelHost).HostList.ParentWeb;
+
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+
+            return null;
+        }
+
         protected SPField GetField(object modelHost, FieldDefinition definition)
         {
             if (modelHost is SiteModelHost)
                 return GetSiteField((modelHost as SiteModelHost).HostSite, definition);
+            else if (modelHost is WebModelHost)
+                return GetWebField((modelHost as WebModelHost).HostWeb, definition);
             else if (modelHost is ListModelHost)
                 return GetListField((modelHost as ListModelHost).HostList, definition);
             else
             {
-                throw new ArgumentException("modelHost needs to be SPSite/SPList");
+                throw new ArgumentException("modelHost needs to be SiteModelHost/WebModelHost/ListModelHost");
             }
+        }
+
+        private SPField GetWebField(SPWeb web, FieldDefinition definition)
+        {
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Resolving web field by ID: [{0}]", definition.Id);
+
+            return web.Fields[definition.Id];
         }
 
         private SPField GetSiteField(SPSite site, FieldDefinition definition)
@@ -163,7 +223,6 @@ namespace SPMeta2.SSOM.ModelHandlers
             // minimal set
             fieldTemplate
               .SetAttribute(BuiltInFieldAttributes.ID, fieldModel.Id.ToString("B"))
-              .SetAttribute(BuiltInFieldAttributes.StaticName, fieldModel.InternalName)
               .SetAttribute(BuiltInFieldAttributes.DisplayName, fieldModel.Title)
               .SetAttribute(BuiltInFieldAttributes.Title, fieldModel.Title)
               .SetAttribute(BuiltInFieldAttributes.Name, fieldModel.InternalName)
@@ -172,9 +231,17 @@ namespace SPMeta2.SSOM.ModelHandlers
               .SetAttribute(BuiltInFieldAttributes.Type, fieldModel.FieldType)
               .SetAttribute(BuiltInFieldAttributes.Group, fieldModel.Group ?? string.Empty);
 
+            // static name is by defaul gets InternalName
+            if (!string.IsNullOrEmpty(fieldModel.StaticName))
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.StaticName, fieldModel.StaticName);
+            else
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.StaticName, fieldModel.InternalName);
+
             // additions
+#if !NET35
             if (!String.IsNullOrEmpty(fieldModel.JSLink))
                 fieldTemplate.SetAttribute(BuiltInFieldAttributes.JSLink, fieldModel.JSLink);
+#endif
 
             if (!string.IsNullOrEmpty(fieldModel.DefaultValue))
                 fieldTemplate.SetSubNode("Default", fieldModel.DefaultValue);
@@ -233,9 +300,10 @@ namespace SPMeta2.SSOM.ModelHandlers
             object modelHost,
             SPFieldCollection fields, FieldDefinition fieldModel)
         {
-            SPField currentField = null;
+            var currentField = fields.OfType<SPField>()
+                                        .FirstOrDefault(f => f.Id == fieldModel.Id);
 
-            if (!fields.ContainsFieldWithStaticName(fieldModel.InternalName))
+            if (currentField == null)
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new field");
 
@@ -251,7 +319,15 @@ namespace SPMeta2.SSOM.ModelHandlers
                 });
 
                 var fieldDef = GetTargetSPFieldXmlDefinition(fieldModel);
-                fields.AddFieldAsXml(fieldDef);
+
+                // special handle for taxonomy field
+                // incorectly removed tax field leaves its indexed field
+                // https://github.com/SubPointSolutions/spmeta2/issues/521
+
+                HandleIncorectlyDeletedTaxonomyField(fieldModel, fields);
+
+                var addFieldOptions = (SPAddFieldOptions)(int)fieldModel.AddFieldOptions;
+                fields.AddFieldAsXml(fieldDef, fieldModel.AddToDefaultView, addFieldOptions);
 
                 currentField = fields[fieldModel.Id];
             }
@@ -276,14 +352,74 @@ namespace SPMeta2.SSOM.ModelHandlers
             return currentField;
         }
 
-        protected virtual void ProcessFieldProperties(SPField field, FieldDefinition fieldModel)
+        private void HandleIncorectlyDeletedTaxonomyField(FieldDefinition fieldModel,
+            SPFieldCollection fields)
         {
-            field.Title = fieldModel.Title;
+            var isTaxField =
+                fieldModel.FieldType.ToUpper() == BuiltInFieldTypes.TaxonomyFieldType.ToUpper()
+                || fieldModel.FieldType.ToUpper() == BuiltInFieldTypes.TaxonomyFieldTypeMulti.ToUpper();
 
-            field.Description = fieldModel.Description ?? string.Empty;
-            field.Group = fieldModel.Group ?? string.Empty;
+            if (!isTaxField)
+                return;
 
-            field.Required = fieldModel.Required;
+            var existingIndexedFieldName = fieldModel.Title.ToUpper() + "_";
+            var existingIndexedField = fields.OfType<SPField>()
+                .FirstOrDefault(f => f.Title.ToUpper().StartsWith(existingIndexedFieldName));
+
+            if (existingIndexedField != null && existingIndexedField.Type == SPFieldType.Note)
+                existingIndexedField.Delete();
+        }
+
+        protected virtual void ProcessFieldProperties(SPField field, FieldDefinition definition)
+        {
+            field.Title = definition.Title;
+
+            field.Description = definition.Description ?? string.Empty;
+            field.Group = string.IsNullOrEmpty(definition.Group) ? "Custom" : definition.Group;
+
+            field.Required = definition.Required;
+
+            if (!string.IsNullOrEmpty(definition.StaticName))
+                field.StaticName = definition.StaticName;
+
+            if (!string.IsNullOrEmpty(definition.ValidationMessage))
+                field.ValidationMessage = definition.ValidationMessage;
+
+            if (!string.IsNullOrEmpty(definition.ValidationFormula))
+                field.ValidationFormula = definition.ValidationFormula;
+
+            if (definition.AllowDeletion.HasValue)
+                field.AllowDeletion = definition.AllowDeletion.Value;
+
+            if (!string.IsNullOrEmpty(definition.DefaultValue))
+                field.DefaultValue = definition.DefaultValue;
+
+            if (definition.EnforceUniqueValues.HasValue)
+                field.EnforceUniqueValues = definition.EnforceUniqueValues.Value;
+
+            field.Indexed = definition.Indexed;
+
+#if !NET35
+            field.JSLink = definition.JSLink;
+#endif
+
+            if (definition.ShowInEditForm.HasValue)
+                field.ShowInEditForm = definition.ShowInEditForm.Value;
+
+            if (definition.ShowInDisplayForm.HasValue)
+                field.ShowInDisplayForm = definition.ShowInDisplayForm.Value;
+
+            if (definition.ShowInListSettings.HasValue)
+                field.ShowInListSettings = definition.ShowInListSettings.Value;
+
+            if (definition.ShowInViewForms.HasValue)
+                field.ShowInViewForms = definition.ShowInViewForms.Value;
+
+            if (definition.ShowInNewForm.HasValue)
+                field.ShowInNewForm = definition.ShowInNewForm.Value;
+
+            if (definition.ShowInVersionHistory.HasValue)
+                field.ShowInVersionHistory = definition.ShowInVersionHistory.Value;
         }
 
         #endregion

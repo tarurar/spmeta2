@@ -35,6 +35,7 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
             var typedField = field.Context.CastTo<FieldCalculated>(field);
 
             typedField.Formula = typedFieldModel.Formula ?? string.Empty;
+            typedField.OutputType = typedField.OutputType = (FieldType)Enum.Parse(typeof(FieldType), typedFieldModel.OutputType);
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)
@@ -43,10 +44,14 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
 
             var typedFieldModel = fieldModel.WithAssertAndCast<CalculatedFieldDefinition>("model", value => value.RequireNotNull());
 
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.LCID, typedFieldModel.CurrencyLocaleId);
+            if (typedFieldModel.CurrencyLocaleId.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.LCID, typedFieldModel.CurrencyLocaleId);
 
-            var dateFormat = String.IsNullOrEmpty(typedFieldModel.DateFormat) ? DateTimeFieldFormatType.DateOnly : Enum.Parse(typeof(DateTimeFieldFormatType), typedFieldModel.DateFormat);
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, dateFormat);
+            // should be a new XML node
+            var formulaNode = new XElement(BuiltInFieldAttributes.Formula, typedFieldModel.Formula);
+            fieldTemplate.Add(formulaNode);
+
+            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, (int)Enum.Parse(typeof(DateTimeFieldFormatType), typedFieldModel.DateFormat));
 
             if (typedFieldModel.ShowAsPercentage.HasValue)
                 fieldTemplate.SetAttribute(BuiltInFieldAttributes.Percentage, typedFieldModel.ShowAsPercentage.Value.ToString().ToUpper());
@@ -55,9 +60,6 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
                 fieldTemplate.SetAttribute(BuiltInFieldAttributes.Decimals, NumberFieldModelHandler.GetDecimalsValue(typedFieldModel.DisplayFormat));
 
             fieldTemplate.SetAttribute(BuiltInFieldAttributes.ResultType, typedFieldModel.OutputType);
-
-            var formulaNode = new XElement(BuiltInFieldAttributes.Formula, typedFieldModel.Formula);
-            fieldTemplate.Add(formulaNode);
 
             if (typedFieldModel.FieldReferences.Count > 0)
             {

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Enumerations;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.Fields
 {
@@ -28,6 +29,9 @@ namespace SPMeta2.Definitions.Fields
     [DefaultRootHost(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
+    [ExpectArrayExtensionMethod]
+
     public class MultiChoiceFieldDefinition : FieldDefinition
     {
         #region constructors
@@ -35,7 +39,9 @@ namespace SPMeta2.Definitions.Fields
         public MultiChoiceFieldDefinition()
         {
             FieldType = BuiltInFieldTypes.MultiChoice;
+
             Choices = new Collection<string>();
+            Mappings = new Collection<string>();
         }
 
         #endregion
@@ -43,9 +49,34 @@ namespace SPMeta2.Definitions.Fields
         #region properties
 
         [ExpectValidation]
+        [DataMember]
+        public override string ValidationMessage
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        [ExpectValidation]
+        [DataMember]
+        public override string ValidationFormula
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public Collection<string> Choices { get; set; }
 
         [ExpectValidation]
+        //[ExpectUpdate]
+        [DataMember]
+        public Collection<string> Mappings { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool FillInChoice { get; set; }
 
         #endregion

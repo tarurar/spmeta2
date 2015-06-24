@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 using SPMeta2.Utils;
 using Microsoft.SharePoint;
@@ -40,10 +40,15 @@ namespace SPMeta2.Regression.SSOM.Validation
                                      .ShouldBeEqual(m => m.Name, o => o.Name)
                                      .ShouldBeEqual(m => m.Class, o => o.Class)
                                      .ShouldBeEqual(m => m.Assembly, o => o.Assembly)
-                                     .ShouldBeEqual(m => m.Data, o => o.Data)
+                                     //.ShouldBeEqual(m => m.Data, o => o.Data)
                                      .ShouldBeEqual(m => m.SequenceNumber, o => o.SequenceNumber)
                                      .ShouldBeEqual(m => m.Synchronization, o => o.GetSynchronization())
                                      .ShouldBeEqual(m => m.Type, o => o.GetEventReceiverType());
+
+            if (!string.IsNullOrEmpty(definition.Data))
+                assert.ShouldBeEqual(m => m.Data, o => o.Data);
+            else
+                assert.SkipProperty(m => m.Data);
         }
     }
 

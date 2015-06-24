@@ -57,6 +57,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DefinitionGenerators\DisplayTemplates\FilterDisplayTemplateDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\DisplayTemplates\JavaScriptDisplayTemplateDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\DisplayTemplates\ItemDisplayTemplateDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\DisplayTemplates\ControlDisplayTemplateDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\MediaFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\SummaryLinkFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\ImageFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\LinkFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Fields\HTMLFieldDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ManagedPropertyDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ReusableHTMLItemDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\ReusableTextItemDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\SearchSettingsDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\CustomDocumentIdProviderDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\PageLayoutAndSiteTemplateSettingsDefinitionGenerator.cs" />
@@ -67,7 +79,14 @@
     <Compile Include="DefinitionGenerators\PublishingPageDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\SearchResultDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\SearchConfigurationDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Taxonomy\TaxonomyTermLabelDefinitionGenerator.cs" />
     <Compile Include="DefinitionGenerators\WebNavigationSettingsDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\ContentBySearchWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\ContentByQueryWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\RefinementScriptWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\ProjectSummaryWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\ResultScriptWebPartDefinitionGenerator.cs" />
+    <Compile Include="DefinitionGenerators\Webparts\SummaryLinkWebPartDefinitionGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PublishingPageLayoutTemplates.Designer.cs">
       <AutoGen>True</AutoGen>

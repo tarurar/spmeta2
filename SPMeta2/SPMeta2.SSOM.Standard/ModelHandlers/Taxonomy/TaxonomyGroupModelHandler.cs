@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint;
 using Microsoft.SharePoint.Taxonomy;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Exceptions;
 using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHandlers;
 using SPMeta2.SSOM.ModelHosts;
@@ -44,7 +45,7 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
             var groupModel = model.WithAssertAndCast<TaxonomyTermGroupDefinition>("model", value => value.RequireNotNull());
 
             var termStore = storeModelHost.HostTermStore;
-            var currentGroup = FindGroup(termStore, groupModel);
+            var currentGroup = FindGroup(storeModelHost, groupModel);
 
             action(new TermGroupModelHost
             {
@@ -53,9 +54,34 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
             });
         }
 
-        protected Group FindGroup(TermStore termStore, TaxonomyTermGroupDefinition groupModel)
+        protected Group FindSiteCollectionGroup(TermStoreModelHost termStoreHost, TaxonomyTermGroupDefinition groupModel)
+        {
+            var termStore = termStoreHost.HostTermStore;
+            return termStore.GetSiteCollectionGroup(termStoreHost.HostSite);
+        }
+
+        protected Group FindSystemGroup(TermStoreModelHost termStoreHost, TaxonomyTermGroupDefinition groupModel)
+        {
+            return termStoreHost.HostTermStore.SystemGroup;
+        }
+
+        protected Group FindGroup(TermStoreModelHost termStoreHost, TaxonomyTermGroupDefinition groupModel)
         {
             Group currentGroup = null;
+
+            var termStore = termStoreHost.HostTermStore;
+
+            if (groupModel.IsSiteCollectionGroup)
+            {
+                currentGroup = FindSiteCollectionGroup(termStoreHost, groupModel);
+                return currentGroup;
+            }
+
+            //if (groupModel.IsSystemGroup)
+            //{
+            //    currentGroup = FindSystemGroup(termStoreHost, groupModel);
+            //    return currentGroup;
+            //}
 
             if (groupModel.Id.HasValue)
                 currentGroup = termStore.GetGroup(groupModel.Id.Value);
@@ -68,8 +94,8 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
         private void DeployTaxonomyGroup(object modelHost, TermStoreModelHost siteModelHost, TaxonomyTermGroupDefinition groupModel)
         {
             var termStore = siteModelHost.HostTermStore;
-            var currentGroup = FindGroup(termStore, groupModel);
-
+            var currentGroup = FindGroup(siteModelHost, groupModel);
+            
             InvokeOnModelEvent(this, new ModelEventArgs
             {
                 CurrentModelNode = null,
@@ -85,9 +111,19 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new Term Group");
 
+#if !NET35
+
                 currentGroup = groupModel.Id.HasValue
                                         ? termStore.CreateGroup(groupModel.Name, groupModel.Id.Value)
                                         : termStore.CreateGroup(groupModel.Name);
+
+#endif
+
+#if NET35
+                // SP2010 API does not support creating groups with particular ID
+                currentGroup = termStore.CreateGroup(groupModel.Name);
+
+#endif
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {

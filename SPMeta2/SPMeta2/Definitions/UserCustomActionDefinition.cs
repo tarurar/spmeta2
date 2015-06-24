@@ -1,4 +1,5 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Text;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Enumerations;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,8 +23,11 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
     [DefaultParentHostAttribute(typeof(SiteDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class UserCustomActionDefinition : DefinitionBase
     {
         #region constructors
@@ -42,6 +47,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         /// <summary>
@@ -49,6 +57,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string Title { get; set; }
 
         /// <summary>
@@ -56,6 +66,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string Description { get; set; }
 
         /// <summary>
@@ -63,6 +75,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string Group { get; set; }
 
         /// <summary>
@@ -70,6 +83,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string Location { get; set; }
 
         /// <summary>
@@ -77,6 +91,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string ScriptSrc { get; set; }
 
         /// <summary>
@@ -84,6 +99,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string ScriptBlock { get; set; }
 
         /// <summary>
@@ -91,6 +107,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public int Sequence { get; set; }
 
         /// <summary>
@@ -98,6 +115,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string Url { get; set; }
 
         /// <summary>
@@ -105,6 +123,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public Collection<string> Rights { get; set; }
 
         /// <summary>
@@ -112,6 +131,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string RegistrationId { get; set; }
 
         /// <summary>
@@ -121,7 +141,15 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string RegistrationType { get; set; }
+
+        /// <summary>
+        /// Gets and sets XML that defines an extension to the ribbon.
+        /// </summary>
+        [ExpectValidation]
+        [DataMember]
+        public string CommandUIExtension { get; set; }
 
         #endregion
 

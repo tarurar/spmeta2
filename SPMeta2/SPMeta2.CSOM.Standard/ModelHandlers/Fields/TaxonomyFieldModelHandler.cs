@@ -39,20 +39,32 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Fields
 
             var taxFieldModel = fieldModel.WithAssertAndCast<TaxonomyFieldDefinition>("model", value => value.RequireNotNull());
 
+            var termStore = LookupTermStore(CurrentSiteModelHost, taxFieldModel, false);
 
-            var termStore = LookupTermStore(CurrentSiteModelHost, taxFieldModel);
-            var storeContext = CurrentSiteModelHost.HostClientContext;
+            TermSet termSet = null;
+            Term term = null;
 
-            var termSet = LookupTermSet(CurrentSiteModelHost, termStore, taxFieldModel); ;
-            var term = LookupTerm(CurrentSiteModelHost, termStore, taxFieldModel); ;
+            if (termStore != null)
+            {
+                termSet = LookupTermSet(CurrentSiteModelHost, termStore, taxFieldModel);
+                term = LookupTerm(CurrentSiteModelHost, termStore, taxFieldModel);
+            }
 
             var taxField = context.CastTo<TaxonomyField>(field);
 
             // let base setting be setup
             base.ProcessFieldProperties(taxField, fieldModel);
-            //context.ExecuteQueryWithTrace();
 
             taxField.AllowMultipleValues = taxFieldModel.IsMulti;
+
+            if (taxFieldModel.Open.HasValue)
+                taxField.Open = taxFieldModel.Open.Value;
+
+            if (taxFieldModel.IsPathRendered.HasValue)
+                taxField.IsPathRendered = taxFieldModel.IsPathRendered.Value;
+
+            if (taxFieldModel.CreateValuesInEditForm.HasValue)
+                taxField.CreateValuesInEditForm = taxFieldModel.CreateValuesInEditForm.Value;
 
             taxField.Description = string.IsNullOrEmpty(taxFieldModel.Description)
                ? string.Empty
@@ -68,37 +80,62 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Fields
 
             if (term != null)
                 taxField.AnchorId = term.Id;
-
-            //context.ExecuteQueryWithTrace();
         }
 
-        public static TermStore LookupTermStore(SiteModelHost currentSiteModelHost, TaxonomyFieldDefinition taxFieldModel)
+        public static TermStore LookupTermStore(SiteModelHost currentSiteModelHost,
+            TaxonomyFieldDefinition taxFieldModel)
+        {
+            return LookupTermStore(currentSiteModelHost, taxFieldModel, false);
+        }
+
+        public static TermStore LookupTermStore(SiteModelHost currentSiteModelHost,
+            TaxonomyFieldDefinition taxFieldModel, bool raiseNullRefException)
         {
             var termStore = TaxonomyTermStoreModelHandler.FindTermStore(currentSiteModelHost,
                                   taxFieldModel.SspName,
                                   taxFieldModel.SspId,
                                   taxFieldModel.UseDefaultSiteCollectionTermStore);
 
-            if (termStore == null)
+            if (termStore == null && raiseNullRefException)
                 throw new ArgumentNullException("termStore is NULL. Please define SspName, SspId or ensure there is a default term store for the giving site.");
 
-            var storeContext = currentSiteModelHost.HostClientContext;
+            if (termStore != null)
+            {
+                var storeContext = currentSiteModelHost.HostClientContext;
 
-            storeContext.Load(termStore, s => s.Id);
-            storeContext.ExecuteQueryWithTrace();
+                storeContext.Load(termStore, s => s.Id);
+                storeContext.ExecuteQueryWithTrace();
+            }
 
             return termStore;
         }
 
         #endregion
 
-        public static TermSet LookupTermSet(SiteModelHost currentSiteModelHost, TermStore termStore, TaxonomyFieldDefinition taxFieldModel)
+        public static TermSet LookupTermSet(
+            SiteModelHost currentSiteModelHost,
+            TermStore termStore,
+            TaxonomyFieldDefinition taxFieldModel)
         {
             var storeContext = currentSiteModelHost.HostClientContext;
 
-            if (!string.IsNullOrEmpty(taxFieldModel.TermSetName))
+            return LookupTermSet(storeContext, termStore, taxFieldModel);
+        }
+
+        public static TermSet LookupTermSet(ClientRuntimeContext context, TermStore termStore, TaxonomyFieldDefinition taxFieldModel)
+        {
+            return LookupTermSet(context, termStore,
+                taxFieldModel.TermSetName, taxFieldModel.TermSetId, taxFieldModel.TermSetLCID);
+        }
+
+        public static TermSet LookupTermSet(ClientRuntimeContext context, TermStore termStore,
+            string termSetName, Guid? termSetId, int termSetLCID)
+        {
+            var storeContext = context;
+
+            if (!string.IsNullOrEmpty(termSetName))
             {
-                var termSets = termStore.GetTermSetsByName(taxFieldModel.TermSetName, taxFieldModel.TermSetLCID);
+                var termSets = termStore.GetTermSetsByName(termSetName, termSetLCID);
 
                 storeContext.Load(termSets);
                 storeContext.ExecuteQueryWithTrace();
@@ -106,7 +143,7 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Fields
                 return termSets.FirstOrDefault();
             }
 
-            if (taxFieldModel.TermSetId.HasValue)
+            if (termSetId.HasGuidValue())
             {
                 TermSet termSet = null;
 
@@ -115,7 +152,7 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Fields
                 {
                     using (scope.StartTry())
                     {
-                        termSet = termStore.GetTermSet(taxFieldModel.TermSetId.Value);
+                        termSet = termStore.GetTermSet(termSetId.Value);
                         storeContext.Load(termSet);
                     }
 

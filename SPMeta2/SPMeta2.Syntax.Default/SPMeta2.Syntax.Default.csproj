@@ -37,10 +37,22 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug35|AnyCPU'">
+    <OutputPath>bin\Debug35\</OutputPath>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Debug35\SPMeta2.Syntax.Default.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
     <OutputPath>bin\Debug40\</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-	<DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -52,7 +64,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug45|AnyCPU'">
     <OutputPath>bin\Debug45\</OutputPath>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-	<DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -91,6 +103,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ComposedLookItemLinkDefinitionSyntax.cs" />
+    <Compile Include="ComposedLookItemDefinitionSyntax.cs" />
+    <Compile Include="MasterPagePreviewDefinitionSyntax.cs" />
+    <Compile Include="SilverlightWebPartDefinitionSyntax.cs" />
+    <Compile Include="DependentLookupFieldDefinitionSyntax.cs" />
+    <Compile Include="DeleteWebPartsDefinitionSyntax.cs" />
+    <Compile Include="ChoiceFieldDefinitionSyntax.cs" />
+    <Compile Include="TypedWebpartsDefinitionSyntax.cs" />
+    <Compile Include="ListItemFieldValuesDefinitionSyntax.cs" />
+    <Compile Include="WebPartGalleryFileDefinitionSyntax.cs" />
+    <Compile Include="UserCodeWebPartDefinitionSyntax.cs" />
+    <Compile Include="MasterPageDefinitionSyntax.cs" />
+    <Compile Include="GeolocationFieldDefinitionSyntax.cs" />
+    <Compile Include="ResetRoleInheritanceDefinitionSyntax.cs" />
     <Compile Include="DocumentParserSyntax.cs" />
     <Compile Include="AuditSettingsSyntax.cs" />
     <Compile Include="TreeViewSettingsDefinitionSyntax.cs" />
@@ -117,7 +143,7 @@
     <Compile Include="ManagedAccountDefinitionSyntax.cs" />
     <Compile Include="JobDefinitionSyntax.cs" />
     <Compile Include="MultiChoiceFieldDefinitionSyntax.cs" />
-    <Compile Include="ChoiceFieldDefinitionSyntax.cs" />
+    <Compile Include="OutcomeChoiceFieldDefinitionSyntax.cs" />
     <Compile Include="CurrencyFieldDefinitionSyntax.cs" />
     <Compile Include="AppPrincipalDefinitionSyntax.cs" />
     <Compile Include="ClientWebPartDefinitionSyntax.cs" />

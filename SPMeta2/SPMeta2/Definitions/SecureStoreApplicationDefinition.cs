@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,13 +23,22 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(FarmDefinition))]
 
     [ExpectAddHostExtensionMethod]
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     public class SecureStoreApplicationDefinition : DefinitionBase
     {
         #region properties
 
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
+
+        [DataMember]
+        [IdentityKey]
         public Guid? Id { get; set; }
+
+        [DataMember]
+        [IdentityKey]
         public bool UseDefault { get; set; }
 
         #endregion

@@ -11,7 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Syntax.Default.Modern;
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios
@@ -148,6 +148,52 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
                                 }
                             });
                         }
+                    });
+                });
+
+            TestModel(model);
+        }
+
+        #endregion
+
+        #region tokens
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.QuickLaunchNavigationNode.Tokens")]
+        public void CanDeploy_TopNavigationNode_WithSiteCollectionToken()
+        {
+            var nav1Node = GenerateNode(n =>
+            {
+                n.Url = string.Format("~sitecollection/{0}.html", Rnd.String());
+            });
+
+            var model = SPMeta2Model
+                .NewWebModel(web =>
+                {
+                    web.AddRandomWeb(rndWeb =>
+                    {
+                        rndWeb.AddQuickLaunchNavigationNode(nav1Node);
+                    });
+                });
+
+            TestModel(model);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.QuickLaunchNavigationNode.Tokens")]
+        public void CanDeploy_TopNavigationNode_WithSiteToken()
+        {
+            var nav1Node = GenerateNode(n =>
+            {
+                n.Url = string.Format("~site/{0}.html", Rnd.String());
+            });
+
+            var model = SPMeta2Model
+                .NewWebModel(web =>
+                {
+                    web.AddRandomWeb(rndWeb =>
+                    {
+                        rndWeb.AddQuickLaunchNavigationNode(nav1Node);
                     });
                 });
 

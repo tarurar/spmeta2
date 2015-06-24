@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Services;
 using SPMeta2.Utils;
@@ -109,6 +109,7 @@ namespace SPMeta2.CSOM.ModelHandlers
                     });
 
                 securableObject.BreakRoleInheritance(breakRoleInheritanceModel.CopyRoleAssignments, breakRoleInheritanceModel.ClearSubscopes);
+                context.ExecuteQueryWithTrace();
             }
 
             if (breakRoleInheritanceModel.ForceClearSubscopes)

@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Syntax.Default;
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios
@@ -48,78 +48,84 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         [TestCategory("Regression.Scenarios.Fields.RawXml")]
         public void CanDeploy_Field_WithRawXml()
         {
-            var internalName = Rnd.String();
-            var id = Guid.NewGuid();
-            var title = Rnd.String();
-            var group = Rnd.String();
-
-            var xmlElement = new XElement("Field",
-                                    new XAttribute(BuiltInFieldAttributes.ID, id.ToString("B")),
-                                    new XAttribute(BuiltInFieldAttributes.StaticName, internalName),
-                                    new XAttribute(BuiltInFieldAttributes.DisplayName, title),
-                                    new XAttribute(BuiltInFieldAttributes.Title, title),
-                                    new XAttribute(BuiltInFieldAttributes.Name, internalName),
-                                    new XAttribute(BuiltInFieldAttributes.Type, BuiltInFieldTypes.Text),
-                                    new XAttribute(BuiltInFieldAttributes.Group, group));
-
-            var def = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
-
-            // ID/InternalName should be defined to be able to lookup the field 
-            def.Id = id;
-            def.FieldType = BuiltInFieldTypes.Text;
-            def.InternalName = internalName;
-            def.Title = title;
-            def.Group = group;
-
-
-            def.RawXml = xmlElement.ToString();
-
-            var siteModel = SPMeta2Model.NewSiteModel(site =>
+            WithDisabledPropertyUpdateValidation(() =>
             {
-                site.AddField(def);
-            });
+                var internalName = Rnd.String();
+                var id = Guid.NewGuid();
+                var title = Rnd.String();
+                var group = Rnd.String();
 
-            TestModel(siteModel);
+                var xmlElement = new XElement("Field",
+                    new XAttribute(BuiltInFieldAttributes.ID, id.ToString("B")),
+                    new XAttribute(BuiltInFieldAttributes.StaticName, internalName),
+                    new XAttribute(BuiltInFieldAttributes.DisplayName, title),
+                    new XAttribute(BuiltInFieldAttributes.Title, title),
+                    new XAttribute(BuiltInFieldAttributes.Name, internalName),
+                    new XAttribute(BuiltInFieldAttributes.Type, BuiltInFieldTypes.Text),
+                    new XAttribute(BuiltInFieldAttributes.Group, group));
+
+                var def = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
+
+                // ID/InternalName should be defined to be able to lookup the field 
+                def.Id = id;
+                def.FieldType = BuiltInFieldTypes.Text;
+                def.InternalName = internalName;
+                def.Title = title;
+                def.Group = group;
+
+                def.RawXml = xmlElement.ToString();
+
+                var siteModel = SPMeta2Model.NewSiteModel(site =>
+                {
+                    site.AddField(def);
+                });
+
+                TestModel(siteModel);
+            });
         }
 
         [TestMethod]
         [TestCategory("Regression.Scenarios.Fields.RawXml")]
         public void CanDeploy_Field_WithRawXmlAndAdditionalAttributes()
         {
-            var internalName = Rnd.String();
-            var id = Guid.NewGuid();
-            var title = Rnd.String();
-            var group = Rnd.String();
-
-            var xmlElement = new XElement("Field",
-                                    new XAttribute(BuiltInFieldAttributes.ID, id.ToString("B")),
-                                    new XAttribute(BuiltInFieldAttributes.StaticName, internalName),
-                                    new XAttribute(BuiltInFieldAttributes.DisplayName, title),
-                                    new XAttribute(BuiltInFieldAttributes.Title, title),
-                                    new XAttribute(BuiltInFieldAttributes.Name, internalName),
-                                    new XAttribute(BuiltInFieldAttributes.Type, BuiltInFieldTypes.Text),
-                                    new XAttribute(BuiltInFieldAttributes.Group, group));
-
-            var def = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
-
-            // ID/InternalName should be defined to be able to lookup the field 
-            def.Id = id;
-            def.FieldType = BuiltInFieldTypes.Text;
-            def.InternalName = internalName;
-            def.Title = title;
-            def.Group = group;
-
-            def.RawXml = xmlElement.ToString();
-
-            def.AdditionalAttributes.Add(new FieldAttributeValue("Commas", Rnd.Bool().ToString().ToUpper()));
-            def.AdditionalAttributes.Add(new FieldAttributeValue("AllowDuplicateValues", Rnd.Bool().ToString().ToUpper()));
-
-            var siteModel = SPMeta2Model.NewSiteModel(site =>
+            WithDisabledPropertyUpdateValidation(() =>
             {
-                site.AddField(def);
-            });
+                var internalName = Rnd.String();
+                var id = Guid.NewGuid();
+                var title = Rnd.String();
+                var group = Rnd.String();
 
-            TestModel(siteModel);
+                var xmlElement = new XElement("Field",
+                    new XAttribute(BuiltInFieldAttributes.ID, id.ToString("B")),
+                    new XAttribute(BuiltInFieldAttributes.StaticName, internalName),
+                    new XAttribute(BuiltInFieldAttributes.DisplayName, title),
+                    new XAttribute(BuiltInFieldAttributes.Title, title),
+                    new XAttribute(BuiltInFieldAttributes.Name, internalName),
+                    new XAttribute(BuiltInFieldAttributes.Type, BuiltInFieldTypes.Text),
+                    new XAttribute(BuiltInFieldAttributes.Group, group));
+
+                var def = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
+
+                // ID/InternalName should be defined to be able to lookup the field 
+                def.Id = id;
+                def.FieldType = BuiltInFieldTypes.Text;
+                def.InternalName = internalName;
+                def.Title = title;
+                def.Group = group;
+
+                def.RawXml = xmlElement.ToString();
+
+                def.AdditionalAttributes.Add(new FieldAttributeValue("Commas", Rnd.Bool().ToString().ToUpper()));
+                def.AdditionalAttributes.Add(new FieldAttributeValue("AllowDuplicateValues",
+                    Rnd.Bool().ToString().ToUpper()));
+
+                var siteModel = SPMeta2Model.NewSiteModel(site =>
+                {
+                    site.AddField(def);
+                });
+
+                TestModel(siteModel);
+            });
         }
 
         [TestMethod]
@@ -344,6 +350,24 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
 
         [TestMethod]
         [TestCategory("Regression.Scenarios.Fields.Scopes")]
+        public void CanDeploy_WebScoped_Field()
+        {
+            var field = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
+
+            var model = SPMeta2Model
+                   .NewWebModel(web =>
+                   {
+                       web.AddRandomWeb(subWeb =>
+                       {
+                           subWeb.AddField(field);
+                       });
+                   });
+
+            TestModel(model);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Fields.Scopes")]
         public void CanDeploy_ListScoped_Field()
         {
             var field = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
@@ -360,6 +384,30 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
             TestModel(model);
         }
 
+
+        #endregion
+
+        #region field options
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Fields.Options")]
+        public void CanDeploy_ListScopedField_AsAddToDefaultView()
+        {
+            var field = ModelGeneratorService.GetRandomDefinition<FieldDefinition>();
+
+            field.AddToDefaultView = true;
+
+            var model = SPMeta2Model
+                   .NewWebModel(web =>
+                   {
+                       web.AddRandomList(list =>
+                       {
+                           list.AddField(field);
+                       });
+                   });
+
+            TestModel(model);
+        }
 
         #endregion
     }

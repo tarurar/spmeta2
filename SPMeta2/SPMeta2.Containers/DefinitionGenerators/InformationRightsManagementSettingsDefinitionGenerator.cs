@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Containers.Services;
 using SPMeta2.Containers.Services.Base;
 using SPMeta2.Definitions;
@@ -21,7 +21,7 @@ namespace SPMeta2.Containers.DefinitionGenerators
                 def.AllowWriteCopy = Rnd.Bool();
 
                 def.DisableDocumentBrowserView = Rnd.Bool();
-                def.DocumentAccessExpireDays = Rnd.Int(300);
+                def.DocumentAccessExpireDays = Rnd.Int(75);
                 def.DocumentLibraryProtectionExpireDate = Rnd.Date();
 
                 def.EnableDocumentAccessExpire = Rnd.Bool();

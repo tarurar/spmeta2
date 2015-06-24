@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Services;
 using SPMeta2.Utils;
 using SPMeta2.CSOM.ModelHosts;
@@ -121,16 +121,17 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             // naaaaah, just gonna get a new one list item
             // keep it simple and safe, really really really safe with all that SharePoint stuff...
-           // var currentItem = list.GetItemById(item.Id);
+            // var currentItem = list.GetItemById(item.Id);
 
             //context.Load(currentItem);
             //context.ExecuteQueryWithTrace();
 
-            if (childModelType == typeof(ListItemFieldValueDefinition))
+            if (childModelType == typeof(ListItemFieldValueDefinition)
+                || childModelType == typeof(ListItemFieldValuesDefinition))
             {
-                var listItemPropertyHost = new ListItemFieldValueModelHost
+                var listItemPropertyHost = new ListItemModelHost
                 {
-                    CurrentItem = item
+                    HostListItem = item
                 };
 
                 action(listItemPropertyHost);
@@ -144,7 +145,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             context.ExecuteQueryWithTrace();
         }
 
-        protected ListItem GetListItem(List list, Folder folder, ListItemDefinition definition)
+        protected virtual ListItem FindListItem(List list, Folder folder, ListItemDefinition definition)
         {
             var context = list.Context;
 
@@ -175,7 +176,7 @@ namespace SPMeta2.CSOM.ModelHandlers
         private ListItem EnsureListItem(List list, Folder folder, ListItemDefinition listItemModel)
         {
             var context = list.Context;
-            var currentItem = GetListItem(list, folder, listItemModel);
+            var currentItem = FindListItem(list, folder, listItemModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -199,7 +200,7 @@ namespace SPMeta2.CSOM.ModelHandlers
                     LeafName = null
                 });
 
-                newItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
+                MapListItemProperties(newItem, listItemModel);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -222,7 +223,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing list item");
 
-                currentItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
+                MapListItemProperties(currentItem, listItemModel);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -241,6 +242,11 @@ namespace SPMeta2.CSOM.ModelHandlers
 
                 return currentItem;
             }
+        }
+
+        protected virtual void MapListItemProperties(ListItem currentItem, ListItemDefinition listItemModel)
+        {
+            currentItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
         }
 
         private bool IsDocumentLibray(List list)

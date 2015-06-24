@@ -31,13 +31,13 @@ namespace SPMeta2.CSOM.DefaultSyntax
 
         #region add content type
 
-        public static ModelNode AddContentTypeLink(this ModelNode model, ContentTypeId contentTypeId)
-        {
-            return ContentTypeLinkDefinitionSyntax.AddContentTypeLink(model, new ContentTypeLinkDefinition
-            {
-                ContentTypeId = contentTypeId.ToString()
-            });
-        }
+        //public static ModelNode AddContentTypeLink(this ModelNode model, ContentTypeId contentTypeId)
+        //{
+        //    return ContentTypeLinkDefinitionSyntax.AddContentTypeLink(model, new ContentTypeLinkDefinition
+        //    {
+        //        ContentTypeId = contentTypeId.ToString()
+        //    });
+        //}
 
         #endregion
 
@@ -62,8 +62,12 @@ namespace SPMeta2.CSOM.DefaultSyntax
 
         #region utils
 
+        [Obsolete("Obsolete. Will be removed from the SPMeta2 API. Use ListDefinition.CustomUrl property instead.")]
         public static string GetListUrl(this ListDefinition listDefinition)
         {
+            if (!string.IsNullOrEmpty(listDefinition.CustomUrl))
+                return listDefinition.CustomUrl;
+
             if (listDefinition.Url.ToUpper().Contains("_CATALOGS"))
                 return listDefinition.Url;
 
@@ -102,7 +106,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.Decision:
                 case ListTemplateType.DocumentLibrary:
 
-                
+
                 case ListTemplateType.HealthReports:
                 case ListTemplateType.HealthRules:
                 case ListTemplateType.Holidays:
@@ -120,7 +124,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.NoCodeWorkflows:
                 case ListTemplateType.NoListTemplate:
                 case ListTemplateType.PictureLibrary:
-                
+
                 case ListTemplateType.SolutionCatalog:
                 case ListTemplateType.Survey:
                 case ListTemplateType.TextBox:
@@ -132,7 +136,7 @@ namespace SPMeta2.CSOM.DefaultSyntax
                 case ListTemplateType.WebPartCatalog:
                 case ListTemplateType.WebTemplateCatalog:
                 case ListTemplateType.Whereabouts:
-                
+
                 case ListTemplateType.WorkflowProcess:
                 case ListTemplateType.XMLForm:
 
@@ -143,7 +147,6 @@ namespace SPMeta2.CSOM.DefaultSyntax
 
             return listDefinition.Url;
         }
-
 
         #endregion
     }

@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Regression.CSOM.Utils;
 using SPMeta2.Utils;
 using Microsoft.SharePoint.Client;
@@ -45,7 +45,13 @@ namespace SPMeta2.Regression.CSOM.Validation.Fields
             textFieldAssert.ShouldBeEqual(m => m.AppendOnly, o => o.AppendOnly);
 
             textFieldAssert.ShouldBeEqual(m => m.RichText, o => o.GetRichText());
-            textFieldAssert.ShouldBeEqual(m => m.RichTextMode, o => o.GetRichTextMode());
+            //textFieldAssert.ShouldBeEqual(m => m.RichTextMode, o => o.GetRichTextMode());
+
+            if (!string.IsNullOrEmpty(textDefinition.RichTextMode))
+                textFieldAssert.ShouldBeEqual(m => m.RichTextMode, o => o.GetRichTextMode());
+            else
+                textFieldAssert.SkipProperty(m => m.RichTextMode, "RichTextMode is null or empty. Skipping.");
+
             textFieldAssert.ShouldBeEqual(m => m.UnlimitedLengthInDocumentLibrary, o => o.GetUnlimitedLengthInDocumentLibrary());
         }
     }

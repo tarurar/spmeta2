@@ -1,7 +1,9 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -16,8 +18,11 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectAddHostExtensionMethod]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class ContentTypeDefinition : DefinitionBase
     {
         #region properties
@@ -29,6 +34,9 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [ExpectRequired(GroupName = "ContentType Id")]
+        [DataMember]
+        [IdentityKey]
         public Guid Id { get; set; }
 
         /// <summary>
@@ -37,7 +45,10 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
 
+        [ExpectRequired(GroupName = "ContentType Id")]
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string IdNumberValue { get; set; }
 
         /// <summary>
@@ -46,6 +57,9 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         /// <summary>
@@ -55,6 +69,8 @@ namespace SPMeta2.Definitions
 
         [ExpectValidation]
         [ExpectUpdate]
+        [DataMember]
+        [ExpectNullable]
         public string Description { get; set; }
 
         /// <summary>
@@ -64,13 +80,25 @@ namespace SPMeta2.Definitions
 
         [ExpectValidation]
         [ExpectUpdate]
+        [DataMember]
         public string Group { get; set; }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
+        public bool Hidden { get; set; }
 
         /// <summary>
         /// Parent content type id. BuiltInContentTypeId class could be used to utilize out of the box content type ids.
         /// </summary>
         /// 
+        [ExpectRequired]
+        [DataMember]
         public string ParentContentTypeId { get; set; }
+
+        [ExpectValidation]
+        [DataMember]
+        public string DocumentTemplate { get; set; }
 
         #endregion
 

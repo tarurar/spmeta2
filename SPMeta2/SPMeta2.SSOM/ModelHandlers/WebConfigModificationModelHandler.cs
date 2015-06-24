@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint.Administration;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
@@ -66,8 +66,9 @@ namespace SPMeta2.SSOM.ModelHandlers
             });
 
             webApp.WebConfigModifications.Add(existingWebConfig);
-
             webApp.Update();
+
+            //webApp.Farm.Services.GetValue<SPWebService>().ApplyWebConfigModifications();
             webApp.WebService.ApplyWebConfigModifications();
         }
 

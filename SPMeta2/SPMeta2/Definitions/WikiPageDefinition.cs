@@ -2,6 +2,7 @@
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -17,12 +18,18 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(ListDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectAddHostExtensionMethod]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class WikiPageDefinition : PageDefinitionBase
     {
         #region properties
 
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public string Content { get; set; }
 
         #endregion
@@ -32,7 +39,7 @@ namespace SPMeta2.Definitions
         public override string ToString()
         {
             return new ToStringResult<WikiPageDefinition>(this, base.ToString())
-                         
+
                           .ToString();
         }
 

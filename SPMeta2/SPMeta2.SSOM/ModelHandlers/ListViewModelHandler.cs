@@ -6,6 +6,7 @@ using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Services;
 using SPMeta2.SSOM.Extensions;
@@ -104,16 +105,28 @@ namespace SPMeta2.SSOM.ModelHandlers
                     currentView.ViewFields.Add(viewField);
             }
 
+            currentView.Hidden = listViewModel.Hidden;
             currentView.Title = listViewModel.Title;
             currentView.RowLimit = (uint)listViewModel.RowLimit;
             currentView.DefaultView = listViewModel.IsDefault;
             currentView.Paged = listViewModel.IsPaged;
 
+#if !NET35
             if (!string.IsNullOrEmpty(listViewModel.JSLink))
                 currentView.JSLink = listViewModel.JSLink;
+#endif
 
             if (!string.IsNullOrEmpty(listViewModel.Query))
                 currentView.Query = listViewModel.Query;
+
+            if (listViewModel.DefaultViewForContentType.HasValue)
+                currentView.DefaultViewForContentType = listViewModel.DefaultViewForContentType.Value;
+
+            if (!string.IsNullOrEmpty(listViewModel.ContentTypeName))
+                currentView.ContentTypeId = LookupListContentTypeByName(targetList, listViewModel.ContentTypeName);
+
+            if (!string.IsNullOrEmpty(listViewModel.ContentTypeId))
+                currentView.ContentTypeId = LookupListContentTypeById(targetList, listViewModel.ContentTypeId);
 
             // viewModel.InvokeOnModelUpdatedEvents<ListViewDefinition, SPView>(currentView);
 
@@ -130,6 +143,24 @@ namespace SPMeta2.SSOM.ModelHandlers
 
             TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling currentView.Update()");
             currentView.Update();
+        }
+
+        protected SPContentTypeId LookupListContentTypeByName(SPList targetList, string name)
+        {
+            var targetContentType = targetList.ContentTypes
+                   .OfType<SPContentType>()
+                   .FirstOrDefault(ct => ct.Name.ToUpper() == name.ToUpper());
+
+            if (targetContentType == null)
+                throw new SPMeta2Exception(string.Format("Cannot find content type by name ['{0}'] in list: [{1}]",
+                    name, targetList.Title));
+
+            return targetContentType.Id;
+        }
+
+        protected SPContentTypeId LookupListContentTypeById(SPList targetList, string contentTypeId)
+        {
+            return new SPContentTypeId(contentTypeId);
         }
 
         #endregion

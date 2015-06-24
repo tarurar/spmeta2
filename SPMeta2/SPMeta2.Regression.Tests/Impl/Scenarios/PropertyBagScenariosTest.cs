@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SPMeta2.Containers;
 using SPMeta2.Definitions;
@@ -35,6 +35,40 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         #endregion
 
         #region property bad cases
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.PropertyBags")]
+        public void CanDeploy_PropertyBag_OnFarm()
+        {
+            WithExpectedUnsupportedCSOMnO365RunnerExceptions(() =>
+            {
+                var model = SPMeta2Model
+                        .NewFarmModel(farm =>
+                        {
+                            farm.AddRandomPropertyBag();
+                        });
+
+                TestModel(model);
+            });
+        }
+
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.PropertyBags")]
+        public void CanDeploy_PropertyBag_OnWebApplication()
+        {
+            WithExpectedUnsupportedCSOMnO365RunnerExceptions(() =>
+            {
+                var model = SPMeta2Model
+                        .NewWebApplicationModel(webApp =>
+                        {
+                            webApp.AddRandomPropertyBag();
+                        });
+
+                TestModel(model);
+            });
+        }
+
 
         [TestMethod]
         [TestCategory("Regression.Scenarios.PropertyBags")]
@@ -104,6 +138,7 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         {
             var listDef = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
             {
+                def.EnableAttachments = false;
                 def.TemplateType = BuiltInListTemplateTypeId.DocumentLibrary;
             });
 

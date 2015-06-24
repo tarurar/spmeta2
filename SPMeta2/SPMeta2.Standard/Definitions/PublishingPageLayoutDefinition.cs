@@ -3,6 +3,7 @@ using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Standard.Definitions
 {
@@ -19,7 +20,10 @@ namespace SPMeta2.Standard.Definitions
     [DefaultParentHost(typeof(ListDefinition), typeof(RootWebDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class PublishingPageLayoutDefinition : PageDefinitionBase
     {
         #region properties
@@ -29,16 +33,27 @@ namespace SPMeta2.Standard.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public string Description { get; set; }
 
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         /// <summary>
         /// Content of the target publishing page layout.
         /// </summary>
+        [ExpectRequired]
         public string Content { get; set; }
 
         /// <summary>
         /// Associated content type of the target publishing page layout.
         /// </summary>
+        [ExpectValidation]
+        [ExpectUpdateAsPublishingPageContentType]
+        //[ExpectRequired]
+        [DataMember]
+        [ExpectNullable]
         public string AssociatedContentTypeId { get; set; }
 
         #endregion

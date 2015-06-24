@@ -10,9 +10,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using SPMeta2.BuiltInDefinitions;
 using SPMeta2.Syntax.Default;
 using SPMeta2.Syntax.Default.Modern;
+using SPMeta2.Syntax.Default.Utils;
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios
 {
@@ -258,6 +259,40 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
             TestModel(env.WebModel);
         }
 
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.ContentTypeLinks.Scopes")]
+        public void CanDeploy_ContentTypeLinkWithSiteAndWebContentTypes()
+        {
+            var siteContentType = ModelGeneratorService.GetRandomDefinition<ContentTypeDefinition>();
+            var webContentType = ModelGeneratorService.GetRandomDefinition<ContentTypeDefinition>();
+
+            var webList = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.ContentTypesEnabled = true;
+            });
+
+            var siteModel = SPMeta2Model.NewSiteModel(site =>
+            {
+                site.AddContentType(siteContentType);
+            });
+
+            var webModel = SPMeta2Model.NewWebModel(web =>
+            {
+                web.AddRandomWeb(subWeb =>
+                {
+                    subWeb.AddContentType(webContentType);
+
+                    subWeb.AddList(webList, list =>
+                    {
+                        list.AddContentTypeLink(siteContentType);
+                        list.AddContentTypeLink(webContentType);
+                    });
+                });
+            });
+
+            TestModel(siteModel, webModel);
+        }
+
 
         [TestMethod]
         [TestCategory("Regression.Scenarios.Lists.ContentTypeLinks")]
@@ -392,6 +427,7 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         {
             TestRandomDefinition<ListDefinition>(def =>
             {
+                def.EnableAttachments = false;
                 def.TemplateType = BuiltInListTemplateTypeId.DocumentLibrary;
             });
         }
@@ -400,9 +436,13 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         [TestCategory("Regression.Scenarios.Lists")]
         public void CanDeploy_CalendarList()
         {
-            TestRandomDefinition<ListDefinition>(def =>
+            WithDisabledPropertyUpdateValidation(() =>
             {
-                def.TemplateType = BuiltInListTemplateTypeId.Events;
+                TestRandomDefinition<ListDefinition>(def =>
+                {
+                    def.EnableFolderCreation = false;
+                    def.TemplateType = BuiltInListTemplateTypeId.Events;
+                });
             });
         }
 
@@ -412,6 +452,8 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         {
             TestRandomDefinition<ListDefinition>(def =>
             {
+                def.EnableMinorVersions = false;
+
                 def.TemplateType = BuiltInListTemplateTypeId.Links;
             });
         }
@@ -443,9 +485,15 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
             TestRandomDefinition<ListDefinition>(def =>
             {
                 def.TemplateType = 0;
-                def.TemplateName = BuiltInListTemplates.Contacts.InternalName;
+                def.TemplateName = BuiltInListTemplates.AssetLibrary.InternalName;
             });
         }
+
+
+
+        #endregion
+
+        #region list URLs
 
         [TestMethod]
         [TestCategory("Regression.Scenarios.Lists.Urls")]
@@ -454,14 +502,47 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
             TestRandomDefinition<ListDefinition>(def =>
             {
                 def.TemplateType = 0;
-                def.TemplateName = BuiltInListTemplates.Contacts.InternalName;
+                def.TemplateName = BuiltInListTemplates.AssetLibrary.InternalName;
                 def.Url = string.Format("{0}.{1}.{2}", Rnd.String(5), Rnd.String(5), Rnd.String(5));
             });
         }
 
-        #endregion
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.Urls")]
+        public void CanDeploy_ListWithLibraryPath()
+        {
+            var testList = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+                def.CustomUrl = Rnd.String();
+            });
 
-        #region list URLs
+            var model = SPMeta2Model.NewWebModel(web =>
+            {
+                web.AddList(testList);
+            });
+
+            TestModel(model);
+        }
+
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.Urls")]
+        public void CanDeploy_LibraryWithListPath()
+        {
+            var testList = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.DocumentLibrary;
+                def.CustomUrl = string.Format("Lists/{0}", Rnd.String());
+            });
+
+            var model = SPMeta2Model.NewWebModel(web =>
+            {
+                web.AddList(testList);
+            });
+
+            TestModel(model);
+        }
 
         [TestMethod]
         [TestCategory("Regression.Scenarios.Lists.Urls")]
@@ -481,10 +562,151 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
             TestRandomDefinition<ListDefinition>(def =>
             {
                 def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+
+                def.ForceCheckout = false;
+
                 def.Url = string.Format("{0}.{1}.{2}", Rnd.String(5), Rnd.String(5), Rnd.String(5));
             });
         }
 
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.Urls")]
+        public void CanDeploy_ListWithCustomUrl()
+        {
+            TestRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+                def.ForceCheckout = false;
+
+                def.Url = string.Empty;
+                def.CustomUrl = string.Format("Lists/{0}", Rnd.String());
+            });
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.Urls")]
+        public void CanDeploy_LibraryWithCustomUrl()
+        {
+            TestRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+                def.ForceCheckout = false;
+
+                def.Url = string.Empty;
+                def.CustomUrl = string.Format("{0}", Rnd.String());
+            });
+        }
+
+        #endregion
+
+        #region custom templates
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.CustomTemplates")]
+        public void CanDeploy_List_From_STPListTemplate()
+        {
+            var stpTemplateContent = ModuleFileUtils.FromResource(
+                    GetType().Assembly,
+                    "SPMeta2.Regression.Tests.Templates.STP.M2Template.stp");
+
+            var stpTemplateFeatureId = new Guid("{00BFEA71-DE22-43B2-A848-C05709900100}");
+
+            // upload stp to list templates
+            var stpModel = SPMeta2Model
+                .NewWebModel(web =>
+                {
+                    web.AddHostList(BuiltInListDefinitions.Catalogs.ListTemplates, list =>
+                    {
+                        list.AddModuleFile(new ModuleFileDefinition
+                        {
+                            FileName = "M2Template.stp",
+                            Content = stpTemplateContent
+                        });
+                    });
+                });
+
+            var customListDef = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+                def.ForceCheckout = false;
+
+                def.Url = Rnd.String();
+                def.CustomUrl = string.Empty;
+
+                def.TemplateType = 0;
+                def.TemplateName = "M2Template";
+            });
+
+            // deploy template to both current and sub web
+            var webModel = SPMeta2Model.NewWebModel(web =>
+            {
+                web.AddList(customListDef.Inherit<ListDefinition>());
+
+                web.AddRandomWeb(subWeb =>
+                {
+                    subWeb.AddList(customListDef.Inherit<ListDefinition>());
+                });
+            });
+
+            TestModel(stpModel, webModel);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.Lists.CustomTemplates")]
+        public void CanDeploy_List_From_CustomTemplate()
+        {
+            var sandboxSolution = new SandboxSolutionDefinition()
+            {
+                FileName = string.Format("{0}.wsp", Rnd.String()),
+                Activate = true,
+
+                SolutionId = new Guid("e9a61998-07f2-45e9-ae43-9e93fa6b11bb"),
+                Content = ModuleFileUtils.FromResource(GetType().Assembly, "SPMeta2.Regression.Tests.Templates.SandboxSolutions.SPMeta2.Containers.SandboxSolutionContainer.wsp")
+            };
+
+            var customListDef = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+                def.ForceCheckout = false;
+
+                def.Url = Rnd.String();
+                def.CustomUrl = string.Empty;
+
+                // would give invalid list template exception
+                //def.TemplateType = 10500;
+
+                // works well, just reset TemplateType as GetRandomDefinition<> generated random TemplateType
+                def.TemplateType = 0;
+                def.TemplateName = "CustomerList";
+            });
+
+            var siteModel = SPMeta2Model
+                .NewSiteModel(site =>
+                {
+                    site.AddSandboxSolution(sandboxSolution);
+                });
+
+            var webModel = SPMeta2Model
+                .NewWebModel(web =>
+                {
+                    web.AddRandomWeb(subWeb =>
+                    {
+                        subWeb.AddWebFeature(new FeatureDefinition
+                        {
+                            Id = new Guid("b997a462-8efb-44cf-92c0-457e75c81798"),
+                            Scope = FeatureDefinitionScope.Web,
+                            Enable = true,
+                            ForceActivate = true
+                        });
+
+                        subWeb.AddList(customListDef);
+                    });
+
+
+                });
+
+            TestModel(siteModel, webModel);
+        }
 
         #endregion
     }

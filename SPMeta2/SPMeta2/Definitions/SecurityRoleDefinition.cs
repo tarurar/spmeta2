@@ -1,8 +1,10 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.ObjectModel;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -17,7 +19,10 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class SecurityRoleDefinition : DefinitionBase
     {
         #region constructors
@@ -36,6 +41,11 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
+        [ExpectRequired]
+
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         /// <summary>
@@ -43,6 +53,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
+        [ExpectNullable]
         public string Description { get; set; }
 
         /// <summary>
@@ -50,6 +63,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdateAsBasePermission]
+        [DataMember]
         public Collection<string> BasePermissions { get; set; }
 
         #endregion

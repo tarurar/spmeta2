@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
@@ -32,12 +32,17 @@ namespace SPMeta2.Regression.SSOM.Validation
                 rootFolder = (modelHost as FolderModelHost).CurrentListItem.Folder;
             }
 
-            var spObject = GetListItem(list, rootFolder, definition);
+            var spObject = FindListItem(list, rootFolder, definition);
 
+            ValidateProperties(spObject, definition);
+        }
+
+        protected virtual void ValidateProperties(SPListItem item, ListItemDefinition definition)
+        {
             var assert = ServiceFactory.AssertService
-                             .NewAssert(definition, spObject)
-                                   .ShouldNotBeNull(spObject)
-                                   .ShouldBeEqual(m => m.Title, o => o.Title);
+                          .NewAssert(definition, item)
+                                .ShouldNotBeNull(item)
+                                .ShouldBeEqual(m => m.Title, o => o.Title);
         }
     }
 }

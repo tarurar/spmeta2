@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Enumerations;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.Fields
 {
@@ -21,7 +22,10 @@ namespace SPMeta2.Definitions.Fields
     [DefaultParentHost(typeof(SiteDefinition))]
     [DefaultRootHost(typeof(SiteDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
+    [ExpectArrayExtensionMethod]
+
     public class UserFieldDefinition : FieldDefinition
     {
         #region constructors
@@ -38,25 +42,56 @@ namespace SPMeta2.Definitions.Fields
         #region properties
 
         [ExpectValidation]
+        [DataMember]
+        public override string ValidationMessage
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        [ExpectValidation]
+        [DataMember]
+        public override string ValidationFormula
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool AllowMultipleValues { get; set; }
 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool AllowDisplay { get; set; }
 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool Presence { get; set; }
 
         /// <summary>
         /// ID of the target security group.
-        /// Is not used during the provision, must be used maually after the provision to hook up the field with the particular group.
         ///  </summary>
         [ExpectValidation]
+        [DataMember]
         public int? SelectionGroup { get; set; }
+
+        /// <summary>
+        /// Name of the target security group.
+        [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
+        public string SelectionGroupName { get; set; }
 
         /// <summary>
         /// Refers to SPFieldUserSelectionMode property.
         /// </summary>
         [ExpectValidation]
+        [ExpectUpdateAsFieldUserSelectionMode]
+        [DataMember]
         public string SelectionMode { get; set; }
 
         #endregion

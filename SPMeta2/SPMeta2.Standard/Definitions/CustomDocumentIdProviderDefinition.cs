@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Standard.Definitions
 {
@@ -19,10 +21,14 @@ namespace SPMeta2.Standard.Definitions
     [DefaultRootHost(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
     public class CustomDocumentIdProviderDefinition : DefinitionBase
     {
         #region properties
 
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string DocumentProviderType { get; set; }
 
         #endregion

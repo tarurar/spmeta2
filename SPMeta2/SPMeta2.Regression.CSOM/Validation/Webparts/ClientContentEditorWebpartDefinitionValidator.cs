@@ -1,15 +1,17 @@
 ﻿using System;
+using SPMeta2.Containers.Assertion;
 using SPMeta2.CSOM.ModelHandlers;
 using SPMeta2.CSOM.ModelHandlers.Webparts;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Definitions.Webparts;
+using SPMeta2.Services;
 using SPMeta2.Utils;
 
 namespace SPMeta2.Regression.CSOM.Validation.Webparts
 {
-    public class ClientContentEditorWebpartDefinitionValidator : WebPartModelHandler
+    public class ClientContentEditorWebpartDefinitionValidator : WebPartDefinitionValidator
     {
         public override Type TargetType
         {
@@ -18,6 +20,8 @@ namespace SPMeta2.Regression.CSOM.Validation.Webparts
 
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
+            base.DeployModel(modelHost, model);
+
             var listItemModelHost = modelHost.WithAssertAndCast<ListItemModelHost>("modelHost", value => value.RequireNotNull());
             var definition = model.WithAssertAndCast<ContentEditorWebPartDefinition>("model", value => value.RequireNotNull());
 
@@ -29,21 +33,55 @@ namespace SPMeta2.Regression.CSOM.Validation.Webparts
                                            .NewAssert(model, definition, spObject)
                                                  .ShouldNotBeNull(spObject);
 
-                // some of the properties can actually be validated
-                // http://stackoverflow.com/questions/11814829/how-to-read-webpart-content-using-sharepoint-client-om
-                // asmx calls are required to get additional information about the current web parts
 
-                assert
-                    .SkipProperty(m => m.ZoneIndex, "Property is not available in CSOM. Skipping.")
+                if (!string.IsNullOrEmpty(definition.Content))
+                {
+                    var value = CurrentWebPartXml.GetContentEditorWebPartProperty("Content");
 
-                    .SkipProperty(m => m.Id, "Property is not available in CSOM. Skipping.")
-                    .SkipProperty(m => m.ZoneId, "Property is not available in CSOM. Skipping.")
+                    assert.ShouldBeEqual((p, s, d) =>
+                    {
+                        var srcProp = s.GetExpressionValue(m => m.Content);
+                        var isValid = definition.Content == value;
 
-                    .SkipProperty(m => m.WebpartFileName, "Property is not available in CSOM. Skipping.")
-                    .SkipProperty(m => m.WebpartType, "Property is not available in CSOM. Skipping.")
-                    .SkipProperty(m => m.WebpartXmlTemplate, "Property is not available in CSOM. Skipping.")
+                        return new PropertyValidationResult
+                        {
+                            Tag = p.Tag,
+                            Src = srcProp,
+                            Dst = null,
+                            IsValid = isValid
+                        };
+                    });
+                }
+                else
+                    assert.SkipProperty(m => m.Content, "Content is null or empty. Skipping.");
 
-                    .ShouldBeEqual(m => m.Title, o => o.Title);
+                if (!string.IsNullOrEmpty(definition.ContentLink))
+                {
+                    var value = CurrentWebPartXml.GetContentEditorWebPartProperty("ContentLink");
+                    var defValue = TokenReplacementService.ReplaceTokens(new TokenReplacementContext
+                    {
+                        Context = listItemModelHost.HostClientContext,
+                        Value = definition.ContentLink
+                    }).Value;
+
+                    var isValid = defValue.ToUpper() == value.ToUpper();
+
+                    assert.ShouldBeEqual((p, s, d) =>
+                    {
+                        var srcProp = s.GetExpressionValue(m => m.ContentLink);
+
+                        return new PropertyValidationResult
+                        {
+                            Tag = p.Tag,
+                            Src = srcProp,
+                            Dst = null,
+                            IsValid = isValid
+                        };
+                    });
+                }
+                else
+                    assert.SkipProperty(m => m.ContentLink, "ContentLink is null or empty. Skipping.");
+
             });
         }
     }

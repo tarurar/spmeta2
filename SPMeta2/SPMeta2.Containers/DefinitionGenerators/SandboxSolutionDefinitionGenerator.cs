@@ -14,10 +14,10 @@ namespace SPMeta2.Containers.DefinitionGenerators
             return WithEmptyDefinition(def =>
             {
                 def.FileName = string.Format("{0}.wsp", Rnd.String());
-                def.Activate = Rnd.Bool();
+                def.Activate = true;
 
-                def.SolutionId = new Guid("e34d1ce3-62da-4a73-a382-a49af8e5dde0");
-                def.Content = ModuleFileUtils.FromResource(GetType().Assembly, "SPMeta2.Containers.Templates.Apps.SPMeta2.Sandbox.TestSandboxApp.wsp");
+                def.SolutionId = new Guid("e9a61998-07f2-45e9-ae43-9e93fa6b11bb");
+                def.Content = ModuleFileUtils.FromResource(GetType().Assembly, "SPMeta2.Containers.Templates.Apps.SPMeta2.Containers.SandboxSolutionContainer.wsp");
             });
         }
     }

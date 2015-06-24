@@ -1,13 +1,15 @@
 ﻿using System.Collections.ObjectModel;
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -20,7 +22,8 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(WebApplicationDefinition))]
     [DefaultParentHostAttribute(typeof(WebApplicationDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class JobDefinition : DefinitionBase
     {
@@ -41,9 +44,12 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public string Title { get; set; }
 
         /// <summary>
@@ -52,6 +58,7 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [DataMember]
         public string JobType { get; set; }
 
         /// <summary>
@@ -62,7 +69,10 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
+        [DataMember]
         public string ScheduleString { get; set; }
+
+        [DataMember]
 
         public Collection<JobDefinitionCtorParams> ConstructorParams { get; set; }
 
@@ -81,6 +91,8 @@ namespace SPMeta2.Definitions
 
         #endregion
     }
+
+    [DataContract]
 
     public enum JobDefinitionCtorParams
     {

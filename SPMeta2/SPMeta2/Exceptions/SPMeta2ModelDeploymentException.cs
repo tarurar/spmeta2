@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Models;
 
 namespace SPMeta2.Exceptions
 {
-    [Serializable]
+    [Serializable] 
     public class SPMeta2ModelDeploymentException : SPMeta2Exception
     {
         public SPMeta2ModelDeploymentException() { }

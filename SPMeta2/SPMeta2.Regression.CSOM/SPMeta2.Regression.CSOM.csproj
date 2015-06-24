@@ -81,6 +81,11 @@
     <Compile Include="ServiceFactory.cs" />
     <Compile Include="Utils\FieldSchemaXmlUtils.cs" />
     <Compile Include="Validation\ClientAppDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientComposedLookItemLinkDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientListItemFieldValuesDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientMasterPagePreviewDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientMasterPageDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientResetRoleInheritanceDefinitionValidator.cs" />
     <Compile Include="Validation\ClientBreakRoleInheritanceDefinitionValidator.cs" />
     <Compile Include="Validation\ClientListFieldLinkDefinitionValidator.cs" />
     <Compile Include="Validation\ClientListItemDefinitionValidator.cs" />
@@ -107,7 +112,10 @@
     <Compile Include="Validation\ClientUserCustomActionDefinitionValidator.cs" />
     <Compile Include="Validation\ClientWebDefinitionValidator.cs" />
     <Compile Include="Validation\ClientMasterPageSettingsDefinitionValidator.cs" />
-    <Compile Include="Validation\ClientWebPartDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientDeleteWebPartsDefinitionValidator.cs" />
+    <Compile Include="Validation\ClientComposedLookItemDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\DependentLookupFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\WebPartDefinitionValidator.cs" />
     <Compile Include="Validation\ClientWelcomePageDefinitionValidator.cs" />
     <Compile Include="Validation\ClientWebPartPageDefinitionValidator.cs" />
     <Compile Include="Validation\ClientWikiPageDefinitionValidator.cs" />
@@ -119,6 +127,8 @@
     <Compile Include="Validation\ContentTypes\UniqueContentTypeFieldsOrderDefinitionValidator.cs" />
     <Compile Include="Validation\ContentTypes\UniqueContentTypeOrderDefinitionValidator.cs" />
     <Compile Include="Validation\ClientEventReceiverDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\OutcomeChoiceFieldDefinitionValidator.cs" />
+    <Compile Include="Validation\Fields\GeolocationFieldDefinitionValidator.cs" />
     <Compile Include="Validation\Fields\ComputedFieldDefinitionValidator.cs" />
     <Compile Include="Validation\Fields\CalculatedFieldDefinitionValidator.cs" />
     <Compile Include="Validation\Fields\GuidFieldDefinitionValidator.cs" />
@@ -140,8 +150,11 @@
     <Compile Include="Validation\ClientTreeViewSettingsDefinitionValidator.cs" />
     <Compile Include="Validation\WebApplicationModelHost.cs" />
     <Compile Include="Validation\Webparts\ClientWebPartDefinitionValidator.cs" />
+    <Compile Include="Validation\Webparts\ClientWebPartGalleryFileDefinitionValidator.cs" />
     <Compile Include="Validation\Webparts\ContactFieldControlDefinitionValidator.cs" />
     <Compile Include="Validation\Webparts\ClientListViewWebPartDefinitionValidator.cs" />
+    <Compile Include="Validation\Webparts\PageViewerWebPartDefinitionValidator.cs" />
+    <Compile Include="Validation\Webparts\SilverlightWebPartDefinitionValidator.cs" />
     <Compile Include="Validation\Webparts\SiteFeedWebPartDefinitionValidator.cs" />
     <Compile Include="Validation\Webparts\ScriptEditorWebParttDefinitionValidator.cs" />
     <Compile Include="Validation\Webparts\ClientXsltListViewWebPartDefinitionValidator.cs" />

@@ -55,9 +55,24 @@ namespace SPMeta2.Regression.SSOM.Standard.Validation.Fields
 
 
             var assert = ServiceFactory.AssertService
-                            .NewAssert(definition, spObject)
-                                  .ShouldNotBeNull(spObject)
-                                  .ShouldBeEqual(m => m.IsMulti, o => o.AllowMultipleValues);
+                .NewAssert(definition, spObject)
+                .ShouldNotBeNull(spObject)
+                .ShouldBeEqual(m => m.IsMulti, o => o.AllowMultipleValues);
+
+            if (definition.CreateValuesInEditForm.HasValue)
+                assert.ShouldBeEqual(m => m.CreateValuesInEditForm, o => o.CreateValuesInEditForm);
+            else
+                assert.SkipProperty(m => m.CreateValuesInEditForm, "CreateValuesInEditForm is null. Skipping property.");
+
+            if (definition.Open.HasValue)
+                assert.ShouldBeEqual(m => m.Open, o => o.Open);
+            else
+                assert.SkipProperty(m => m.Open, "Open is null. Skipping property.");
+
+            if (definition.IsPathRendered.HasValue)
+                assert.ShouldBeEqual(m => m.IsPathRendered, o => o.IsPathRendered);
+            else
+                assert.SkipProperty(m => m.IsPathRendered, "IsPathRendered is null. Skipping property.");
 
             // SSP
             if (definition.SspId.HasValue)
@@ -74,7 +89,9 @@ namespace SPMeta2.Regression.SSOM.Standard.Validation.Fields
                 assert.SkipProperty(m => m.SspName, "SspName is null. Skipping property.");
             }
 
-            if (definition.UseDefaultSiteCollectionTermStore.HasValue)
+
+
+            if (definition.UseDefaultSiteCollectionTermStore == true)
             {
                 var taxSession = new TaxonomySession(site);
                 var termStore = taxSession.DefaultSiteCollectionTermStore;
@@ -96,7 +113,7 @@ namespace SPMeta2.Regression.SSOM.Standard.Validation.Fields
             }
             else
             {
-                assert.SkipProperty(m => m.TermSetName, "UseDefaultSiteCollectionTermStore is null. Skipping property.");
+                assert.SkipProperty(m => m.UseDefaultSiteCollectionTermStore, "UseDefaultSiteCollectionTermStore is null. Skipping property.");
             }
 
             // term set

@@ -22,6 +22,7 @@ using SPMeta2.SSOM.ModelHosts;
 using SPMeta2.SSOM.Services;
 using SPMeta2.SSOM.Standard.ModelHandlers.Webparts;
 using SPMeta2.Utils;
+using SPMeta2.Services.Impl;
 
 namespace SPMeta2.Containers.SSOM
 {
@@ -45,6 +46,9 @@ namespace SPMeta2.Containers.SSOM
         {
             _provisionService = new SSOMProvisionService();
             _validationService = new SSOMValidationService();
+
+            // TODO, setup a high level validation registration
+            _provisionService.PreDeploymentServices.Add(new DefaultRequiredPropertiesValidationService());
 
             var ssomStandartAsm = typeof(ContactFieldControlModelHandler).Assembly;
 
@@ -159,6 +163,26 @@ namespace SPMeta2.Containers.SSOM
         }
 
         public override void DeployWebModel(ModelNode model)
+        {
+            foreach (var webUrl in WebUrls)
+            {
+                Trace.WriteLine(string.Format("[INF]    Running on web: [{0}]", webUrl));
+
+                for (var provisionGeneration = 0; provisionGeneration < ProvisionGenerationCount; provisionGeneration++)
+                {
+                    WithSSOMSiteAndWebContext(webUrl, (site, web) =>
+                    {
+                        if (EnableDefinitionProvision)
+                            _provisionService.DeployModel(WebModelHost.FromWeb(web), model);
+
+                        if (EnableDefinitionValidation)
+                            _validationService.DeployModel(WebModelHost.FromWeb(web), model);
+                    });
+                }
+            }
+        }
+
+        public override void DeployListModel(ModelNode model)
         {
             foreach (var webUrl in WebUrls)
             {

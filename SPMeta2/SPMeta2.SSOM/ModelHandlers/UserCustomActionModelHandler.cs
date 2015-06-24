@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint;
 using Microsoft.SharePoint.BusinessData.Administration;
 using SPMeta2.Common;
@@ -122,6 +122,9 @@ namespace SPMeta2.SSOM.ModelHandlers
             existringAction.Url = customAction.Url;
 
             existringAction.Sequence = customAction.Sequence;
+
+            if (!string.IsNullOrEmpty(customAction.CommandUIExtension))
+                existringAction.CommandUIExtension = customAction.CommandUIExtension;
 
             if (!string.IsNullOrEmpty(customAction.RegistrationId))
                 existringAction.RegistrationId = customAction.RegistrationId;

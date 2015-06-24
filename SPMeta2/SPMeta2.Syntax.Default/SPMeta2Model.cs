@@ -1,9 +1,12 @@
 ﻿using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Models;
+using SPMeta2.Services.Impl;
+using SPMeta2.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace SPMeta2.Syntax.Default
@@ -13,6 +16,15 @@ namespace SPMeta2.Syntax.Default
     /// </summary>
     public static class SPMeta2Model
     {
+        #region static
+
+        static SPMeta2Model()
+        {
+            RegisterKnownDefinition(typeof(FieldDefinition).Assembly);
+        }
+
+        #endregion
+
         #region farm
 
         /// <summary>
@@ -119,6 +131,8 @@ namespace SPMeta2.Syntax.Default
 
         #region sites
 
+
+
         /// <summary>
         /// Creates a new instance of the ModelNode adding "empty site model".
         /// Site model is not going to be pushes by SPMeta2 API, it just required to be there for model tree processing.
@@ -217,6 +231,56 @@ namespace SPMeta2.Syntax.Default
 
         #endregion
 
+        #region webs
+
+        /// <summary>
+        /// Creates a new instance of the ModelNode adding "empty list model".
+        /// List model is not going to be pushes by SPMeta2 API, it just required to be there for model tree processing.
+        /// </summary>
+        /// <returns></returns>
+        public static ModelNode NewListModel()
+        {
+            return NewListModel((ListDefinition)null);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the ModelNode adding web model provided.
+        /// If RequireSelfProcessing set as 'true', then web model is going to be processed and pushed by SPMeta2 API.
+        /// </summary>
+        /// <param name="listDefinition"></param>
+        /// <returns></returns>
+        public static ModelNode NewListModel(ListDefinition listDefinition)
+        {
+            return NewListModel(listDefinition, null);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the ModelNode adding "empty list model".
+        /// Web model is not going to be pushes by SPMeta2 API, it just required to be there for model tree processing.
+        /// Use action to get access to the "list model node" and construct model tree.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static ModelNode NewListModel(Action<ModelNode> action)
+        {
+            return NewListModel(new ListDefinition { RequireSelfProcessing = false }, action);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the ModelNode adding list model provided.
+        /// If RequireSelfProcessing set as 'true', then list model is going to be processed and pushed by SPMeta2 API.
+        /// Use action to get access to the "list model node" and construct model tree.
+        /// </summary>
+        /// <param name="listDefinition"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static ModelNode NewListModel(ListDefinition listDefinition, Action<ModelNode> action)
+        {
+            return NewModelNode<ListDefinition>(listDefinition, action);
+        }
+
+        #endregion
+
         #region utils
 
         private static ModelNode NewModelNode<TModelDefinition>(TModelDefinition model, Action<ModelNode> action)
@@ -234,6 +298,67 @@ namespace SPMeta2.Syntax.Default
         }
 
         #endregion
+
+        #region serialization
+
+        public static void RegisterKnownDefinition(Type type)
+        {
+            RegisterKnownDefinition(new[] { type });
+        }
+
+        public static void RegisterKnownDefinition(Assembly assembly)
+        {
+            RegisterKnownDefinition(new[] { assembly });
+        }
+
+        public static void RegisterKnownDefinition(IEnumerable<Assembly> assemblies)
+        {
+            RegisterKnownDefinition(ReflectionUtils.GetTypesFromAssemblies<DefinitionBase>(assemblies));
+        }
+
+        public static void RegisterKnownDefinition(IEnumerable<Type> types)
+        {
+            foreach (var type in types)
+                if (!KnownTypes.Contains(type))
+                    KnownTypes.Add(type);
+        }
+
+        public static List<Type> KnownTypes = new List<Type>();
+
+        public static ModelNode FromJSON(string jsonString)
+        {
+            var serializer = ServiceContainer.Instance.GetService<DefaultJSONSerializationService>();
+            serializer.RegisterKnownTypes(KnownTypes);
+
+            return serializer.Deserialize(typeof(ModelNode), jsonString) as ModelNode;
+        }
+
+        public static string ToJSON(ModelNode model)
+        {
+            var serializer = ServiceContainer.Instance.GetService<DefaultJSONSerializationService>();
+            serializer.RegisterKnownTypes(KnownTypes);
+
+            return serializer.Serialize(model);
+        }
+
+        public static ModelNode FromXML(string jsonString)
+        {
+            var serializer = ServiceContainer.Instance.GetService<DefaultXMLSerializationService>();
+            serializer.RegisterKnownTypes(KnownTypes);
+
+            return serializer.Deserialize(typeof(ModelNode), jsonString) as ModelNode;
+        }
+
+        public static string ToXML(ModelNode model)
+        {
+            var serializer = ServiceContainer.Instance.GetService<DefaultXMLSerializationService>();
+            serializer.RegisterKnownTypes(KnownTypes);
+
+            return serializer.Serialize(model);
+        }
+
+        #endregion
+
 
         #region Obsolete
 

@@ -1,12 +1,14 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,6 +23,7 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(WebApplicationDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class PrefixDefinition : DefinitionBase
     {
@@ -31,6 +34,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Path { get; set; }
 
         /// <summary>
@@ -40,6 +46,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string PrefixType { get; set; }
 
         #endregion

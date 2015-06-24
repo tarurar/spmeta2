@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using System.Xml.Linq;
 
 using SPMeta2.Utils;
@@ -38,6 +38,15 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
             // let base setting be setup
             base.ProcessFieldProperties(field, fieldModel);
 
+            var typedFieldModel = fieldModel.WithAssertAndCast<MultiChoiceFieldDefinition>("model", value => value.RequireNotNull());
+            var typedField = field.Context.CastTo<FieldMultiChoice>(field);
+
+            typedField.FillInChoice = typedFieldModel.FillInChoice;
+
+            if (typedFieldModel.Choices.Count > 0)
+            {
+                typedField.Choices = typedFieldModel.Choices.ToArray();
+            }
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)
@@ -58,6 +67,24 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
                 }
 
                 fieldTemplate.Add(choicesNode);
+            }
+
+            if (typedFieldModel.Mappings.Count > 0)
+            {
+                var mappingsNode = new XElement("MAPPINGS");
+                var currentValueIndex = 1;
+
+                foreach (var mappingValue in typedFieldModel.Mappings)
+                {
+                    var mappingValueNode = new XElement("MAPPING", mappingValue);
+                    mappingValueNode.SetAttributeValue("Value", currentValueIndex);
+
+                    mappingsNode.Add(mappingValueNode);
+
+                    currentValueIndex++;
+                }
+
+                fieldTemplate.Add(mappingsNode);
             }
         }
 

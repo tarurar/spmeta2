@@ -5,6 +5,7 @@ using Microsoft.SharePoint.Utilities;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Services;
 using SPMeta2.SSOM.DefaultSyntax;
@@ -119,20 +120,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             // min provision
             var targetList = GetOrCreateList(modelHost, web, listModel);
 
-            targetList.Title = listModel.Title;
-
-            // SPBug, again & again, must not be null
-            targetList.Description = listModel.Description ?? string.Empty;
-            targetList.ContentTypesEnabled = listModel.ContentTypesEnabled;
-
-            if (listModel.IrmEnabled.HasValue)
-                targetList.IrmEnabled = listModel.IrmEnabled.Value;
-
-            if (listModel.IrmExpire.HasValue)
-                targetList.IrmExpire = listModel.IrmExpire.Value;
-
-            if (listModel.IrmReject.HasValue)
-                targetList.IrmReject = listModel.IrmReject.Value;
+            MapListProperties(targetList, listModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -146,6 +134,65 @@ namespace SPMeta2.SSOM.ModelHandlers
             });
 
             targetList.Update();
+        }
+
+        private static void MapListProperties(SPList list, ListDefinition definition)
+        {
+            list.Title = definition.Title;
+
+            // SPBug, again & again, must not be null
+            list.Description = definition.Description ?? string.Empty;
+            list.ContentTypesEnabled = definition.ContentTypesEnabled;
+
+            if (!string.IsNullOrEmpty(definition.DraftVersionVisibility))
+            {
+                var draftOption = (DraftVisibilityType)Enum.Parse(typeof(DraftVisibilityType), definition.DraftVersionVisibility);
+                list.DraftVersionVisibility = draftOption;
+            }
+
+            // IRM
+            if (definition.IrmEnabled.HasValue)
+                list.IrmEnabled = definition.IrmEnabled.Value;
+
+            if (definition.IrmExpire.HasValue)
+                list.IrmExpire = definition.IrmExpire.Value;
+
+            if (definition.IrmReject.HasValue)
+                list.IrmReject = definition.IrmReject.Value;
+
+            // the rest
+            if (definition.EnableAttachments.HasValue)
+                list.EnableAttachments = definition.EnableAttachments.Value;
+
+            if (definition.EnableFolderCreation.HasValue)
+                list.EnableFolderCreation = definition.EnableFolderCreation.Value;
+
+            if (definition.EnableMinorVersions.HasValue)
+                list.EnableMinorVersions = definition.EnableMinorVersions.Value;
+
+            if (definition.EnableModeration.HasValue)
+                list.EnableModeration = definition.EnableModeration.Value;
+
+            if (definition.EnableVersioning.HasValue)
+                list.EnableVersioning = definition.EnableVersioning.Value;
+
+            if (definition.ForceCheckout.HasValue)
+                list.ForceCheckout = definition.ForceCheckout.Value;
+
+            if (definition.Hidden.HasValue)
+                list.Hidden = definition.Hidden.Value;
+
+            if (definition.NoCrawl.HasValue)
+                list.NoCrawl = definition.NoCrawl.Value;
+
+            if (definition.OnQuickLaunch.HasValue)
+                list.OnQuickLaunch = definition.OnQuickLaunch.Value;
+
+            if (definition.MajorVersionLimit.HasValue)
+                list.MajorVersionLimit = definition.MajorVersionLimit.Value;
+
+            if (definition.MajorWithMinorVersionsLimit.HasValue)
+                list.MajorWithMinorVersionsLimit = definition.MajorWithMinorVersionsLimit.Value;
         }
 
         private SPList GetOrCreateList(
@@ -168,7 +215,7 @@ namespace SPMeta2.SSOM.ModelHandlers
 
                     //listId = web.Lists.Add(listModel.Url, listModel.Description ?? string.Empty, (SPListTemplateType)listModel.TemplateType);
                     listId = web.Lists.Add(
-                                    listModel.Url,
+                                    listModel.Title,
                                     listModel.Description ?? string.Empty,
                                     listModel.GetListUrl(),
                                     string.Empty,
@@ -179,13 +226,11 @@ namespace SPMeta2.SSOM.ModelHandlers
                 {
                     TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Creating list by TemplateName: [{0}]", listModel.TemplateName);
 
-                    var listTemplate = web.ListTemplates
-                                           .OfType<SPListTemplate>()
-                                           .FirstOrDefault(t => t.InternalName == listModel.TemplateName);
+                    TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Searching list template in web.ListTemplates");
+                    var listTemplate = ResolveListTemplate(web, listModel);
 
-                    //listId = web.Lists.Add(listModel.Url, listModel.Description ?? string.Empty, listTemplate);
                     listId = web.Lists.Add(
-                                   listModel.Url,
+                                   listModel.Title,
                                    listModel.Description ?? string.Empty,
                                    listModel.GetListUrl(),
                                    listTemplate.FeatureId.ToString(),
@@ -227,6 +272,34 @@ namespace SPMeta2.SSOM.ModelHandlers
             }
 
             return result;
+        }
+
+        protected virtual SPListTemplate ResolveListTemplate(SPWeb web, ListDefinition listModel)
+        {
+            // internal names would be with '.STP', so just a little bit easier to define and find
+            var templateName = listModel.TemplateName.ToUpper().Replace(".STP", string.Empty);
+
+            var listTemplate = web.ListTemplates
+                .OfType<SPListTemplate>()
+                .FirstOrDefault(t => t.InternalName.ToUpper().Replace(".STP", string.Empty) == templateName);
+
+            if (listTemplate == null)
+            {
+                TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall,
+                    "Searching list template in Site.GetCustomListTemplates(web)");
+
+                var customListTemplates = web.Site.GetCustomListTemplates(web);
+                listTemplate = customListTemplates
+                    .OfType<SPListTemplate>()
+                    .FirstOrDefault(t => t.InternalName.ToUpper().Replace(".STP", string.Empty) == templateName);
+            }
+
+            if (listTemplate == null)
+            {
+                throw new SPMeta2Exception(string.Format("Can't find custom list template with internal Name:[{0}]",
+                    listModel.TemplateName));
+            }
+            return listTemplate;
         }
 
         private static SPList GetListByUrl(SPWeb web, ListDefinition listModel)

@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Services;
 using SPMeta2.SSOM.ModelHosts;
@@ -85,7 +85,16 @@ namespace SPMeta2.SSOM.ModelHandlers
             else
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Upgrading existing farm solution");
-                existringSolution.Upgrade(tmpWspFilPath);
+
+                if (existringSolution.Deployed)
+                {
+                    existringSolution.Upgrade(tmpWspFilPath);
+                }
+                else
+                {
+                    // TODO
+                    // https://github.com/SubPointSolutions/spmeta2/issues/324
+                }
             }
 
             InvokeOnModelEvent(this, new ModelEventArgs

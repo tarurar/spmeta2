@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Services;
 using SPMeta2.Utils;
@@ -37,23 +37,56 @@ namespace SPMeta2.CSOM.ModelHandlers
             DeployListFieldLink(modelHost, list, listFieldLinkModel);
         }
 
-        private Field FindExistingSiteField(Web rootWeb, Guid id)
+        protected Field FindExistingListField(List list, ListFieldLinkDefinition listFieldLinkModel)
         {
-            var context = rootWeb.Context;
+            return FindField(list.Fields, listFieldLinkModel);
+        }
+
+        protected Field FindAvailableField(Web web, ListFieldLinkDefinition listFieldLinkModel)
+        {
+            return FindField(web.AvailableFields, listFieldLinkModel);
+        }
+
+        private Field FindField(FieldCollection fields, ListFieldLinkDefinition listFieldLinkModel)
+        {
+            var context = fields.Context;
+
             var scope = new ExceptionHandlingScope(context);
 
             Field field = null;
 
-            using (scope.StartScope())
+            if (listFieldLinkModel.FieldId.HasGuidValue())
             {
-                using (scope.StartTry())
+                var id = listFieldLinkModel.FieldId.Value;
+
+                using (scope.StartScope())
                 {
-                    rootWeb.AvailableFields.GetById(id);
+                    using (scope.StartTry())
+                    {
+                        fields.GetById(id);
+                    }
+
+                    using (scope.StartCatch())
+                    {
+
+                    }
                 }
+            }
+            else if (!string.IsNullOrEmpty(listFieldLinkModel.FieldInternalName))
+            {
+                var fieldInternalName = listFieldLinkModel.FieldInternalName;
 
-                using (scope.StartCatch())
+                using (scope.StartScope())
                 {
+                    using (scope.StartTry())
+                    {
+                        fields.GetByInternalNameOrTitle(fieldInternalName);
+                    }
 
+                    using (scope.StartCatch())
+                    {
+
+                    }
                 }
             }
 
@@ -61,8 +94,18 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             if (!scope.HasException)
             {
-                field = rootWeb.AvailableFields.GetById(id);
+                if (listFieldLinkModel.FieldId.HasGuidValue())
+                {
+                    field = fields.GetById(listFieldLinkModel.FieldId.Value);
+                }
+                else if (!string.IsNullOrEmpty(listFieldLinkModel.FieldInternalName))
+                {
+                    field = fields.GetByInternalNameOrTitle(listFieldLinkModel.FieldInternalName);
+                }
+
                 context.Load(field);
+                context.Load(field, f => f.SchemaXml);
+
                 context.ExecuteQueryWithTrace();
             }
 
@@ -79,25 +122,7 @@ namespace SPMeta2.CSOM.ModelHandlers
             context.Load(fields);
             context.ExecuteQueryWithTrace();
 
-            Field existingListField = null;
-
-            Field tmp = null;
-            try
-            {
-                TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Fetching site field by ID: [{0}]", listFieldLinkModel.FieldId);
-
-                tmp = list.Fields.GetById(listFieldLinkModel.FieldId);
-                context.ExecuteQueryWithTrace();
-            }
-            catch (Exception exception)
-            {
-                TraceService.ErrorFormat((int)LogEventId.ModelProvisionCoreCall, "Cannot find site field by ID: [{0}]. Provision might break.", listFieldLinkModel.FieldId);
-            }
-            finally
-            {
-                if (tmp != null && tmp.ServerObjectIsNull.HasValue && !tmp.ServerObjectIsNull.Value)
-                    existingListField = tmp;
-            }
+            Field existingListField = FindExistingListField(list, listFieldLinkModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -114,31 +139,42 @@ namespace SPMeta2.CSOM.ModelHandlers
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new list field");
 
-                //var avialableField = web.AvailableFields;
+                var siteField = FindAvailableField(web, listFieldLinkModel);
 
-                //context.Load(avialableField);
-                //context.ExecuteQueryWithTrace();
+                var addFieldOptions = (AddFieldOptions)(int)listFieldLinkModel.AddFieldOptions;
 
-                var siteField = FindExistingSiteField(web, listFieldLinkModel.FieldId);
+                Field listField = null;
 
-                fields.Add(siteField);
+                // AddToDefaultView || !DefaultValue would use AddFieldAsXml
+                // this would change InternalName of the field inside the list
+
+                // The second case, fields.Add(siteField), does not change internal name of the field inside list
+                if (addFieldOptions != AddFieldOptions.DefaultValue || listFieldLinkModel.AddToDefaultView)
+                    listField = fields.AddFieldAsXml(siteField.SchemaXml, listFieldLinkModel.AddToDefaultView, addFieldOptions);
+                else
+                    listField = fields.Add(siteField);
+
+                ProcessListFieldLinkProperties(listField, listFieldLinkModel);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
                     CurrentModelNode = null,
                     Model = null,
                     EventType = ModelEventType.OnProvisioned,
-                    Object = siteField,
+                    Object = listField,
                     ObjectType = typeof(Field),
                     ObjectDefinition = listFieldLinkModel,
                     ModelHost = modelHost
                 });
 
+                listField.Update();
                 context.ExecuteQueryWithTrace();
             }
             else
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing list field");
+
+                ProcessListFieldLinkProperties(existingListField, listFieldLinkModel);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -150,7 +186,22 @@ namespace SPMeta2.CSOM.ModelHandlers
                     ObjectDefinition = listFieldLinkModel,
                     ModelHost = modelHost
                 });
+
+                existingListField.Update();
+                context.ExecuteQueryWithTrace();
             }
+        }
+
+        private void ProcessListFieldLinkProperties(Field existingListField, ListFieldLinkDefinition listFieldLinkModel)
+        {
+            if (!string.IsNullOrEmpty(listFieldLinkModel.DisplayName))
+                existingListField.Title = listFieldLinkModel.DisplayName;
+
+            if (listFieldLinkModel.Hidden.HasValue)
+                existingListField.Hidden = listFieldLinkModel.Hidden.Value;
+
+            if (listFieldLinkModel.Required.HasValue)
+                existingListField.Required = listFieldLinkModel.Required.Value;
         }
 
         #endregion

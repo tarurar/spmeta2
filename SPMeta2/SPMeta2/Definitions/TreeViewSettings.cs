@@ -1,4 +1,5 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Text;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -19,14 +21,20 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
     [DefaultParentHostAttribute(typeof(WebDefinition))]
     [Serializable]
+    [DataContract]
+    [SingletonIdentity]
     public class TreeViewSettingsDefinition : DefinitionBase
     {
         #region properties
 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool? QuickLaunchEnabled { get; set; }
 
         [ExpectValidation]
+        [ExpectUpdate]
+        [DataMember]
         public bool? TreeViewEnabled { get; set; }
 
         #endregion

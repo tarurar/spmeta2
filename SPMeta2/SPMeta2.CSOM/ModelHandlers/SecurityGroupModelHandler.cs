@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Utilities;
 using SPMeta2.Common;
 using SPMeta2.CSOM.Common;
 using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Services;
 using SPMeta2.Utils;
@@ -16,6 +18,11 @@ namespace SPMeta2.CSOM.ModelHandlers
     public class SecurityGroupModelHandler : CSOMModelHandlerBase
     {
         #region properties
+
+        public override Type TargetType
+        {
+            get { return typeof(SecurityGroupDefinition); }
+        }
 
         #endregion
 
@@ -63,8 +70,19 @@ namespace SPMeta2.CSOM.ModelHandlers
             var context = web.Context;
 
             // well, this should be pulled up to the site handler and init Load/Exec query
-            context.Load(web, tmpWeb => tmpWeb.SiteGroups);
+            context.Load(web, tmpWeb => tmpWeb.SiteGroups, g => g.Id, g => g.Title);
             context.ExecuteQueryWithTrace();
+
+            Principal groupOwner = null;
+
+            if (!string.IsNullOrEmpty(securityGroupModel.Owner) &&
+                (securityGroupModel.Owner.ToUpper() != securityGroupModel.Name.ToUpper()))
+            {
+                groupOwner = ResolvePrincipal(context, web, securityGroupModel.Owner);
+
+                if (groupOwner == null)
+                    throw new SPMeta2Exception(string.Format("Cannot resolve Principal by string value: [{0}]", securityGroupModel.Owner));
+            }
 
             var currentGroup = FindSecurityGroupByTitle(web.SiteGroups, securityGroupModel.Name);
 
@@ -88,6 +106,24 @@ namespace SPMeta2.CSOM.ModelHandlers
                     Title = securityGroupModel.Name,
                     Description = securityGroupModel.Description ?? string.Empty,
                 });
+
+                currentGroup.Update();
+                context.ExecuteQueryWithTrace();
+
+                // updating the owner or leave as default
+                // Enhance 'SecurityGroupDefinition' provision - add self-owner support #516
+                // https://github.com/SubPointSolutions/spmeta2/issues/516
+                if (!string.IsNullOrEmpty(securityGroupModel.Owner))
+                {
+                    groupOwner = ResolvePrincipal(context, web, securityGroupModel.Owner);
+                    currentGroup.Owner = groupOwner;
+
+                    currentGroup.Update();
+                    context.ExecuteQueryWithTrace();
+                }
+
+                context.Load(currentGroup);
+                context.ExecuteQueryWithTrace();
             }
             else
             {
@@ -97,6 +133,19 @@ namespace SPMeta2.CSOM.ModelHandlers
             currentGroup.Title = securityGroupModel.Name;
             currentGroup.Description = securityGroupModel.Description ?? string.Empty;
             currentGroup.OnlyAllowMembersViewMembership = securityGroupModel.OnlyAllowMembersViewMembership;
+
+            if (securityGroupModel.AllowMembersEditMembership.HasValue)
+                currentGroup.AllowMembersEditMembership = securityGroupModel.AllowMembersEditMembership.Value;
+
+            if (securityGroupModel.AllowRequestToJoinLeave.HasValue)
+                currentGroup.AllowRequestToJoinLeave = securityGroupModel.AllowRequestToJoinLeave.Value;
+
+            if (securityGroupModel.AutoAcceptRequestToJoinLeave.HasValue)
+                currentGroup.AutoAcceptRequestToJoinLeave = securityGroupModel.AutoAcceptRequestToJoinLeave.Value;
+
+            if (groupOwner != null)
+                currentGroup.Owner = groupOwner;
+
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -111,6 +160,50 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             currentGroup.Update();
             context.ExecuteQueryWithTrace();
+        }
+
+        private Principal ResolvePrincipal(ClientRuntimeContext context, Web web, string owner)
+        {
+            Principal result = null;
+
+            var targetSources = new Dictionary<PrincipalType, PrincipalInfo>();
+
+            // owner might be only a user or sharepoint group
+            // making a few attempts and checking NULL ref later in the code
+            targetSources.Add(PrincipalType.SharePointGroup, null);
+            targetSources.Add(PrincipalType.User, null);
+
+            foreach (var targetSource in targetSources.Keys)
+            {
+                // ResolvePrincipal != SearchPrincipals, at all!
+
+                //var principalInfos = Utility.ResolvePrincipal(context, web, owner, targetSource, PrincipalSource.All, null, false);
+                var principalInfos = Utility.SearchPrincipals(context, web, owner, targetSource, PrincipalSource.All, null, 2);
+                context.ExecuteQuery();
+
+                if (principalInfos.Count > 0)
+                //if (principalInfos.Value != null)
+                {
+                    var info = principalInfos[0];
+                    //var info = principalInfos.Value;
+
+                    targetSources[targetSource] = info;
+
+                    if (targetSource == PrincipalType.User || targetSource == PrincipalType.SecurityGroup)
+                        result = web.EnsureUser(info.LoginName);
+
+                    if (targetSource == PrincipalType.SharePointGroup)
+                        result = web.SiteGroups.GetById(info.PrincipalId);
+
+                    context.Load(result);
+                    context.ExecuteQuery();
+
+                    // nic, found, break, profit!
+                    break;
+                }
+            }
+
+            return result;
         }
 
         protected Group FindSecurityGroupByTitle(IEnumerable<Group> siteGroups, string securityGroupTitle)
@@ -129,10 +222,5 @@ namespace SPMeta2.CSOM.ModelHandlers
         }
 
         #endregion
-
-        public override Type TargetType
-        {
-            get { return typeof(SecurityGroupDefinition); }
-        }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -16,6 +18,7 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(SecurityGroupLinkDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class SecurityRoleLinkDefinition : DefinitionBase
     {
@@ -35,6 +38,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired(GroupName = "Role")]
+        [DataMember]
+        [IdentityKey]
         public string SecurityRoleName { get; set; }
 
         /// <summary>
@@ -43,6 +49,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired(GroupName = "Role")]
+        [DataMember]
+        [IdentityKey]
         public string SecurityRoleType { get; set; }
 
         /// <summary>
@@ -50,6 +59,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired(GroupName = "Role")]
+        [DataMember]
+        [IdentityKey]
         public int SecurityRoleId { get; set; }
 
         #endregion

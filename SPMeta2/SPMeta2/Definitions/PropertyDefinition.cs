@@ -1,8 +1,10 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -18,7 +20,10 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(WebDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class PropertyDefinition : DefinitionBase
     {
         #region properties
@@ -28,6 +33,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Key { get; set; }
 
         /// <summary>
@@ -35,6 +43,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public object Value { get; set; }
 
         /// <summary>
@@ -42,6 +52,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool Overwrite { get; set; }
 
         #endregion

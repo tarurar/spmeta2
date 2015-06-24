@@ -30,6 +30,13 @@ namespace SPMeta2.Services
             {
                 ModelHandlers = new Dictionary<Type, ModelHandlerBase>();
                 ModelTraverseService = ServiceContainer.Instance.GetService<ModelTreeTraverseServiceBase>();
+
+                // default pre-post deployment services
+                PreDeploymentServices = new List<PreDeploymentServiceBase>();
+                PreDeploymentServices.AddRange(ServiceContainer.Instance.GetServices<PreDeploymentServiceBase>());
+
+                PostDeploymentServices = new List<PostDeploymentServiceBase>();
+                PostDeploymentServices.AddRange(ServiceContainer.Instance.GetServices<PostDeploymentServiceBase>());
             }
         }
 
@@ -49,7 +56,7 @@ namespace SPMeta2.Services
             var traceService = ServiceContainer.Instance.GetService<TraceServiceBase>();
             var handlerTypes = ReflectionUtils.GetTypesFromAssembly<T>(asm);
 
-            traceService.InformationFormat((int)LogEventId.CoreCalls,
+            traceService.VerboseFormat((int)LogEventId.CoreCalls,
                   "RegisterModelHandlers for service:[{0}] and assembly: [{1}]",
                   new object[]
                     {
@@ -92,6 +99,9 @@ namespace SPMeta2.Services
 
         public ModelTreeTraverseServiceBase ModelTraverseService { get; set; }
 
+        public List<PreDeploymentServiceBase> PreDeploymentServices { get; set; }
+        public List<PostDeploymentServiceBase> PostDeploymentServices { get; set; }
+
         #endregion
 
         #region events
@@ -121,7 +131,7 @@ namespace SPMeta2.Services
 
         public void RegisterModelHandler(ModelHandlerBase modelHandlerType)
         {
-            TraceService.InformationFormat((int)LogEventId.CoreCalls,
+            TraceService.VerboseFormat((int)LogEventId.CoreCalls,
                   "RegisterModelHandler of type:[{0}] for target type:[{1}]",
                   new object[]
                     {
@@ -153,8 +163,28 @@ namespace SPMeta2.Services
 
         public virtual void DeployModel(ModelHostBase modelHost, ModelNode model)
         {
+            RunPreDeploymentServices(modelHost, model);
+
             EnsureModelHandleEvents();
             ProcessModelDeployment(modelHost, model);
+
+            RunPostDeploymentServices(modelHost, model);
+        }
+
+        private void RunPostDeploymentServices(ModelHostBase modelHost, ModelNode model)
+        {
+            var services = PostDeploymentServices.OrderBy(s => s.Order);
+
+            foreach (var service in services)
+                service.DeployModel(modelHost, model);
+        }
+
+        private void RunPreDeploymentServices(ModelHostBase modelHost, ModelNode model)
+        {
+            var services = PreDeploymentServices.OrderBy(s => s.Order);
+
+            foreach (var service in services)
+                service.DeployModel(modelHost, model);
         }
 
         public virtual void RetractModel(ModelHostBase modelHost, ModelNode model)

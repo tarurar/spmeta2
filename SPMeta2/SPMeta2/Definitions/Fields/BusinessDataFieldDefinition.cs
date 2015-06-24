@@ -5,8 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.Fields
 {
@@ -21,6 +22,9 @@ namespace SPMeta2.Definitions.Fields
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
+    [ExpectArrayExtensionMethod]
+
     public class BusinessDataFieldDefinition : FieldDefinition
     {
         #region constructors
@@ -34,11 +38,28 @@ namespace SPMeta2.Definitions.Fields
 
         #region properties
 
+        [ExpectValidation]
+        [DataMember]
+        public override string ValidationMessage
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
+        [ExpectValidation]
+        [DataMember]
+        public override string ValidationFormula
+        {
+            get { return string.Empty; }
+            set { }
+        }
+
         /// <summary>
         /// System instance of the target business data field.
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
 
         public string SystemInstanceName { get; set; }
 
@@ -47,6 +68,7 @@ namespace SPMeta2.Definitions.Fields
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
 
         public string EntityNamespace { get; set; }
 
@@ -55,6 +77,7 @@ namespace SPMeta2.Definitions.Fields
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
 
         public string EntityName { get; set; }
 
@@ -63,6 +86,7 @@ namespace SPMeta2.Definitions.Fields
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
 
         public string BdcFieldName { get; set; }
 

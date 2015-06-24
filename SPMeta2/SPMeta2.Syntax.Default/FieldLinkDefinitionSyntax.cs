@@ -18,13 +18,7 @@ namespace SPMeta2.Syntax.Default
             return model;
         }
 
-        public static ModelNode AddContentTypeFieldLinks(this ModelNode model, params Guid[] fieldIds)
-        {
-            foreach (var fieldId in fieldIds)
-                AddContentTypeFieldLink(model, fieldId);
 
-            return model;
-        }
 
         public static ModelNode AddContentTypeFieldLink(this ModelNode model, Guid fieldId)
         {
@@ -47,14 +41,6 @@ namespace SPMeta2.Syntax.Default
             return model;
         }
 
-        public static ModelNode AddContentTypeFieldLinks(this ModelNode model, params FieldDefinition[] definitions)
-        {
-            foreach (var definition in definitions)
-                AddContentTypeFieldLink(model, definition);
-
-            return model;
-        }
-
         public static ModelNode AddContentTypeFieldLink(this ModelNode model, FieldDefinition definition)
         {
             return AddContentTypeFieldLink(model, definition, null);
@@ -62,9 +48,17 @@ namespace SPMeta2.Syntax.Default
 
         public static ModelNode AddContentTypeFieldLink(this ModelNode model, FieldDefinition definition, Action<ModelNode> action)
         {
+            if (definition.Id != default(Guid))
+            {
+                return model.AddContentTypeFieldLink(new ContentTypeFieldLinkDefinition
+                {
+                    FieldId = definition.Id
+                }, action);
+            }
+
             return model.AddContentTypeFieldLink(new ContentTypeFieldLinkDefinition
             {
-                FieldId = definition.Id
+                FieldInternalName = definition.InternalName
             }, action);
         }
 
@@ -80,6 +74,17 @@ namespace SPMeta2.Syntax.Default
 
         #endregion
 
+        #region array overload
+
+        public static ModelNode AddContentTypeFieldLinks(this ModelNode model, IEnumerable<ContentTypeFieldLinkDefinition> definitions)
+        {
+            foreach (var definition in definitions)
+                model.AddDefinitionNode(definition);
+
+            return model;
+        }
+
+        #endregion
 
     }
 }

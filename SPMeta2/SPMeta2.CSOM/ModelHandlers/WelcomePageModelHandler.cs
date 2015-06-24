@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint.Client;
 using SPMeta2.Common;
 using SPMeta2.CSOM.Extensions;
@@ -56,7 +56,8 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Changing welcome page to: [{0}]", welcomePgaeModel.Url);
 
-            folder.WelcomePage = welcomePgaeModel.Url;
+            // https://github.com/SubPointSolutions/spmeta2/issues/431
+            folder.WelcomePage = UrlUtility.RemoveStartingSlash(welcomePgaeModel.Url);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -76,6 +77,11 @@ namespace SPMeta2.CSOM.ModelHandlers
             context.ExecuteQueryWithTrace();
         }
 
+        private static string ProcessWelcomeUrl(string welcomeUrl)
+        {
+            return UrlUtility.RemoveStartingSlash(welcomeUrl);
+        }
+
         protected Folder ExtractFolderFromModelHost(object modelHost)
         {
             if (modelHost is WebModelHost)
@@ -88,7 +94,12 @@ namespace SPMeta2.CSOM.ModelHandlers
             }
             else if (modelHost is FolderModelHost)
             {
-                return (modelHost as FolderModelHost).CurrentLibraryFolder;
+                var folderModelHost = (modelHost as FolderModelHost);
+
+                if (folderModelHost.CurrentLibraryFolder != null)
+                    return folderModelHost.CurrentLibraryFolder;
+
+                return folderModelHost.CurrentListItem.Folder;
             }
 
             TraceService.ErrorFormat((int)LogEventId.ModelProvisionCoreCall, "Unsupported model host of type: [{0}]. Throwing SPMeta2UnsupportedModelHostException",

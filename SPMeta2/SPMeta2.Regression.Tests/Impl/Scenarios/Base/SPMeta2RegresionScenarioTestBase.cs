@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios.Base
 {
@@ -15,7 +15,9 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios.Base
 
         public SPMeta2RegresionScenarioTestBase()
         {
-           RegressionService.ProvisionGenerationCount = 2;
+            RegressionService.ProvisionGenerationCount = 2;
+            RegressionService.ShowOnlyFalseResults = false;
+
             Rnd = new DefaultRandomService();
         }
 

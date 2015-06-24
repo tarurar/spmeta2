@@ -1,12 +1,14 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -20,7 +22,8 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(FarmDefinition))]
 
     [ExpectAddHostExtensionMethod]
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class WebApplicationDefinition : DefinitionBase
     {
@@ -31,6 +34,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string ApplicationPoolId { get; set; }
 
         /// <summary>
@@ -38,6 +42,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string ApplicationPoolUsername { get; set; }
 
         /// <summary>
@@ -45,6 +50,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string ApplicationPoolPassword { get; set; }
 
         /// <summary>
@@ -52,6 +58,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public int Port { get; set; }
 
         /// <summary>
@@ -59,6 +67,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string HostHeader { get; set; }
 
         /// <summary>
@@ -66,6 +76,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool CreateNewDatabase { get; set; }
 
         /// <summary>
@@ -73,6 +84,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool AllowAnonymousAccess { get; set; }
 
         /// <summary>
@@ -80,11 +92,14 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string ManagedAccount { get; set; }
 
         /// <summary>
         /// UseSecureSocketsLayer flag.
         /// </summary>
+        /// 
+        [DataMember]
         public bool UseSecureSocketsLayer { get; set; }
 
         /// <summary>
@@ -92,6 +107,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string DatabaseName { get; set; }
 
         /// <summary>
@@ -99,6 +115,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string DatabaseServer { get; set; }
 
         /// <summary>
@@ -106,6 +123,7 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool UseNTLMExclusively { get; set; }
 
         #endregion

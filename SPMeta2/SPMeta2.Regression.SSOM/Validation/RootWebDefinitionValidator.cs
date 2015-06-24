@@ -17,14 +17,23 @@ namespace SPMeta2.Regression.SSOM.Validation
     {
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var siteModelHost = modelHost.WithAssertAndCast<SiteModelHost>("modelHost", value => value.RequireNotNull());
             var definition = model.WithAssertAndCast<RootWebDefinition>("model", value => value.RequireNotNull());
 
-            var spObject = GetCurrentObject(siteModelHost, definition);
+            var spObject = GetCurrentObject(modelHost, definition);
 
             var assert = ServiceFactory.AssertService
                                         .NewAssert(definition, spObject)
                                         .ShouldNotBeNull(spObject);
+
+            if (string.IsNullOrEmpty(definition.Title))
+                assert.SkipProperty(m => m.Title, "Title is null or empty");
+            else
+                assert.ShouldBeEqual(m => m.Title, o => o.Title);
+
+            if (string.IsNullOrEmpty(definition.Description))
+                assert.SkipProperty(m => m.Description, "Description is null or empty");
+            else
+                assert.ShouldBeEqual(m => m.Description, o => o.Description);
 
             assert.ShouldBeEqual((p, s, d) =>
             {

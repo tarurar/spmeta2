@@ -1,7 +1,9 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -16,7 +18,10 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class SecurityGroupDefinition : DefinitionBase
     {
         #region  constructors
@@ -34,14 +39,22 @@ namespace SPMeta2.Definitions
         /// Name of the target security group.
         /// </summary>
         /// 
+
+        [DataMember]
         [ExpectValidation]
+        [ExpectRequired]
+        [IdentityKey]
         public string Name { get; set; }
 
         /// <summary>
         /// Description of the target security group.
         /// </summary>
         /// 
+
+        [DataMember]
         [ExpectValidation]
+        [ExpectUpdate]
+        [ExpectNullable]
         public string Description { get; set; }
 
         /// <summary>
@@ -49,6 +62,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectUpdateAsUser]
+        [DataMember]
         public string Owner { get; set; }
 
         /// <summary>
@@ -56,29 +71,48 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public string DefaultUser { get; set; }
 
         /// <summary>
         /// Membership view options.
         /// </summary>
         [ExpectValidation]
+        [DataMember]
         public bool OnlyAllowMembersViewMembership { get; set; }
 
         /// <summary>
         /// Flag to mimic out of the box AssociatedOwnerGroup
         /// </summary>
+        /// 
+        [DataMember]
         public bool IsAssociatedVisitorsGroup { get; set; }
 
         /// <summary>
         /// Flag to mimic AssociatedMemberGroup
         /// </summary>
+        /// 
+        [DataMember]
         public bool IsAssociatedMemberGroup { get; set; }
 
         /// <summary>
         /// Flag to mimic AssociatedOwnerGroup
         /// </summary>
 
+        [DataMember]
         public bool IsAssociatedOwnerGroup { get; set; }
+
+        [ExpectValidation]
+        [DataMember]
+        public bool? AllowMembersEditMembership { get; set; }
+
+        [ExpectValidation]
+        [DataMember]
+        public bool? AllowRequestToJoinLeave { get; set; }
+
+        [ExpectValidation]
+        [DataMember]
+        public bool? AutoAcceptRequestToJoinLeave { get; set; }
 
         #endregion
 

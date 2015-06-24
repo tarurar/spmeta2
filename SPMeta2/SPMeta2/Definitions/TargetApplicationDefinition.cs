@@ -3,17 +3,26 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
+    [DataContract]
     public class TargetApplicationFieldValue
     {
+        [DataMember]
         public bool IsMasked { get; set; }
+
+
+        [DataMember]
         public string Name { get; set; }
+
+        [DataMember]
         public string CredentialType { get; set; }
     }
 
@@ -25,7 +34,8 @@ namespace SPMeta2.Definitions
     [DefaultRootHost(typeof(FarmDefinition))]
     [DefaultParentHost(typeof(SecureStoreApplicationDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
 
     [ExpectWithExtensionMethod]
     public class TargetApplicationDefinition : DefinitionBase
@@ -42,18 +52,35 @@ namespace SPMeta2.Definitions
 
         #region properties
 
+        [DataMember]
+        [IdentityKey]
         public string ApplicationId { get; set; }
+      
+        [DataMember]
         public string Name { get; set; }
 
+
+        [DataMember]
         public string FriendlyName { get; set; }
 
+
+        [DataMember]
         public string ContactEmail { get; set; }
+
+        [DataMember]
         public int TicketTimeout { get; set; }
+
+
+        [DataMember]
         public string Type { get; set; }
 
+        [DataMember]
         public Collection<string> TargetApplicationClams { get; set; }
+
+        [DataMember]
         public Collection<TargetApplicationFieldValue> Fields { get; set; }
 
+        [DataMember]
         public string CredentialManagementUrl { get; set; }
 
         #endregion

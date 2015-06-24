@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.SharePoint.Client;
 using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
-using SPMeta2.CSOM.Utils;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.Enumerations;
 using SPMeta2.ModelHandlers;
 using SPMeta2.Services;
 using SPMeta2.Utils;
 using SPMeta2.Common;
+using UrlUtility = SPMeta2.Utils.UrlUtility;
 
 namespace SPMeta2.CSOM.ModelHandlers
 {
@@ -46,7 +48,83 @@ namespace SPMeta2.CSOM.ModelHandlers
 
         private void ProcessWebFolder(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
         {
-            throw new NotImplementedException();
+            var web = folderHost.HostWeb;
+            var folder = folderHost.CurrentWebFolder;
+
+            var context = web.Context;
+
+            if (!folder.IsPropertyAvailable("ServerRelativeUrl"))
+            {
+                context.Load(folder, f => f.ServerRelativeUrl);
+                context.ExecuteQueryWithTrace();
+            }
+
+            var currentFile = web.GetFileByServerRelativeUrl(GetSafeFileUrl(folder, moduleFile));
+
+            context.Load(currentFile, f => f.Exists);
+            context.ExecuteQuery();
+
+            InvokeOnModelEvent(this, new ModelEventArgs
+            {
+                CurrentModelNode = null,
+                Model = null,
+                EventType = ModelEventType.OnProvisioning,
+                Object = currentFile.Exists ? currentFile : null,
+                ObjectType = typeof(File),
+                ObjectDefinition = moduleFile,
+                ModelHost = folderHost
+            });
+
+            if (moduleFile.Overwrite)
+            {
+                var fileCreatingInfo = new FileCreationInformation
+                {
+                    Url = moduleFile.FileName,
+                    Overwrite = true
+                };
+
+                if (moduleFile.Content.Length < ContentStreamFileSize)
+                {
+                    TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Using fileCreatingInfo.Content for small file less than: [{0}]", ContentStreamFileSize);
+                    fileCreatingInfo.Content = moduleFile.Content;
+                }
+                else
+                {
+                    TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "Using fileCreatingInfo.ContentStream for big file more than: [{0}]", ContentStreamFileSize);
+                    fileCreatingInfo.ContentStream = new System.IO.MemoryStream(moduleFile.Content);
+                }
+
+                var file = folder.Files.Add(fileCreatingInfo);
+
+                folder.Context.ExecuteQuery();
+
+                InvokeOnModelEvent(this, new ModelEventArgs
+                {
+                    CurrentModelNode = null,
+                    Model = null,
+                    EventType = ModelEventType.OnProvisioned,
+                    Object = file,
+                    ObjectType = typeof(File),
+                    ObjectDefinition = moduleFile,
+                    ModelHost = folderHost
+                });
+            }
+            else
+            {
+                InvokeOnModelEvent(this, new ModelEventArgs
+                {
+                    CurrentModelNode = null,
+                    Model = null,
+                    EventType = ModelEventType.OnProvisioned,
+                    Object = currentFile.Exists ? currentFile : null,
+                    ObjectType = typeof(File),
+                    ObjectDefinition = moduleFile,
+                    ModelHost = folderHost
+                });
+            }
+
+            folder.Update();
+            folder.Context.ExecuteQueryWithTrace();
         }
 
         private void ProcessContentTypeFolder(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
@@ -156,9 +234,9 @@ namespace SPMeta2.CSOM.ModelHandlers
 
                 context.ExecuteQueryWithTrace();
 
-                var listItemPropertyHost = new ListItemFieldValueModelHost
+                var listItemPropertyHost = new ListItemModelHost
                 {
-                    CurrentItem = item
+                    HostListItem = item
                 };
 
                 action(listItemPropertyHost);
@@ -197,6 +275,8 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             context.Load(list, l => l.EnableMinorVersions);
             context.Load(list, l => l.EnableModeration);
+            context.Load(list, l => l.BaseType);
+
             context.ExecuteQueryWithTrace();
 
             if (file != null)
@@ -216,28 +296,36 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             var shouldRefreshLoad = false;
 
-            if (list != null && file != null && (file.Exists && file.CheckOutType != CheckOutType.None))
+            // are we inside ocument libary, so that check in stuff is needed?
+            var isDocumentLibrary = list != null && list.BaseType == BaseType.DocumentLibrary;
+
+            if (isDocumentLibrary)
             {
-                file.UndoCheckOut();
-                file.RefreshLoad();
 
-                context.ExecuteQueryWithTrace();
-            }
+                if (list != null && file != null && (file.Exists && file.CheckOutType != CheckOutType.None))
+                {
+                    file.UndoCheckOut();
+                    file.RefreshLoad();
 
-            if (list != null && file != null && (list.EnableMinorVersions) && (file.Exists && file.Level == FileLevel.Published))
-            {
-                file.UnPublish("Provision");
-                file.RefreshLoad();
+                    context.ExecuteQueryWithTrace();
+                }
 
-                context.ExecuteQueryWithTrace();
-            }
+                if (list != null && file != null && (list.EnableMinorVersions) &&
+                    (file.Exists && file.Level == FileLevel.Published))
+                {
+                    file.UnPublish("Provision");
+                    file.RefreshLoad();
 
-            if (list != null && file != null && (file.Exists && file.CheckOutType == CheckOutType.None))
-            {
-                file.CheckOut();
-                file.RefreshLoad();
+                    context.ExecuteQueryWithTrace();
+                }
 
-                context.ExecuteQueryWithTrace();
+                if (list != null && file != null && (file.Exists && file.CheckOutType == CheckOutType.None))
+                {
+                    file.CheckOut();
+                    file.RefreshLoad();
+
+                    context.ExecuteQueryWithTrace();
+                }
             }
 
             var spFile = action(file);
@@ -248,6 +336,13 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             if (spFile.Exists)
             {
+                if (isDocumentLibrary)
+                {
+                    spFile.ListItemAllFields.Update();
+                }
+
+                context.ExecuteQueryWithTrace();
+
                 if (onCreated != null)
                     onCreated(spFile);
 
@@ -257,14 +352,17 @@ namespace SPMeta2.CSOM.ModelHandlers
                 context.ExecuteQueryWithTrace();
             }
 
-            if (list != null && spFile != null && (spFile.Exists && spFile.CheckOutType != CheckOutType.None))
-                spFile.CheckIn("Provision", CheckinType.MajorCheckIn);
+            if (isDocumentLibrary)
+            {
+                if (list != null && spFile != null && (spFile.Exists && spFile.CheckOutType != CheckOutType.None))
+                    spFile.CheckIn("Provision", CheckinType.MajorCheckIn);
 
-            if (list != null && spFile != null && (list.EnableMinorVersions))
-                spFile.Publish("Provision");
+                if (list != null && spFile != null && (list.EnableMinorVersions))
+                    spFile.Publish("Provision");
 
-            if (list != null && spFile != null && (list.EnableModeration))
-                spFile.Approve("Provision");
+                if (list != null && spFile != null && (list.EnableModeration))
+                    spFile.Approve("Provision");
+            }
 
             context.ExecuteQueryWithTrace();
         }
@@ -273,10 +371,12 @@ namespace SPMeta2.CSOM.ModelHandlers
         {
             Folder folder = null;
 
-            if(folderHost.CurrentList != null)
-                 folder = folderHost.CurrentLibraryFolder;
-            if (folderHost.CurrentContentType != null)
+            if (folderHost.CurrentList != null)
+                folder = folderHost.CurrentLibraryFolder;
+            else if (folderHost.CurrentContentType != null)
                 folder = folderHost.CurrentContentTypeFolder;
+            else if (folderHost.CurrentWebFolder != null)
+                folder = folderHost.CurrentWebFolder;
 
             var web = folderHost.HostWeb;
             var context = web.Context;
@@ -289,6 +389,44 @@ namespace SPMeta2.CSOM.ModelHandlers
             return file;
         }
 
+        protected string ResolveContentTypeId(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
+        {
+            var context = folderHost.CurrentLibraryFolder.Context;
+            var list = folderHost.CurrentList;
+            var stringCustomContentType = string.Empty;
+
+            if (!string.IsNullOrEmpty(moduleFile.ContentTypeId))
+            {
+                stringCustomContentType = moduleFile.ContentTypeId;
+            }
+            else if (!string.IsNullOrEmpty(moduleFile.ContentTypeName))
+            {
+                // preload custom content type
+
+                var listContentTypes = list.ContentTypes;
+                context.Load(listContentTypes);
+                context.ExecuteQueryWithTrace();
+
+                var listContentType = listContentTypes.ToList()
+                                                      .FirstOrDefault(c => c.Name.ToUpper() == moduleFile.ContentTypeName.ToUpper());
+
+                if (listContentType == null)
+                {
+                    throw new ArgumentNullException(
+                        string.Format("Cannot find content type with Name:[{0}] in List:[{1}]",
+                            new string[]
+                                    {
+                                        moduleFile.ContentTypeName,
+                                        list.Title
+                                    }));
+                }
+
+                stringCustomContentType = listContentType.Id.ToString();
+            }
+
+            return stringCustomContentType;
+        }
+
         private File ProcessFile(FolderModelHost folderHost, ModuleFileDefinition moduleFile)
         {
             var context = folderHost.CurrentLibraryFolder.Context;
@@ -299,6 +437,8 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             context.Load(folder, f => f.ServerRelativeUrl);
             context.ExecuteQueryWithTrace();
+
+            var stringCustomContentType = ResolveContentTypeId(folderHost, moduleFile);
 
             if (list != null)
             {
@@ -329,6 +469,8 @@ namespace SPMeta2.CSOM.ModelHandlers
 
             WithSafeFileOperation(list, file, f =>
             {
+
+
                 var fileName = moduleFile.FileName;
                 var fileContent = moduleFile.Content;
 
@@ -350,7 +492,22 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
 
                 TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Overwriting file");
-                return folder.Files.Add(fileCreatingInfo);
+                var updatedFile = folder.Files.Add(fileCreatingInfo);
+
+                var newFileItem = updatedFile.ListItemAllFields;
+                //context.Load(newFileItem);
+                //context.ExecuteQueryWithTrace();
+
+                if (!string.IsNullOrEmpty(stringCustomContentType))
+                    newFileItem[BuiltInInternalFieldNames.ContentTypeId] = stringCustomContentType;
+
+                if (moduleFile.DefaultValues.Count > 0)
+                    EnsureDefaultValues(newFileItem, moduleFile);
+
+                if (!string.IsNullOrEmpty(stringCustomContentType) || moduleFile.DefaultValues.Count > 0)
+                    newFileItem.Update();
+
+                return updatedFile;
             });
 
             var resultFile = web.GetFileByServerRelativeUrl(GetSafeFileUrl(folder, moduleFile));
@@ -371,6 +528,29 @@ namespace SPMeta2.CSOM.ModelHandlers
             InvokeOnModelEvent<ModuleFileDefinition, File>(resultFile, ModelEventType.OnUpdated);
 
             return resultFile;
+        }
+
+        private static void EnsureDefaultValues(ListItem newFileItem, ModuleFileDefinition publishingPageModel)
+        {
+            foreach (var defaultValue in publishingPageModel.DefaultValues)
+            {
+                if (!string.IsNullOrEmpty(defaultValue.FieldName))
+                {
+                    if (newFileItem.FieldValues.ContainsKey(defaultValue.FieldName))
+                    {
+                        if (newFileItem[defaultValue.FieldName] == null)
+                            newFileItem[defaultValue.FieldName] = defaultValue.Value;
+                    }
+                    else
+                    {
+                        newFileItem[defaultValue.FieldName] = defaultValue.Value;
+                    }
+                }
+                else if (defaultValue.FieldId.HasValue && defaultValue.FieldId != default(Guid))
+                {
+                    // unsupported by CSOM API yet
+                }
+            }
         }
 
         #endregion

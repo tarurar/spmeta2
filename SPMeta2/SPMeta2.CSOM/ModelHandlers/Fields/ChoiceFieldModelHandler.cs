@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using System.Xml.Linq;
 
 using SPMeta2.Utils;
@@ -36,10 +36,13 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
             // let base setting be setup
             base.ProcessFieldProperties(field, fieldModel);
 
-            field.ValidationMessage = fieldModel.ValidationMessage ?? string.Empty;
-            field.ValidationFormula = fieldModel.ValidationFormula ?? string.Empty;
+            if (!string.IsNullOrEmpty(fieldModel.ValidationMessage))
+                field.ValidationMessage = fieldModel.ValidationMessage;
+
+            if (!string.IsNullOrEmpty(fieldModel.ValidationFormula))
+                field.ValidationFormula = fieldModel.ValidationFormula;
         }
-        
+
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)
         {
             base.ProcessSPFieldXElement(fieldTemplate, fieldModel);

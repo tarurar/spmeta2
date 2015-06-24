@@ -1,8 +1,10 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -18,8 +20,11 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(SiteDefinition))]
 
     [ExpectAddHostExtensionMethod]
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class WebDefinition : DefinitionBase
     {
         #region constructors
@@ -40,6 +45,8 @@ namespace SPMeta2.Definitions
         /// 
         [ExpectValidation]
         [ExpectUpdate]
+        [ExpectRequired]
+        [DataMember]
         public string Title { get; set; }
 
         /// <summary>
@@ -48,6 +55,8 @@ namespace SPMeta2.Definitions
         /// 
         [ExpectValidation]
         [ExpectUpdate]
+        [DataMember]
+        [ExpectNullable]
         public string Description { get; set; }
 
         /// <summary>
@@ -55,7 +64,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
-        [ExpectUpdate]
+        [DataMember]
+        //[ExpectUpdateAsLCID]
         public uint LCID { get; set; }
 
         /// <summary>
@@ -63,12 +73,15 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
         public bool UseUniquePermission { get; set; }
 
         /// <summary>
         /// Convert to the new web template if web if there.
         /// </summary>
         /// 
+
+        [DataMember]
         public bool ConvertIfThere { get; set; }
 
         /// <summary>
@@ -77,6 +90,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Url { get; set; }
 
         /// <summary>
@@ -86,11 +102,15 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired(GroupName = "Web Template")]
+        [DataMember]
         public string WebTemplate { get; set; }
 
         /// <summary>
         /// Custom web template name of the target web.
         /// </summary>
+        [ExpectRequired(GroupName = "Web Template")]
+        [DataMember]
         public string CustomWebTemplate { get; set; }
 
         #endregion

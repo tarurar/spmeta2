@@ -1,4 +1,5 @@
 ﻿using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using System;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,8 +23,11 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(WebDefinition))]
     [DefaultParentHostAttribute(typeof(ListItemDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class ListItemFieldValueDefinition : DefinitionBase
     {
         #region properties
@@ -33,7 +38,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
-
+        [ExpectRequired(GroupName = "Field")]
+        [DataMember]
+        [IdentityKey]
         public string FieldName { get; set; }
 
         /// <summary>
@@ -42,7 +49,9 @@ namespace SPMeta2.Definitions
         /// 
 
         [ExpectValidation]
-
+        [ExpectRequired(GroupName = "Field")]
+        [DataMember]
+        [IdentityKey]
         public Guid? FieldId { get; set; }
 
         /// <summary>
@@ -50,6 +59,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public object Value { get; set; }
 
         #endregion

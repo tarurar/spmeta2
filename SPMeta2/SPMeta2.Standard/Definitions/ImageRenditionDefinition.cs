@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Standard.Definitions
 {
@@ -20,13 +22,25 @@ namespace SPMeta2.Standard.Definitions
     [DefaultRootHost(typeof(SiteDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class ImageRenditionDefinition : DefinitionBase
     {
         #region properties
 
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
+
+        [ExpectRequired]
+        [DataMember]
         public int Height { get; set; }
+
+        [ExpectRequired]
+        [DataMember]
         public int Width { get; set; }
 
         #endregion

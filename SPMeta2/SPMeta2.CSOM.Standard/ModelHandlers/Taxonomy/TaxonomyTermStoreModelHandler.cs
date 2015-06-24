@@ -8,9 +8,11 @@ using SPMeta2.CSOM.ModelHosts;
 using SPMeta2.CSOM.Standard.ModelHosts;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
+using SPMeta2.ModelHosts;
 using SPMeta2.Services;
 using SPMeta2.Standard.Definitions.Taxonomy;
 using SPMeta2.Utils;
+using Microsoft.SharePoint.Client;
 
 namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
 {
@@ -42,13 +44,15 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
 
             var termStore = FindTermStore(siteModelHost, termStoreModel);
 
-            action(new TermStoreModelHost
+            var termStoreModelHost = ModelHostBase.Inherit<TermStoreModelHost>(siteModelHost, context =>
             {
-                HostTermStore = termStore
+                context.HostTermStore = termStore;
             });
 
+            action(termStoreModelHost);
+
             TraceService.Verbose((int)LogEventId.ModelProvisionCoreCall, "Calling termStore.CommitAll()");
-            
+
             termStore.CommitAll();
             termStore.Context.ExecuteQueryWithTrace();
         }
@@ -61,15 +65,22 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
             Guid? termStoreId,
             bool? useDefaultSiteCollectionTermStore)
         {
-            var site = siteModelHost.HostSite;
+            return FindTermStore(siteModelHost.HostSite, termStoreName, termStoreId, useDefaultSiteCollectionTermStore);
+        }
 
+        internal static TermStore FindTermStore(Site site,
+            string termStoreName,
+            Guid? termStoreId,
+            bool? useDefaultSiteCollectionTermStore)
+        {
+            var clientContext = site.Context;
             TermStore termStore = null;
 
             lock (_storeCacheLock)
             {
                 var key = string.Format("{0}-{1}-{2}",
-                    siteModelHost.HostClientContext.GetHashCode(),
-                    siteModelHost.HostClientContext.Site.GetHashCode(),
+                    clientContext.GetHashCode(),
+                    clientContext.GetHashCode(),
                     string.Format("{0}-{1}-{2}", termStoreName, termStoreId, useDefaultSiteCollectionTermStore))
                         .ToLower();
 
@@ -77,8 +88,8 @@ namespace SPMeta2.CSOM.Standard.ModelHandlers.Taxonomy
                 {
                     TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "First call to TermStore with cache key: [{0}]", key);
 
-                    var session = TaxonomySession.GetTaxonomySession(siteModelHost.HostClientContext);
-                    var client = siteModelHost.HostClientContext;
+                    var session = TaxonomySession.GetTaxonomySession(clientContext);
+                    var client = clientContext;
 
                     if (useDefaultSiteCollectionTermStore == true)
                     {

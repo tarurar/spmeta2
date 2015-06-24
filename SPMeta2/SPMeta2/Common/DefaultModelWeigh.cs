@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SPMeta2.Definitions.Fields;
 
 namespace SPMeta2.Common
 {
@@ -21,7 +22,22 @@ namespace SPMeta2.Common
             InitSiteScope();
             InitWebScope();
             InitListScope();
+
+            InitListItemScope();
+            InitModuleFileScope();
+
             InitFolderScope();
+        }
+
+        private static void InitModuleFileScope()
+        {
+            Weighs.Add(new ModelWeigh(
+                 typeof(ModuleFileDefinition),
+                 new[]
+                {
+                    typeof (BreakRoleInheritanceDefinition),
+                    typeof (ResetRoleInheritanceDefinition),
+                }));
         }
 
         #endregion
@@ -37,6 +53,19 @@ namespace SPMeta2.Common
 
         #region methods
 
+        private static void InitListItemScope()
+        {
+            Weighs.Add(new ModelWeigh(
+                typeof(ListItemDefinition),
+                new[]
+                {
+                    typeof (BreakRoleInheritanceDefinition),
+                    typeof (ResetRoleInheritanceDefinition),
+               
+                    typeof (PropertyDefinition)
+                }));
+        }
+
         private static void InitFolderScope()
         {
             Weighs.Add(new ModelWeigh(
@@ -44,6 +73,7 @@ namespace SPMeta2.Common
                 new[]
                 {
                     typeof (BreakRoleInheritanceDefinition),
+                    typeof (ResetRoleInheritanceDefinition),
                     typeof (SecurityRoleLinkDefinition),
                     typeof (PropertyDefinition)
                 }));
@@ -56,16 +86,21 @@ namespace SPMeta2.Common
                 new[]
                 {
                     typeof (BreakRoleInheritanceDefinition),
+                    typeof (ResetRoleInheritanceDefinition),
                     typeof (SecurityRoleLinkDefinition),
 
                     typeof (PropertyDefinition),
                     
-                    // list scoped fields should be deployed first as well as content type links
-                    typeof (FieldDefinition),
-                    typeof (ListFieldLinkDefinition),
-
                     typeof (ContentTypeDefinition),
                     typeof (ContentTypeLinkDefinition),
+                    
+                    // field and field links could be added with 'AddToAllContentTypes' options
+                    // we need content types deployed first
+                    typeof (FieldDefinition),
+                    typeof (LookupFieldDefinition),
+                    typeof (DependentLookupFieldDefinition),
+
+                    typeof (ListFieldLinkDefinition),
 
                     typeof (SP2013WorkflowSubscriptionDefinition),
                     
@@ -74,6 +109,7 @@ namespace SPMeta2.Common
                     typeof (ListViewDefinition),
                     typeof (ModuleFileDefinition),
 
+                    typeof (ListItemDefinition),
                     typeof (ListItemFieldValueDefinition),
                 }));
         }
@@ -89,11 +125,16 @@ namespace SPMeta2.Common
                     typeof (SecurityGroupDefinition),
 
                     typeof (BreakRoleInheritanceDefinition),
+                    typeof (ResetRoleInheritanceDefinition),
+
                     typeof (SecurityRoleLinkDefinition),
 
                     typeof (PropertyDefinition),
                     
                     typeof (FieldDefinition),
+                    typeof (LookupFieldDefinition),
+                    typeof (DependentLookupFieldDefinition),
+
                     typeof (ContentTypeDefinition),
                     
                     typeof (SP2013WorkflowDefinition),
@@ -125,6 +166,9 @@ namespace SPMeta2.Common
                     typeof (UserCustomActionDefinition),
 
                     typeof (FieldDefinition),
+                    typeof (LookupFieldDefinition),
+                    typeof (DependentLookupFieldDefinition),
+
                     typeof (ContentTypeDefinition),
                     
                     typeof (WebDefinition)

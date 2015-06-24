@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -19,8 +21,11 @@ namespace SPMeta2.Definitions
     [DefaultParentHost(typeof(ListDefinition))]
 
     [Serializable]
+    [DataContract]
 
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class EventReceiverDefinition : DefinitionBase
     {
         #region constructors
@@ -39,6 +44,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         /// <summary>
@@ -46,6 +54,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public string Type { get; set; }
 
         /// <summary>
@@ -53,6 +63,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public string Assembly { get; set; }
 
         /// <summary>
@@ -60,6 +72,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public string Class { get; set; }
 
         /// <summary>
@@ -67,6 +81,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public int SequenceNumber { get; set; }
 
         /// <summary>
@@ -74,6 +90,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired]
+        [DataMember]
         public string Synchronization { get; set; }
 
         /// <summary>
@@ -81,6 +99,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string Data { get; set; }
 
         #endregion

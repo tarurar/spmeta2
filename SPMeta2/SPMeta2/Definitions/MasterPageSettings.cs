@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions.Base;
 using System.Linq.Expressions;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -21,16 +23,27 @@ namespace SPMeta2.Definitions
     [DefaultRootHostAttribute(typeof(SiteDefinition))]
     [DefaultParentHostAttribute(typeof(WebDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     public class MasterPageSettingsDefinition : DefinitionBase
     {
         #region properties
 
+        [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string SiteMasterPageUrl { get; set; }
+
+        [DataMember]
         public bool? SiteMasterPageInheritFromMaster { get; set; }
 
+        [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string SystemMasterPageUrl { get; set; }
-        public string SystemMasterPageInheritFromMaster { get; set; }
+
+        [DataMember]
+        public bool? SystemMasterPageInheritFromMaster { get; set; }
 
         #endregion
 

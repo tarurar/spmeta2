@@ -5,7 +5,6 @@ using SPMeta2.Common;
 using SPMeta2.CSOM.Common;
 using SPMeta2.CSOM.Extensions;
 using SPMeta2.CSOM.ModelHosts;
-using SPMeta2.CSOM.Utils;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
 using SPMeta2.ModelHandlers;
@@ -14,7 +13,9 @@ using SPMeta2.Services;
 using SPMeta2.Syntax.Default;
 using SPMeta2.Utils;
 using System.Xml.Linq;
+using SPMeta2.Exceptions;
 using SPMeta2.ModelHosts;
+using UrlUtility = SPMeta2.Utils.UrlUtility;
 
 namespace SPMeta2.CSOM.ModelHandlers
 {
@@ -25,20 +26,41 @@ namespace SPMeta2.CSOM.ModelHandlers
             get { return typeof(ContentTypeDefinition); }
         }
 
+        protected Site ExtractSite(object modelHost)
+        {
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite;
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostSite;
+
+            throw new SPMeta2Exception("modelHost should be SiteModelHost/WebModelHost");
+        }
+
+        protected Web ExtractWeb(object modelHost)
+        {
+            if (modelHost is SiteModelHost)
+                return (modelHost as SiteModelHost).HostSite.RootWeb;
+            if (modelHost is WebModelHost)
+                return (modelHost as WebModelHost).HostWeb;
+
+            throw new SPMeta2Exception("modelHost should be SiteModelHost/WebModelHost");
+        }
+
         public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)
         {
-            var siteModelHost = modelHost.WithAssertAndCast<SiteModelHost>("modelHost", value => value.RequireNotNull());
+            var site = ExtractSite(modelHost);
+            var web = ExtractWeb(modelHost);
 
-            var site = siteModelHost.HostSite;
+            var mdHHost = modelHost as CSOMModelHostBase;
+
             var contentTypeModel = model as ContentTypeDefinition;
 
-            if (site != null && contentTypeModel != null)
+            if (web != null && contentTypeModel != null)
             {
-                var rootWeb = site.RootWeb;
-                var context = rootWeb.Context;
+                var context = web.Context;
 
                 var id = contentTypeModel.GetContentTypeId();
-                var currentContentType = rootWeb.ContentTypes.GetById(id);
+                var currentContentType = web.ContentTypes.GetById(id);
 
                 context.ExecuteQueryWithTrace();
 
@@ -46,25 +68,12 @@ namespace SPMeta2.CSOM.ModelHandlers
                 {
                     TraceService.Information((int)LogEventId.ModelProvisionCoreCall, "Resolving content type resource folder for ModuleFileDefinition");
 
-                    if (!currentContentType.IsPropertyAvailable("SchemaXml"))
-                    {
-                        context.Load(rootWeb, w => w.ServerRelativeUrl);
-                        currentContentType.Context.Load(currentContentType, c => c.SchemaXml);
-                        currentContentType.Context.ExecuteQuery();
-                    }
+                    var serverRelativeFolderUrl = ExtractResourceFolderServerRelativeUrl(web, context, currentContentType);
 
-                    var ctDocument = XDocument.Parse(currentContentType.SchemaXml);
-                    var folderUrlNode = ctDocument.Descendants().FirstOrDefault(d => d.Name == "Folder");
-
-                    var webRelativeFolderUrl = folderUrlNode.Attribute("TargetName").Value;
-                    var serverRelativeFolderUrl = UrlUtility.CombineUrl(rootWeb.ServerRelativeUrl, webRelativeFolderUrl);
-
-                    TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "webRelativeFolderUrl is: [{0}]", webRelativeFolderUrl);
-
-                    var ctFolder = rootWeb.GetFolderByServerRelativeUrl(serverRelativeFolderUrl);
+                    var ctFolder = web.GetFolderByServerRelativeUrl(serverRelativeFolderUrl);
                     context.ExecuteQueryWithTrace();
 
-                    var folderModelHost = ModelHostBase.Inherit<FolderModelHost>(siteModelHost, host =>
+                    var folderModelHost = ModelHostBase.Inherit<FolderModelHost>(mdHHost, host =>
                     {
                         host.CurrentContentType = currentContentType;
                         host.CurrentContentTypeFolder = ctFolder;
@@ -74,14 +83,10 @@ namespace SPMeta2.CSOM.ModelHandlers
                 }
                 else
                 {
-                    // ModelHostContext is a cheat for client OM
-                    // the issue is that having ContenType instance to work with FieldLinks is not enought - you need RootWeb
-                    // and RootWeb could be accessed only via Site
-                    // so, somehow we need to pass this info to the model handler
-
                     action(new ModelHostContext
                     {
                         Site = site,
+                        Web = web,
                         ContentType = currentContentType
                     });
                 }
@@ -97,20 +102,42 @@ namespace SPMeta2.CSOM.ModelHandlers
             }
         }
 
+        private static string ExtractResourceFolderServerRelativeUrl(Web web, ClientRuntimeContext context, ContentType currentContentType)
+        {
+            if (!currentContentType.IsPropertyAvailable("SchemaXml")
+                || !web.IsPropertyAvailable("ServerRelativeUrl"))
+            {
+                context.Load(web, w => w.ServerRelativeUrl);
+                currentContentType.Context.Load(currentContentType, c => c.SchemaXml);
+                currentContentType.Context.ExecuteQuery();
+            }
+
+            var ctDocument = XDocument.Parse(currentContentType.SchemaXml);
+            var folderUrlNode = ctDocument.Descendants().FirstOrDefault(d => d.Name == "Folder");
+
+            var webRelativeFolderUrl = folderUrlNode.Attribute("TargetName").Value;
+            var serverRelativeFolderUrl = UrlUtility.CombineUrl(web.ServerRelativeUrl, webRelativeFolderUrl);
+
+            TraceService.VerboseFormat((int)LogEventId.ModelProvisionCoreCall, "webRelativeFolderUrl is: [{0}]", webRelativeFolderUrl);
+            return serverRelativeFolderUrl;
+        }
+
+
+
         public override void DeployModel(object modelHost, DefinitionBase model)
         {
-            var siteModelHost = modelHost.WithAssertAndCast<SiteModelHost>("modelHost", value => value.RequireNotNull());
+            var site = ExtractSite(modelHost);
+            var web = ExtractWeb(modelHost);
 
-            var site = siteModelHost.HostSite;
             var contentTypeModel = model.WithAssertAndCast<ContentTypeDefinition>("model", value => value.RequireNotNull());
-
-            var rootWeb = site.RootWeb;
-            var context = rootWeb.Context;
+            var context = web.Context;
 
             var contentTypeId = contentTypeModel.GetContentTypeId();
 
-            var tmp = rootWeb.ContentTypes.GetById(contentTypeId);
-            context.ExecuteQueryWithTrace();
+            var tmpContentType = context.LoadQuery(web.ContentTypes.Where(ct => ct.StringId == contentTypeId));
+            context.ExecuteQuery();
+
+            var tmp = tmpContentType.FirstOrDefault();
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -131,12 +158,13 @@ namespace SPMeta2.CSOM.ModelHandlers
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new content type");
 
-                currentContentType = rootWeb.ContentTypes.Add(new ContentTypeCreationInformation
+                currentContentType = web.ContentTypes.Add(new ContentTypeCreationInformation
                 {
                     Name = contentTypeModel.Name,
                     Description = string.IsNullOrEmpty(contentTypeModel.Description) ? string.Empty : contentTypeModel.Description,
                     Group = contentTypeModel.Group,
-                    Id = contentTypeId
+                    Id = contentTypeId,
+                    ParentContentType = null
                 });
             }
             else
@@ -146,9 +174,34 @@ namespace SPMeta2.CSOM.ModelHandlers
                 currentContentType = tmp;
             }
 
+            currentContentType.Hidden = contentTypeModel.Hidden;
+
             currentContentType.Name = contentTypeModel.Name;
             currentContentType.Description = string.IsNullOrEmpty(contentTypeModel.Description) ? string.Empty : contentTypeModel.Description;
             currentContentType.Group = contentTypeModel.Group;
+
+            if (!string.IsNullOrEmpty(contentTypeModel.DocumentTemplate))
+            {
+                var serverRelativeFolderUrl = ExtractResourceFolderServerRelativeUrl(web, context, currentContentType);
+
+                var processedDocumentTemplateUrl = TokenReplacementService.ReplaceTokens(new TokenReplacementContext
+                {
+                    Value = contentTypeModel.DocumentTemplate,
+                    Context = context
+                }).Value;
+
+                // resource related path
+                if (!processedDocumentTemplateUrl.Contains('/')
+                    && !processedDocumentTemplateUrl.Contains('\\'))
+                {
+                    processedDocumentTemplateUrl = UrlUtility.CombineUrl(new string[] { 
+                            serverRelativeFolderUrl,
+                            processedDocumentTemplateUrl
+                        });
+                }
+
+                currentContentType.DocumentTemplate = processedDocumentTemplateUrl;
+            }
 
             InvokeOnModelEvent<ContentTypeDefinition, ContentType>(currentContentType, ModelEventType.OnUpdated);
 

@@ -4,6 +4,8 @@ using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
+using SPMeta2.Attributes.Identity;
 
 namespace SPMeta2.Definitions.ContentTypes
 {
@@ -16,7 +18,8 @@ namespace SPMeta2.Definitions.ContentTypes
     [DefaultRootHost(typeof(SiteDefinition))]
     [DefaultParentHost(typeof(ContentTypeDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     public class RemoveContentTypeFieldLinksDefinition : DefinitionBase
     {
         #region constructors
@@ -30,6 +33,8 @@ namespace SPMeta2.Definitions.ContentTypes
 
         #region properties
 
+        [DataMember]
+        [IdentityKey]
         public List<FieldLinkValue> Fields { get; set; }
 
         #endregion

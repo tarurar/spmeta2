@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
 
@@ -25,6 +25,24 @@ namespace SPMeta2.Regression.CSOM.Validation
                                       .NewAssert(model, definition, spObject)
                                             .ShouldNotBeNull(spObject);
 
+
+            if (!string.IsNullOrEmpty(definition.SiteMasterPageUrl))
+            {
+                assert.ShouldBeEndOf(m => m.SiteMasterPageUrl, o => o.CustomMasterUrl);
+            }
+            else
+            {
+                assert.SkipProperty(m => m.SiteMasterPageUrl, "SiteMasterPageUrl is NULL or empty");
+            }
+
+            if (!string.IsNullOrEmpty(definition.SystemMasterPageUrl))
+            {
+                assert.ShouldBeEndOf(m => m.SystemMasterPageUrl, o => o.MasterUrl);
+            }
+            else
+            {
+                assert.SkipProperty(m => m.SystemMasterPageUrl, "SystemMasterPageUrl is NULL or empty");
+            }
 
         }
     }

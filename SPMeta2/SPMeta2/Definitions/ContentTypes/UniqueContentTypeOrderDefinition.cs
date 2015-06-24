@@ -1,21 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions.Base;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions.ContentTypes
 {
+    [DataContract]
     public class ContentTypeLinkValue
     {
+        [DataMember]
+        [IdentityKey]
         public string ContentTypeName { get; set; }
+
+        [DataMember]
+        [IdentityKey]
         public string ContentTypeId { get; set; }
     }
 
+    [DataContract]
+
     public class FieldLinkValue
     {
+        [DataMember]
         public string InternalName { get; set; }
+
+        [DataMember]
         public Guid? Id { get; set; }
 
         public override string ToString()
@@ -37,6 +50,7 @@ namespace SPMeta2.Definitions.ContentTypes
     [DefaultParentHost(typeof(ListDefinition))]
 
     [Serializable]
+    [DataContract]
     public class UniqueContentTypeOrderDefinition : DefinitionBase
     {
         #region constructors
@@ -50,6 +64,8 @@ namespace SPMeta2.Definitions.ContentTypes
 
         #region properties
 
+        [DataMember]
+        [IdentityKey]
         public List<ContentTypeLinkValue> ContentTypes { get; set; }
 
         #endregion

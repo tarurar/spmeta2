@@ -22,6 +22,12 @@ namespace SPMeta2.Containers.DefinitionGenerators
 
                 //def.WebpartXmlTemplate = DefaultWebpartTemplates.ContentEditorWebpart;
                 def.WebpartFileName = BuiltInWebpartFileNames.MSContentEditor;
+
+                if (Rnd.Bool())
+                    def.ExportMode = BuiltInExportMode.All;
+
+                def.Width = Rnd.Int(500);
+                def.Height = Rnd.Int(500);
             });
         }
     }

@@ -1,7 +1,0 @@
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\bin\Debug\SPMeta2.Regression.Common.dll
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\bin\Debug\SPMeta2.Regression.Common.pdb
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\bin\Debug\SPMeta2.dll
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\bin\Debug\SPMeta2.pdb
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\obj\Debug\SPMeta2.Regression.Common.csprojResolveAssemblyReference.cache
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\obj\Debug\SPMeta2.Regression.Common.dll
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Common\obj\Debug\SPMeta2.Regression.Common.pdb

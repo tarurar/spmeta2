@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SPMeta2.BuiltInDefinitions;
 using SPMeta2.Containers;
 using SPMeta2.Definitions;
 using SPMeta2.Enumerations;
@@ -7,8 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Syntax.Default;
+using SPMeta2.Regression.Tests.Data;
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios
 {
@@ -36,6 +38,50 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         public static void Cleanup()
         {
             InternalCleanup();
+        }
+
+        #endregion
+
+        #region content types and values
+
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.ModuleFiles.Typed")]
+        public void CanDeploy_ModuleFile_AsJavaScriptDisplayTemplate()
+        {
+            var moduleFile = ModelGeneratorService.GetRandomDefinition<ModuleFileDefinition>(def =>
+            {
+                def.ContentTypeName = "JavaScript Display Template";
+                def.DefaultValues = new List<FieldValue>
+                {
+                    new FieldValue
+                    {
+                        FieldName = "DisplayTemplateJSTargetControlType",
+                        Value = "Form"
+                    },
+                     new FieldValue
+                    {
+                        FieldName = "DisplayTemplateJSTargetScope",
+                        Value = Rnd.String()
+                    },
+                     new FieldValue
+                    {
+                        FieldName = "DisplayTemplateJSTemplateType",
+                        Value ="Override"
+                    },
+                    
+                };
+            });
+
+            var webModel = SPMeta2Model.NewWebModel(web =>
+            {
+                web.AddHostList(BuiltInListDefinitions.Calalogs.MasterPage, list =>
+                {
+                    list.AddModuleFile(moduleFile);
+                });
+            });
+
+            TestModel(webModel);
         }
 
         #endregion
@@ -114,11 +160,123 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         }
 
         [TestMethod]
+        [TestCategory("Regression.Scenarios.ModuleFiles.Hosts.Lists")]
+        public void CanDeploy_ModuleFile_ToGenericList()
+        {
+            var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.GenericList;
+            });
+
+            TestModuleFileDeploymentToList(list);
+        }
+
+
+        private void TestModuleFileDeploymentToList(ListDefinition list)
+        {
+            var blogSite = ModelGeneratorService.GetRandomDefinition<WebDefinition>(def =>
+            {
+                def.WebTemplate = BuiltInWebTemplates.Collaboration.Blog;
+            });
+
+            var model = SPMeta2Model
+                .NewWebModel(web =>
+                {
+                    web.AddWeb(blogSite, blogWeb =>
+                    {
+                        blogWeb.AddList(list, rndList =>
+                        {
+                            rndList.AddModuleFile(new ModuleFileDefinition
+                            {
+                                FileName = "AllItems.aspx",
+                                Content = Encoding.Default.GetBytes(PageTemplates.CustomAllItemsPage),
+                                Overwrite = true
+                            });
+
+                            rndList.AddWelcomePage(new WelcomePageDefinition
+                            {
+                                Url = "AllItems.aspx"
+                            });
+                        });
+                    });
+
+                });
+
+            TestModels(new[] { model });
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.ModuleFiles.Hosts.Lists")]
+        public void CanDeploy_ModuleFile_ToIssueTrackingList()
+        {
+            var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.TemplateType = BuiltInListTemplateTypeId.IssueTracking;
+            });
+
+            TestModuleFileDeploymentToList(list);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.ModuleFiles.Hosts.Blog")]
+        public void CanDeploy_ModuleFile_ToPostList()
+        {
+            var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.CustomUrl = "Lists/Posts";
+
+                def.ContentTypesEnabled = false;
+
+                def.TemplateType = 0;
+                def.TemplateName = BuiltInListTemplates.Posts.InternalName;
+            });
+
+            TestModuleFileDeploymentToList(list);
+        }
+
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.ModuleFiles.Hosts.Blog")]
+        public void CanDeploy_ModuleFile_ToCommentsList()
+        {
+            var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.CustomUrl = "Lists/Comments";
+
+                def.ContentTypesEnabled = false;
+
+                def.TemplateType = 0;
+                def.TemplateName = BuiltInListTemplates.Comments.InternalName;
+            });
+
+            TestModuleFileDeploymentToList(list);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Scenarios.ModuleFiles.Hosts.Blog")]
+        public void CanDeploy_ModuleFile_ToCategoriesList()
+        {
+            var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
+            {
+                def.CustomUrl = "Lists/Categories";
+
+                def.ContentTypesEnabled = false;
+
+                def.TemplateType = 0;
+                def.TemplateName = BuiltInListTemplates.Categories.InternalName;
+            });
+
+            TestModuleFileDeploymentToList(list);
+        }
+
+        [TestMethod]
         [TestCategory("Regression.Scenarios.ModuleFiles.Hosts")]
         public void CanDeploy_ModuleFile_ToLibraryFolder()
         {
             var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
             {
+                
+
                 def.TemplateType = BuiltInListTemplateTypeId.DocumentLibrary;
             });
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -18,6 +20,7 @@ namespace SPMeta2.Definitions
     [ExpectWithExtensionMethod]
 
     [Serializable]
+    [DataContract]
 
     public class SecurityGroupLinkDefinition : DefinitionBase
     {
@@ -33,6 +36,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string SecurityGroupName { get; set; }
 
         /// <summary>
@@ -40,6 +45,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public bool IsAssociatedVisitorGroup { get; set; }
 
         /// <summary>
@@ -47,12 +54,16 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public bool IsAssociatedMemberGroup { get; set; }
 
         /// <summary>
         /// Flag to mimic AssociatedOwnerGroup
         /// </summary>
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public bool IsAssociatedOwnerGroup { get; set; }
 
         #endregion

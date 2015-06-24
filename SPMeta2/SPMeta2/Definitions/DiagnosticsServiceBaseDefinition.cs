@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -18,11 +20,15 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(FarmDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class DiagnosticsServiceBaseDefinition : DefinitionBase
     {
         #region properties
 
+        [ExpectRequired]
+        [DataMember]
+        [IdentityKey]
         public string AssemblyQualifiedName { get; set; }
 
         #endregion

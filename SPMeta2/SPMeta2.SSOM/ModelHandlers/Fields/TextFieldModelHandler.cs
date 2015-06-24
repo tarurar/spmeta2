@@ -31,8 +31,17 @@ namespace SPMeta2.SSOM.ModelHandlers.Fields
             // let base setting be setup
             base.ProcessFieldProperties(field, fieldModel);
 
-            field.ValidationMessage = fieldModel.ValidationMessage ?? string.Empty;
-            field.ValidationFormula = fieldModel.ValidationFormula ?? string.Empty;
+            if (!string.IsNullOrEmpty(fieldModel.ValidationMessage))
+                field.ValidationMessage = fieldModel.ValidationMessage;
+
+            if (!string.IsNullOrEmpty(fieldModel.ValidationFormula))
+                field.ValidationFormula = fieldModel.ValidationFormula;
+
+            var spField = field.WithAssertAndCast<SPFieldText>("field", value => value.RequireNotNull());
+            var typedFieldModel = fieldModel.WithAssertAndCast<TextFieldDefinition>("model", value => value.RequireNotNull());
+
+            if (typedFieldModel.MaxLength.HasValue)
+                spField.MaxLength = typedFieldModel.MaxLength.Value;
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)

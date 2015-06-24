@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
+using SPMeta2.Attributes.Identity;
 
 namespace SPMeta2.Definitions
 {
@@ -18,27 +20,35 @@ namespace SPMeta2.Definitions
     [DefaultRootHost(typeof(WebApplicationDefinition))]
     [DefaultParentHost(typeof(WebApplicationDefinition))]
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class WebConfigModificationDefinition : DefinitionBase
     {
         #region properties
 
         [ExpectValidation]
+        [DataMember]
         public string Path { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public uint Sequence { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public string Owner { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public string Type { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public string Value { get; set; }
 
         #endregion

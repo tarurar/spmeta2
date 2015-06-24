@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SPMeta2.Regression.Tests.Impl.Scenarios
 {
@@ -40,6 +40,7 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         {
             var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
             {
+                def.EnableMinorVersions = false;
                 def.TemplateType = BuiltInListTemplateTypeId.GenericList;
             });
 
@@ -88,6 +89,7 @@ namespace SPMeta2.Regression.Tests.Impl.Scenarios
         {
             var list = ModelGeneratorService.GetRandomDefinition<ListDefinition>(def =>
             {
+                def.EnableMinorVersions = false;
                 def.TemplateType = BuiltInListTemplateTypeId.GenericList;
             });
 

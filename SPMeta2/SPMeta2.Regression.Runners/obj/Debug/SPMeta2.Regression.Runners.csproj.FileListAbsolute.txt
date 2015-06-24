@@ -1,9 +1,0 @@
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\bin\Debug\SPMeta2.Regression.Runners.dll
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\bin\Debug\SPMeta2.Regression.Runners.pdb
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\bin\Debug\SPMeta2.dll
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\bin\Debug\SPMeta2.pdb
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\obj\Debug\SPMeta2.Regression.Runners.csprojResolveAssemblyReference.cache
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\obj\Debug\SPMeta2.Regression.Runners.dll
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\obj\Debug\SPMeta2.Regression.Runners.pdb
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\bin\Debug\SPMeta2.Regression.Runners.XML
-C:\Sources\spmeta2\SPMeta2\SPMeta2.Regression.Runners\bin\Debug\SPMeta2.xml

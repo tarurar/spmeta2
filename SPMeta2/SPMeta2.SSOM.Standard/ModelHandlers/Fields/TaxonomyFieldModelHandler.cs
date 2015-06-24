@@ -41,18 +41,32 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Fields
 
             var site = GetCurrentSite();
 
-            TermStore tesmStore = LookupTermStore(site, taxFieldModel);
-            TermSet termSet = LookupTermSet(tesmStore, taxFieldModel);
-            Term term = LookupTerm(tesmStore, taxFieldModel);
-
             taxField.AllowMultipleValues = taxFieldModel.IsMulti;
-            taxField.SspId = tesmStore.Id;
 
-            if (termSet != null)
-                taxField.TermSetId = termSet.Id;
+            if (taxFieldModel.Open.HasValue)
+                taxField.Open = taxFieldModel.Open.Value;
 
-            if (term != null)
-                taxField.AnchorId = term.Id;
+            if (taxFieldModel.CreateValuesInEditForm.HasValue)
+                taxField.CreateValuesInEditForm = taxFieldModel.CreateValuesInEditForm.Value;
+
+            if (taxFieldModel.IsPathRendered.HasValue)
+                taxField.IsPathRendered = taxFieldModel.IsPathRendered.Value;
+
+            TermStore tesmStore = LookupTermStore(site, taxFieldModel);
+
+            if (tesmStore != null)
+            {
+                taxField.SspId = tesmStore.Id;
+
+                TermSet termSet = LookupTermSet(tesmStore, taxFieldModel);
+                Term term = LookupTerm(tesmStore, taxFieldModel);
+
+                if (termSet != null)
+                    taxField.TermSetId = termSet.Id;
+
+                if (term != null)
+                    taxField.AnchorId = term.Id;
+            }
         }
 
         public static Term LookupTerm(TermStore tesmStore, TaxonomyFieldDefinition taxFieldModel)
@@ -68,11 +82,20 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Fields
 
         public static TermSet LookupTermSet(TermStore tesmStore, TaxonomyFieldDefinition taxFieldModel)
         {
-            if (taxFieldModel.TermSetId.HasValue)
-                return tesmStore.GetTermSet(taxFieldModel.TermSetId.Value);
+            return LookupTermSet(tesmStore,
+                taxFieldModel.TermSetName,
+                taxFieldModel.TermSetId,
+                taxFieldModel.TermSetLCID
+                );
+        }
 
-            if (!string.IsNullOrEmpty(taxFieldModel.TermSetName))
-                return tesmStore.GetTermSets(taxFieldModel.TermSetName, taxFieldModel.TermSetLCID).FirstOrDefault();
+        public static TermSet LookupTermSet(TermStore tesmStore, string termSetName, Guid? termSetId, int termSetLCID)
+        {
+            if (termSetId.HasGuidValue())
+                return tesmStore.GetTermSet(termSetId.Value);
+
+            if (!string.IsNullOrEmpty(termSetName))
+                return tesmStore.GetTermSets(termSetName, termSetLCID).FirstOrDefault();
 
             return null;
         }
@@ -94,5 +117,7 @@ namespace SPMeta2.SSOM.Standard.ModelHandlers.Fields
         }
 
         #endregion
+
+
     }
 }

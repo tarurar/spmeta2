@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SPMeta2.Exceptions
 {
-    [Serializable]
+    [Serializable] 
     public class SPMeta2NotImplementedException : SPMeta2Exception
     {
         public SPMeta2NotImplementedException() { }

@@ -7,7 +7,37 @@ namespace SPMeta2.Syntax.Default
     {
         #region methods
 
-        public static ModelNode WithAddAudiences(this ModelNode model, Action<ModelNode> action)
+        public static ModelNode WithReusableHTMLItems(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+        public static ModelNode WithReusableTextItems(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+        public static ModelNode WithComposedLookItems(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+        public static ModelNode WithFilterDisplayTemplates(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+
+        public static ModelNode WithJavaScriptDisplayTemplates(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+        public static ModelNode WithMasterPages(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+        public static ModelNode WithMasterPagePreviews(this ModelNode model, Action<ModelNode> action)
         {
             return MakeScopeCall(model, action);
         }
@@ -48,6 +78,16 @@ namespace SPMeta2.Syntax.Default
         }
 
         public static ModelNode WithWebConfigModifications(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+        public static ModelNode WithWebPartGalleryFiles(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+        public static ModelNode WithMediaFields(this ModelNode model, Action<ModelNode> action)
         {
             return MakeScopeCall(model, action);
         }
@@ -165,10 +205,24 @@ namespace SPMeta2.Syntax.Default
             return MakeScopeCall(model, action);
         }
 
+        public static ModelNode WithControlDisplayTemplates(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+
+        public static ModelNode WithItemDisplayTemplates(this ModelNode model, Action<ModelNode> action)
+        {
+            return MakeScopeCall(model, action);
+        }
+
+
+
         public static ModelNode WithImageRenditions(this ModelNode model, Action<ModelNode> action)
         {
             return MakeScopeCall(model, action);
         }
+
 
         public static ModelNode WithSearchResults(this ModelNode model, Action<ModelNode> action)
         {

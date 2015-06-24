@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint;
 using SPMeta2.Common;
 using SPMeta2.Definitions;
@@ -66,7 +66,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             EnsureListItem(list, folder, listItemModel);
         }
 
-        protected SPListItem GetListItem(SPList list, SPFolder folder, ListItemDefinition listItemModel)
+        protected virtual SPListItem FindListItem(SPList list, SPFolder folder, ListItemDefinition listItemModel)
         {
             var items = list.GetItems(new SPQuery
             {
@@ -87,7 +87,7 @@ namespace SPMeta2.SSOM.ModelHandlers
 
         private SPListItem EnsureListItem(SPList list, SPFolder folder, ListItemDefinition listItemModel)
         {
-            var currentItem = GetListItem(list, folder, listItemModel);
+            var currentItem = FindListItem(list, folder, listItemModel);
 
             InvokeOnModelEvent(this, new ModelEventArgs
             {
@@ -105,7 +105,8 @@ namespace SPMeta2.SSOM.ModelHandlers
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingNewObject, "Processing new list item");
 
                 var newItem = list.Items.Add(folder.ServerRelativeUrl, SPFileSystemObjectType.File, null);
-                newItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
+
+                MapListItemProperties(newItem, listItemModel);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -126,7 +127,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             {
                 TraceService.Information((int)LogEventId.ModelProvisionProcessingExistingObject, "Processing existing list item");
 
-                currentItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
+                MapListItemProperties(currentItem, listItemModel);
 
                 InvokeOnModelEvent(this, new ModelEventArgs
                 {
@@ -143,6 +144,11 @@ namespace SPMeta2.SSOM.ModelHandlers
 
                 return currentItem;
             }
+        }
+
+        protected virtual void MapListItemProperties(SPListItem newItem, ListItemDefinition listItemModel)
+        {
+            newItem[BuiltInInternalFieldNames.Title] = listItemModel.Title;
         }
 
         public override void WithResolvingModelHost(object modelHost, DefinitionBase model, Type childModelType, Action<object> action)

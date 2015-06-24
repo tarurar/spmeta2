@@ -36,6 +36,11 @@ namespace SPMeta2.SSOM.ModelHandlers.Fields
             var typedField = field as SPFieldCalculated;
 
             typedField.Formula = typedFieldModel.Formula ?? string.Empty;
+
+            if (typedFieldModel.ShowAsPercentage.HasValue)
+                typedField.ShowAsPercentage = typedFieldModel.ShowAsPercentage.Value;
+
+            typedField.OutputType = (SPFieldType)Enum.Parse(typeof(SPFieldType), typedFieldModel.OutputType);
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)
@@ -44,8 +49,12 @@ namespace SPMeta2.SSOM.ModelHandlers.Fields
 
             var typedFieldModel = fieldModel.WithAssertAndCast<CalculatedFieldDefinition>("model", value => value.RequireNotNull());
 
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.LCID, typedFieldModel.CurrencyLocaleId);
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Formula, typedFieldModel.Formula);
+            if (typedFieldModel.CurrencyLocaleId.HasValue)
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.LCID, typedFieldModel.CurrencyLocaleId);
+
+            // should be a new XML node
+            var formulaNode = new XElement(BuiltInFieldAttributes.Formula, typedFieldModel.Formula);
+            fieldTemplate.Add(formulaNode);
 
             fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, (int)Enum.Parse(typeof(SPDateTimeFieldFormatType), typedFieldModel.DateFormat));
 

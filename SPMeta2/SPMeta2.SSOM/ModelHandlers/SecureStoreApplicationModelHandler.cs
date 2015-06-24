@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.Office.SecureStoreService.Server;
 using Microsoft.SharePoint;
 using Microsoft.SharePoint.Administration;
@@ -33,6 +33,7 @@ namespace SPMeta2.SSOM.ModelHandlers
             var definition = model.WithAssertAndCast<SecureStoreApplicationDefinition>("model", value => value.RequireNotNull());
 
             DeployDefinition(modelHost, farmAppModelHost.HostFarm, definition);
+            farmAppModelHost.ShouldUpdateHost = false;
         }
 
         public override void WithResolvingModelHost(ModelHostResolveContext context)

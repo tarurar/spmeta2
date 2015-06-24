@@ -30,6 +30,18 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug35|AnyCPU'">
+    <OutputPath>bin\Debug35\</OutputPath>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Debug35\SPMeta2.Standard.XML</DocumentationFile>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug40|AnyCPU'">
     <OutputPath>bin\Debug40\</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -79,15 +91,35 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuiltInDefinitions\BuiltInPublishingFieldDefinitions.cs" />
+    <Compile Include="Definitions\Base\ReusableItemDefinitionBase.cs" />
+    <Compile Include="Definitions\DisplayTemplates\FilterDisplayTemplateDefinition.cs" />
+    <Compile Include="Definitions\ManagedPropertyDefinition.cs" />
+    <Compile Include="Definitions\ReusableHTMLItemDefinition.cs" />
+    <Compile Include="Definitions\ReusableTextItemDefinition.cs" />
+    <Compile Include="Definitions\Webparts\ProjectSummaryWebPartDefinition.cs" />
+    <Compile Include="Definitions\Webparts\RefinementScriptWebPartDefinition.cs" />
+    <Compile Include="Enumerations\BuiltInContentClass.cs" />
+    <Compile Include="Enumerations\BuiltInCompatibleSearchDataTypes.cs" />
+    <Compile Include="Syntax\ContentBySearchWebPartSyntax.cs" />
+    <Compile Include="Definitions\Base\ItemControlTemplateDefinitionBase.cs" />
+    <Compile Include="Definitions\Base\TemplateDefinitionBase.cs" />
     <Compile Include="Definitions\CustomDocumentIdProviderDefinition.cs" />
+    <Compile Include="Definitions\DisplayTemplates\ControlDisplayTemplateDefinition.cs" />
+    <Compile Include="Definitions\DisplayTemplates\JavaScriptDisplayTemplateDefinition.cs" />
+    <Compile Include="Definitions\DisplayTemplates\ItemDisplayTemplateDefinition.cs" />
+    <Compile Include="Definitions\Fields\MediaFieldDefinition.cs" />
+    <Compile Include="Definitions\Fields\SummaryLinkFieldDefinition.cs" />
+    <Compile Include="Definitions\Fields\LinkFieldDefinition.cs" />
+    <Compile Include="Definitions\Fields\ImageFieldDefinition.cs" />
+    <Compile Include="Definitions\Fields\HTMLFieldDefinition.cs" />
     <Compile Include="Definitions\PageLayoutAndSiteTemplateSettingsDefinition.cs" />
     <Compile Include="Definitions\AudienceDefinition.cs" />
     <Compile Include="Definitions\Fields\TaxonomyFieldDefinition.cs" />
@@ -97,15 +129,23 @@
     <Compile Include="Definitions\SearchConfigurationDefinition.cs" />
     <Compile Include="Definitions\SearchResultDefinition.cs" />
     <Compile Include="Definitions\SearchSettingsDefinition.cs" />
+    <Compile Include="Definitions\Taxonomy\TaxonomyTermLabelDefinition.cs" />
     <Compile Include="Definitions\WebNavigationSettingsDefinition.cs" />
     <Compile Include="Definitions\Webparts\ContactFieldControlDefinition.cs" />
+    <Compile Include="Definitions\Webparts\ContentBySearchWebPartDefinition.cs" />
     <Compile Include="Definitions\Webparts\ContentByQueryWebPartDefinition.cs" />
+    <Compile Include="Definitions\Webparts\ResultScriptWebPartDefinition.cs" />
     <Compile Include="Definitions\Webparts\SiteFeedWebPartDefinition.cs" />
+    <Compile Include="Definitions\Webparts\SummaryLinkWebPartDefinition.cs" />
+    <Compile Include="Enumerations\BuiltInPublishingContentTypeNames.cs" />
     <Compile Include="Enumerations\BuiltInPublishingFieldTypes.cs" />
     <Compile Include="Enumerations\BuiltInInternalPublishingFieldNames.cs" />
     <Compile Include="Enumerations\BuiltInPublishingContentTypeId.cs" />
     <Compile Include="Enumerations\BuiltInPublishingFieldId.cs" />
     <Compile Include="Enumerations\BuiltInPublishingPageLayoutNames.cs" />
+    <Compile Include="Enumerations\BuiltInJSTargetControlType.cs" />
+    <Compile Include="Enumerations\BuiltInJSTemplateType.cs" />
+    <Compile Include="Enumerations\BuiltInTargetControlType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Definitions\Taxonomy\TaxonomyTermDefinition.cs" />
     <Compile Include="Definitions\Taxonomy\TaxonomyTermGroupDefinition.cs" />
@@ -116,6 +156,20 @@
     <Compile Include="Services\Webparts\ContentByQueryWebPart\SortByValue.cs" />
     <Compile Include="Services\Webparts\ContentByQueryWebPart\DataMappingValue.cs" />
     <Compile Include="Services\Webparts\ContentByQueryWebPart\DataMappingViewFieldValue.cs" />
+    <Compile Include="Syntax\FilterDisplayTemplateDefinitionSyntax.cs" />
+    <Compile Include="Syntax\RefinementScriptWebPartDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ManagedPropertyDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ReusableItemDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ResultScriptWebPartDefinitionSyntax.cs" />
+    <Compile Include="Syntax\JavaScriptDisplayTemplateDefinitionSyntax.cs" />
+    <Compile Include="Syntax\SummaryLinkWebPartDefinitionSyntax.cs" />
+    <Compile Include="Syntax\HTMLFieldDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ImageFieldDefinitionSyntax.cs" />
+    <Compile Include="Syntax\LinkFieldDefinitionSyntax.cs" />
+    <Compile Include="Syntax\SummaryLinkFieldDefinitionSyntax.cs" />
+    <Compile Include="Syntax\MediaFieldDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ItemDisplayTemplateDefinitionSyntax.cs" />
+    <Compile Include="Syntax\ControlDisplayTemplateDefinitionSyntax.cs" />
     <Compile Include="Syntax\SearchSettingsDefinitionSyntax.cs" />
     <Compile Include="Syntax\CustomDocumentIdProviderDefinitionSyntax.cs" />
     <Compile Include="Syntax\AudienceDefinitionSyntax.cs" />
@@ -128,12 +182,15 @@
     <Compile Include="Syntax\ImageRenditionDefinitionSyntax.cs" />
     <Compile Include="Syntax\PublishingPageDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyFieldDefinitionSyntax.cs" />
+    <Compile Include="Syntax\TaxonomyTermLabelDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermGroupDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermSetDefinitionSyntax.cs" />
     <Compile Include="Syntax\TaxonomyTermStoreDefinitionSyntax.cs" />
     <Compile Include="Syntax\PageLayoutAndSiteTemplateSettingsDefinitionSyntax.cs" />
+    <Compile Include="Syntax\TypedWebpartsDefinitionSyntax.cs" />
     <Compile Include="Syntax\WebNavigationSettingsDefinitionSyntax.cs" />
+    <Compile Include="Utils\TaxonomyUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SPMeta2.Syntax.Default\SPMeta2.Syntax.Default.csproj">

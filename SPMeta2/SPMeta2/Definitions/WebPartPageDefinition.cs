@@ -1,6 +1,7 @@
 ﻿using SPMeta2.Attributes;
 using SPMeta2.Attributes.Regression;
 using System;
+using System.Runtime.Serialization;
 namespace SPMeta2.Definitions
 {
     /// <summary>
@@ -14,8 +15,10 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(ListDefinition))]
 
     [ExpectAddHostExtensionMethod]
-    [Serializable]
+    [Serializable] [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class WebPartPageDefinition : PageDefinitionBase
     {
         #region constructors
@@ -36,7 +39,9 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
-
+        [ExpectUpdateAsWebPartPageLayoutTemplate]
+        [ExpectRequired(GroupName = "Layout Template")]
+        [DataMember]
         public int PageLayoutTemplate { get; set; }
 
         /// <summary>
@@ -44,6 +49,8 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
         [ExpectValidation]
+        [ExpectRequired(GroupName = "Layout Template")]
+        [DataMember]
 
         public string CustomPageLayout { get; set; }
 

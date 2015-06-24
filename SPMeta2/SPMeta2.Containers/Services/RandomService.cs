@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace SPMeta2.Containers.Services
 {
@@ -22,6 +26,7 @@ namespace SPMeta2.Containers.Services
         public abstract double Double(double maxValue);
 
         public abstract string UserLogin();
+        public abstract string ActiveDirectoryGroup();
         public abstract string UserName();
 
         public abstract string DbServerName();
@@ -34,6 +39,61 @@ namespace SPMeta2.Containers.Services
     public static class RandomServiceExtensions
     {
         #region methods
+
+        public static bool? NullableBool(this RandomService service)
+        {
+            if (service.Bool())
+                return service.Bool();
+
+            return null;
+        }
+
+        public static T RandomFromArray<T>(this RandomService service, IEnumerable<T> array)
+        {
+            return array.ToList()[service.Int(array.Count() - 1)];
+        }
+
+        public static IEnumerable<T> RandomArrayFromArray<T>(this RandomService service, IEnumerable<T> array)
+        {
+            if (array.Count() == 0)
+                return Enumerable.Empty<T>();
+
+            var resultArray = new List<T>();
+            var itemsCount = service.Int(array.Count() - 1);
+
+            if (itemsCount == 0)
+                itemsCount = array.Count() / 2;
+
+            for (var i = 0; i < itemsCount; i++)
+            {
+                var newItem = array.ToList()[service.Int(array.Count() - 1)];
+
+                if (!resultArray.Contains(newItem))
+                    resultArray.Add(newItem);
+            }
+
+            return resultArray;
+        }
+
+        public static List<T> RandomListFromArray<T>(this RandomService service, IEnumerable<T> array)
+        {
+            var result = new List<T>();
+
+            foreach (var value in RandomArrayFromArray<T>(service, array))
+                result.Add(value);
+
+            return result;
+        }
+
+        public static Collection<T> RandomCollectionFromArray<T>(this RandomService service, IEnumerable<T> array)
+        {
+            var result = new Collection<T>();
+
+            foreach (var value in RandomArrayFromArray<T>(service, array))
+                result.Add(value);
+
+            return result;
+        }
 
         public static string HttpUrl(this RandomService service)
         {
@@ -60,6 +120,31 @@ namespace SPMeta2.Containers.Services
             return (short)service.Int(maxValue);
         }
 
+        public static byte Byte(this RandomService service)
+        {
+            return service.Byte(byte.MaxValue);
+        }
+
+        public static byte[] ByteArray(this RandomService service)
+        {
+            return ByteArray(service, 64);
+            return ByteArray(service, 64);
+        }
+
+        public static byte[] ByteArray(this RandomService service, int length)
+        {
+            var result = new List<byte>();
+
+            for (var i = 0; i < length; i++)
+                result.Add(service.Byte());
+
+            return result.ToArray();
+        }
+
+        public static byte Byte(this RandomService service, byte maxValue)
+        {
+            return (byte)service.Int(maxValue);
+        }
 
         public static uint UInt(this RandomService service)
         {

@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Utils;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Standard.Definitions
 {
@@ -20,7 +22,8 @@ namespace SPMeta2.Standard.Definitions
     [DefaultRootHost(typeof(SiteDefinition))]
     [DefaultParentHost(typeof(SiteDefinition))]
 
-    [Serializable]
+    [Serializable] 
+    [DataContract]
     [ExpectWithExtensionMethod]
     public class SearchResultDefinition : DefinitionBase
     {
@@ -36,21 +39,30 @@ namespace SPMeta2.Standard.Definitions
         #region properties
 
         [ExpectValidation]
+        [DataMember]
         public bool IsDefault { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string Name { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string Description { get; set; }
 
         [ExpectValidation]
+        [DataMember]
+        [ExpectNullable]
         public string Query { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public string ProviderName { get; set; }
 
         [ExpectValidation]
+        [DataMember]
         public Guid? ProviderId { get; set; }
 
         #endregion

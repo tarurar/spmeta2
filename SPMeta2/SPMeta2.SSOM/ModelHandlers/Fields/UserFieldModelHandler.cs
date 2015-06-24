@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Xml.Linq;
 using Microsoft.SharePoint;
 using SPMeta2.Definitions;
@@ -35,6 +36,21 @@ namespace SPMeta2.SSOM.ModelHandlers.Fields
             var typedFieldModel = fieldModel.WithAssertAndCast<UserFieldDefinition>("model", value => value.RequireNotNull());
 
             typedField.AllowDisplay = typedFieldModel.AllowDisplay;
+            typedField.Presence = typedFieldModel.Presence;
+            typedField.AllowMultipleValues = typedFieldModel.AllowMultipleValues;
+
+            if (!string.IsNullOrEmpty(typedFieldModel.SelectionMode))
+                typedField.SelectionMode = (SPFieldUserSelectionMode)Enum.Parse(typeof(SPFieldUserSelectionMode), typedFieldModel.SelectionMode);
+
+            if (typedFieldModel.SelectionGroup.HasValue)
+            {
+                typedField.SelectionGroup = typedFieldModel.SelectionGroup.Value;
+            }
+            else if (!string.IsNullOrEmpty(typedFieldModel.SelectionGroupName))
+            {
+                var group = GetCurrentWeb().SiteGroups.OfType<SPGroup>().FirstOrDefault(g => g.Name.ToUpper() == typedFieldModel.SelectionGroupName.ToUpper());
+                typedField.SelectionGroup = group.ID;
+            }
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)

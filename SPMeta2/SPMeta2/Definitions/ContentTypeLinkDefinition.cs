@@ -1,8 +1,10 @@
 ﻿
 using SPMeta2.Attributes;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using System;
 using SPMeta2.Definitions.Base;
+using System.Runtime.Serialization;
 
 namespace SPMeta2.Definitions
 {
@@ -18,7 +20,10 @@ namespace SPMeta2.Definitions
     [DefaultParentHostAttribute(typeof(ListDefinition))]
 
     [Serializable]
+    [DataContract]
     [ExpectWithExtensionMethod]
+    [ExpectArrayExtensionMethod]
+
     public class ContentTypeLinkDefinition : DefinitionBase
     {
         #region properties
@@ -28,8 +33,10 @@ namespace SPMeta2.Definitions
         /// ContentTypeId is used for the first place, then ContentTypeName is used as a second attempt to lookup the content type.
         /// </summary>
         /// 
-
+        [ExpectRequired(GroupName = "ContentType Link")]
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string ContentTypeId { get; set; }
 
         /// <summary>
@@ -38,7 +45,10 @@ namespace SPMeta2.Definitions
         /// </summary>
         /// 
 
+        [ExpectRequired(GroupName = "ContentType Link")]
         [ExpectValidation]
+        [DataMember]
+        [IdentityKey]
         public string ContentTypeName { get; set; }
 
         #endregion

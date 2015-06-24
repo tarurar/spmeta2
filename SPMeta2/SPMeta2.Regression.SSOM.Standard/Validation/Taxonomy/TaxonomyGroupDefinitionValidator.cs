@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.SharePoint.Taxonomy;
 using SPMeta2.Definitions;
 using SPMeta2.Definitions.Base;
@@ -12,6 +12,7 @@ using SPMeta2.SSOM.Standard.ModelHandlers.Taxonomy;
 using SPMeta2.SSOM.Standard.ModelHosts;
 using SPMeta2.Standard.Definitions.Taxonomy;
 using SPMeta2.Utils;
+using SPMeta2.Containers.Assertion;
 
 namespace SPMeta2.Regression.SSOM.Standard.Validation.Taxonomy
 {
@@ -22,12 +23,37 @@ namespace SPMeta2.Regression.SSOM.Standard.Validation.Taxonomy
             var termStoreModelHost = modelHost.WithAssertAndCast<TermStoreModelHost>("modelHost", value => value.RequireNotNull());
             var definition = model.WithAssertAndCast<TaxonomyTermGroupDefinition>("model", value => value.RequireNotNull());
 
-            var spObject = FindGroup(termStoreModelHost.HostTermStore, definition);
+            var spObject = FindGroup(termStoreModelHost, definition);
 
             var assert = ServiceFactory.AssertService
-                           .NewAssert(definition, spObject)
-                                 .ShouldNotBeNull(spObject)
-                                 .ShouldBeEqual(m => m.Name, o => o.Name);
+                                .NewAssert(definition, spObject)
+                                .ShouldNotBeNull(spObject);
+
+            if (definition.IsSiteCollectionGroup)
+            {
+                assert.SkipProperty(m => m.Name, "IsSiteCollectionGroup is TRUE. Skipping Name property validation.");
+
+                assert.ShouldBeEqual((p, s, d) =>
+                {
+                    var srcProp = s.GetExpressionValue(m => m.IsSiteCollectionGroup);
+                    var group = FindSiteCollectionGroup(termStoreModelHost, definition);
+
+                    var isValid = group.IsSiteCollectionGroup;
+
+                    return new PropertyValidationResult
+                    {
+                        Tag = p.Tag,
+                        Src = srcProp,
+                        Dst = null,
+                        IsValid = isValid
+                    };
+                });
+            }
+            else
+            {
+                assert.SkipProperty(m => m.IsSiteCollectionGroup, "IsSiteCollectionGroup is false. Skipping property.");
+                assert.ShouldBeEqual(m => m.Name, o => o.Name);
+            }
 
             if (definition.Id.HasValue)
             {

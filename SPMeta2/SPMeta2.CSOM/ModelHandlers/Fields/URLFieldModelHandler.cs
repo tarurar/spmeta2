@@ -31,6 +31,11 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
             // let base setting be setup
             base.ProcessFieldProperties(field, fieldModel);
 
+            var typedFieldModel = fieldModel.WithAssertAndCast<URLFieldDefinition>("model", value => value.RequireNotNull());
+            var typedField = field.Context.CastTo<FieldUrl>(field);
+
+            if (!string.IsNullOrEmpty(typedFieldModel.DisplayFormat))
+                typedField.DisplayFormat = (UrlFieldFormatType)Enum.Parse(typeof(UrlFieldFormatType), typedFieldModel.DisplayFormat);
         }
 
         protected override void ProcessSPFieldXElement(XElement fieldTemplate, FieldDefinition fieldModel)
@@ -39,7 +44,8 @@ namespace SPMeta2.CSOM.ModelHandlers.Fields
 
             var typedFieldModel = fieldModel.WithAssertAndCast<URLFieldDefinition>("model", value => value.RequireNotNull());
 
-            fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, typedFieldModel.DisplayFormat);
+            if (!string.IsNullOrEmpty(typedFieldModel.DisplayFormat))
+                fieldTemplate.SetAttribute(BuiltInFieldAttributes.Format, typedFieldModel.DisplayFormat);
         }
 
         #endregion

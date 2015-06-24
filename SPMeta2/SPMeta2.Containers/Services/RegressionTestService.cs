@@ -72,10 +72,36 @@ namespace SPMeta2.Containers.Services
 
         #endregion
 
+        [Serializable]
+        public class ContainerValidationResultException : SPMeta2Exception
+        {
+            public ContainerValidationResultException() { }
+            public ContainerValidationResultException(string message) : base(message) { }
+            public ContainerValidationResultException(string message, Exception inner) : base(message, inner) { }
+            protected ContainerValidationResultException(
+              System.Runtime.Serialization.SerializationInfo info,
+              System.Runtime.Serialization.StreamingContext context)
+                : base(info, context) { }
 
+            public DefinitionBase Definition { get; set; }
+
+            public OnPropertyValidatedEventArgs Args { get; set; }
+        }
 
         public void OnModelPropertyValidated(object sender, OnPropertyValidatedEventArgs e)
         {
+            // immediate throw
+            // temporary solution due to multiple provision of the same model
+
+            //if (!e.Result.IsValid)
+            //{
+            //    throw new ContainerValidationResultException
+            //    {
+            //        Args = e,
+            //        Definition = e.Result.Tag as DefinitionBase
+            //    };
+            //}
+
             var existingModelResult = ModelValidations.FirstOrDefault(r => r.Model == e.Result.Tag);
 
             if (existingModelResult == null)
@@ -322,6 +348,8 @@ namespace SPMeta2.Containers.Services
 
                 hook.OnProvisioning = true;
 
+                AssertService.IsNotNull(context.ModelHost);
+
                 AssertService.IsNotNull(context.ObjectDefinition);
             });
         }
@@ -338,6 +366,8 @@ namespace SPMeta2.Containers.Services
 
                 AssertService.IsNotNull(context.Object);
                 AssertService.IsNotNull(context.ObjectDefinition);
+
+                AssertService.IsNotNull(context.ModelHost);
 
                 AssertService.IsInstanceOfType(context.Object, typeof(TObjectType));
             });
@@ -412,18 +442,26 @@ namespace SPMeta2.Containers.Services
 
                     if (model.Value.GetType() == typeof(FarmDefinition))
                         runner.DeployFarmModel(model);
-
-                    if (model.Value.GetType() == typeof(WebApplicationDefinition))
+                    else if (model.Value.GetType() == typeof(WebApplicationDefinition))
                         runner.DeployWebApplicationModel(model);
-
-                    if (model.Value.GetType() == typeof(SiteDefinition))
+                    else if (model.Value.GetType() == typeof(SiteDefinition))
                         runner.DeploySiteModel(model);
-
-                    if (model.Value.GetType() == typeof(WebDefinition))
+                    else if (model.Value.GetType() == typeof(WebDefinition))
                         runner.DeployWebModel(model);
+                    else if (model.Value.GetType() == typeof(ListDefinition))
+                        runner.DeployListModel(model);
+                    else
+                    {
+                        throw new SPMeta2NotImplementedException(
+                            string.Format("Runner does not support model of type: [{0}]", model.Value.GetType()));
 
-                    var hasMissedOrInvalidProps = ResolveModelValidation(model, hooks);
-                    AssertService.IsFalse(hasMissedOrInvalidProps);
+                    }
+
+                    if (this.EnableDefinitionValidation)
+                    {
+                        var hasMissedOrInvalidProps = ResolveModelValidation(model, hooks);
+                        AssertService.IsFalse(hasMissedOrInvalidProps);
+                    }
                 });
             }
         }
@@ -472,9 +510,11 @@ namespace SPMeta2.Containers.Services
                 if (definitionSandbox.Value.GetType() == typeof(WebDefinition))
                     runner.DeployWebModel(definitionSandbox);
 
-                var hasMissedOrInvalidProps = ResolveModelValidation(definitionSandbox, hooks);
-
-                AssertService.IsFalse(hasMissedOrInvalidProps);
+                if (this.EnableDefinitionValidation)
+                {
+                    var hasMissedOrInvalidProps = ResolveModelValidation(definitionSandbox, hooks);
+                    AssertService.IsFalse(hasMissedOrInvalidProps);
+                }
 
                 result = definitionSandbox;
             });
@@ -534,21 +574,29 @@ namespace SPMeta2.Containers.Services
 
                 foreach (var property in modelValidationResult.Properties.OrderBy(p => p.Src != null ? p.Src.Name : p.ToString()))
                 {
-                    Trace.WriteLine(string.Format("[INF]{6} [{4}] - Src prop: [{0}] Src value: [{1}] Dst prop: [{2}] Dst value: [{3}] Message:[{5}]",
-                        new object[]{
-                            property.Src != null ? property.Src.Name : string.Empty,
-                            property.Src != null ? property.Src.Value : string.Empty,
+                    if ((!property.IsValid) ||
+                         (property.IsValid && !ShowOnlyFalseResults))
+                    {
+                        Trace.WriteLine(
+                            string.Format(
+                                "[INF]{6} [{4}] - Src prop: [{0}] Src value: [{1}] Dst prop: [{2}] Dst value: [{3}] Message:[{5}]",
+                                new object[]
+                                {
+                                    property.Src != null ? property.Src.Name : string.Empty,
+                                    property.Src != null ? property.Src.Value : string.Empty,
 
-                            property.Dst != null ? property.Dst.Name : string.Empty,
-                            property.Dst != null ? property.Dst.Value : string.Empty,
+                                    property.Dst != null ? property.Dst.Name : string.Empty,
+                                    property.Dst != null ? property.Dst.Value : string.Empty,
 
-                            property.IsValid,
-                            property.Message,
-                            start
-                    }));
+                                    property.IsValid,
+                                    property.Message,
+                                    start
+                                }));
+                    }
 
                     if (!property.IsValid)
                         hasMissedOrInvalidProps = true;
+
                 }
 
                 Trace.WriteLine(string.Format("[INF]{0}PROPERTY CHECK", start));
@@ -564,6 +612,21 @@ namespace SPMeta2.Containers.Services
                             modelValidationResult.Properties.FirstOrDefault(
                                 r => r.Src != null && r.Src.Name == shouldBeValidatedProp.Name);
 
+                        // convert stuff
+                        if (validationResult == null)
+                        {
+                            validationResult = modelValidationResult.Properties.FirstOrDefault(
+                                  r => r.Src != null && r.Src.Name.Contains("." + shouldBeValidatedProp.Name + ")"));
+                        }
+
+                        // nullables
+                        if (validationResult == null)
+                        {
+                            validationResult = modelValidationResult.Properties.FirstOrDefault(
+                                  r => r.Src != null &&
+                                      (r.Src.Name.Contains("System.Nullable`1") && r.Src.Name.Contains(shouldBeValidatedProp.Name)));
+                        }
+
                         if (validationResult != null)
                         {
                             hasValidation = true;
@@ -576,10 +639,13 @@ namespace SPMeta2.Containers.Services
 
                         if (hasValidation)
                         {
-                            Trace.WriteLine(string.Format("[INF]{2} [{0}] - [{1}]",
-                                "VALIDATED",
-                                shouldBeValidatedProp.Name,
-                                start));
+                            if (!ShowOnlyFalseResults)
+                            {
+                                Trace.WriteLine(string.Format("[INF]{2} [{0}] - [{1}]",
+                                    "VALIDATED",
+                                    shouldBeValidatedProp.Name,
+                                    start));
+                            }
                         }
                         else
                         {
@@ -639,14 +705,25 @@ namespace SPMeta2.Containers.Services
             TraceUtils.WithScope(traceScope =>
             {
                 if (eventHooks.OnProvisioning)
-                    traceScope.WriteLine(string.Format("[INF]{0} [VALIDATED] - [OnProvisioning]", start));
+                {
+                    if (!ShowOnlyFalseResults)
+                        traceScope.WriteLine(string.Format("[INF]{0} [VALIDATED] - [OnProvisioning]", start));
+                }
                 else
+                {
+
                     traceScope.WriteLine(string.Format("[ERR]{0} [MISSED] - [OnProvisioning]", start));
+                }
 
                 if (eventHooks.OnProvisioned)
-                    traceScope.WriteLine(string.Format("[INF]{0} [VALIDATED] - [OnProvisioned]", start));
+                {
+                    if (!ShowOnlyFalseResults)
+                        traceScope.WriteLine(string.Format("[INF]{0} [VALIDATED] - [OnProvisioned]", start));
+                }
                 else
+                {
                     traceScope.WriteLine(string.Format("[IERR]{0} [MISSED] - [OnProvisioned]", start));
+                }
 
                 AssertService.AreEqual(true, eventHooks.OnProvisioning);
                 AssertService.AreEqual(true, eventHooks.OnProvisioned);
@@ -712,6 +789,8 @@ namespace SPMeta2.Containers.Services
         }
 
         public int ProvisionGenerationCount { get; set; }
+
+        public bool ShowOnlyFalseResults { get; set; }
 
         public bool EnableDefinitionProvision { get; set; }
         public bool EnableDefinitionValidation { get; set; }

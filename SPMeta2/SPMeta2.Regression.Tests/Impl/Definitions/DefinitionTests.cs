@@ -6,14 +6,16 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Threading.Tasks;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SPMeta2.Attributes.Identity;
 using SPMeta2.Attributes.Regression;
 using SPMeta2.Definitions;
 using SPMeta2.Models;
 using SPMeta2.Standard.Definitions.Fields;
 using SPMeta2.Syntax.Default;
 using SPMeta2.Utils;
+using SPMeta2.Standard.Definitions;
 
 namespace SPMeta2.Regression.Tests.Impl.Definitions
 {
@@ -34,7 +36,7 @@ namespace SPMeta2.Regression.Tests.Impl.Definitions
             LoadDefinitions();
         }
 
-        private static void LoadDefinitions()
+        protected static void LoadDefinitions()
         {
             var spMetaAssembly = typeof(FieldDefinition).Assembly;
             var spMetaStandardAssembly = typeof(TaxonomyFieldDefinition).Assembly;
@@ -121,6 +123,147 @@ namespace SPMeta2.Regression.Tests.Impl.Definitions
             Assert.IsTrue(result);
         }
 
+        [TestMethod]
+        [TestCategory("Regression.Definitions")]
+        public void DefinitionsShouldBeMarkedAsDataContract()
+        {
+            var showOnlyFails = true;
+            var result = true;
+
+            foreach (var definitionType in DefinitionTypes)
+            {
+                var hasAttr = definitionType.GetCustomAttributes(typeof(DataContractAttribute)).Any();
+
+                if (!hasAttr)
+                {
+                    Trace.WriteLine(string.Format("[{2}] - Checking definition type:[{0}]. Has DataContractAttribute:[{1}]",
+                        definitionType, hasAttr, hasAttr.ToString().ToUpper()));
+
+                }
+
+                if (!hasAttr)
+                    result = false;
+            }
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Definitions.Identity")]
+        public void DefinitionsShouldHasIdentityOrIdentityKey()
+        {
+            var showOnlyFails = true;
+            var result = true;
+
+            foreach (var definitionType in DefinitionTypes)
+            {
+                var isSingleIdenity = definitionType.GetCustomAttributes(typeof(SingletonIdentityAttribute), true).Any();
+                var isInstanceIdentity = !definitionType.GetCustomAttributes(typeof(SingletonIdentityAttribute), true).Any();
+
+                if (isSingleIdenity)
+                {
+                    //Trace.WriteLine(string.Format("[{1}] - Checking SINGLE type:[{0}].", definitionType, bool.TrueString.ToUpper()));
+
+                    continue;
+                }
+
+                if (isInstanceIdentity)
+                {
+                    var hasKeys = definitionType
+                                        .GetProperties()
+                                        .SelectMany(p => p.GetCustomAttributes(typeof(IdentityKeyAttribute)))
+                                        .Any();
+                    if (!hasKeys)
+                    {
+                        Trace.WriteLine(string.Format("[{2}] - Checking INSTANCE type:[{0}]. Has keys:[{1}]",
+                            definitionType, hasKeys, hasKeys.ToString().ToUpper()));
+
+                    }
+
+                    if (!hasKeys)
+                        result = false;
+                }
+            }
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Definitions")]
+        public void ModelNodeTypesPublicPropsShouldBeMarkedAsDataMemberOrIgnoreDataMemberAttr()
+        {
+            var showOnlyFails = true;
+            var result = true;
+            var errors = 0;
+
+            var types = new List<Type>();
+            types.AddRange(ReflectionUtils.GetTypesFromAssembly<ModelNode>(typeof(ModelNode).Assembly));
+
+            foreach (var definitionType in types)
+            {
+                var props = definitionType.GetProperties();
+
+                foreach (var prop in props)
+                {
+                    var hasAttr = prop.GetCustomAttributes(typeof(DataMemberAttribute)).Any()
+                        || prop.GetCustomAttributes(typeof(IgnoreDataMemberAttribute)).Any();
+
+                    if (!hasAttr)
+                    {
+                        Trace.WriteLine(string.Format("[{2}] - Checking definition type:[{0}]. Prop:[{1}]",
+                            definitionType.Name, prop.Name, hasAttr));
+                    }
+
+                    if (!hasAttr)
+                    {
+                        errors++;
+                        result = false;
+                    }
+                }
+            }
+
+            Trace.WriteLine(string.Format("Errors: [{0}]", errors));
+
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        [TestCategory("Regression.Definitions")]
+        public void DefinitionsPublicPropsShouldBeMarkedAsDataMemberOrIgnoreDataMemberAttr()
+        {
+            var showOnlyFails = true;
+            var result = true;
+            var errors = 0;
+
+            foreach (var definitionType in DefinitionTypes)
+            {
+
+                var props = definitionType.GetProperties();
+
+                foreach (var prop in props)
+                {
+                    var hasAttr = prop.GetCustomAttributes(typeof(DataMemberAttribute)).Any()
+                        || prop.GetCustomAttributes(typeof(IgnoreDataMemberAttribute)).Any();
+
+                    if (!hasAttr)
+                    {
+                        Trace.WriteLine(string.Format("[{2}] - Checking definition type:[{0}]. Prop:[{1}]",
+                            definitionType.Name, prop.Name, hasAttr));
+                    }
+
+                    if (!hasAttr)
+                    {
+                        errors++;
+                        result = false;
+                    }
+                }
+            }
+
+            Trace.WriteLine(string.Format("Errors: [{0}]", errors));
+
+            Assert.IsTrue(result);
+        }
+
 
         [TestMethod]
         [TestCategory("Regression.Definitions")]
@@ -168,13 +311,58 @@ namespace SPMeta2.Regression.Tests.Impl.Definitions
                 Trace.WriteLine(string.Format("    [{0}] - Add{1}(this ModelNode model, {1}Definition definition))", hasAddDefinitionMethod.ToString().ToUpper(), definitionName));
                 Trace.WriteLine(string.Format("    [{0}] - Add{1}(this ModelNode model, {1}Definition definition, Action<ModelNode> action))", hasAddDefinitionWithCallbackMethod.ToString().ToUpper(), definitionName));
 
+                #endregion
+
+                #region AddXXXs array overload
+
+                var hasAddArrayDefinitionMethod = true;
+                var shouldCheckArrayOverload = definitionType.GetCustomAttributes(typeof(ExpectArrayExtensionMethod)).Any();
+
+                if (shouldCheckArrayOverload)
+                {
+                    // validate (this ModelNode model, XXXDefinition definition)
+                    Trace.WriteLine(
+                        string.Format(
+                            "     Add{0}s(this ModelNode model, IEnumerable<{0}Definition> definitions, Action<ModelNode> action))",
+                            definitionName));
+                    var addArrayDefinitionMethodName = string.Format("Add{0}s", definitionName);
+
+                    if (definitionType == typeof(PrefixDefinition))
+                        addArrayDefinitionMethodName = string.Format("{0}es", definitionName);
+                    if (definitionType == typeof(PropertyDefinition))
+                        addArrayDefinitionMethodName = string.Format("AddProperties");
+                    if (definitionType == typeof(ManagedPropertyDefinition))
+                        addArrayDefinitionMethodName = string.Format("AddManagedProperties");
+                    if (definitionType == typeof(DiagnosticsServiceBaseDefinition))
+                        addArrayDefinitionMethodName = string.Format("AddDiagnosticsServices");
+                    if (definitionType == typeof(ListItemFieldValuesDefinition))
+                        addArrayDefinitionMethodName = string.Format("ListItemFieldValues");
+
+                    var arrayTypoe = typeof(IEnumerable<>);
+                    var arrayDefinitionType = arrayTypoe.MakeGenericType(definitionType);
+
+                    hasAddArrayDefinitionMethod = methods.FirstOrDefault(m =>
+                        m.Name == addArrayDefinitionMethodName &&
+                        m.GetParameters().Count() == 2 &&
+                        m.GetParameters()[0].ParameterType == typeof(ModelNode) &&
+                        m.GetParameters()[1].ParameterType == arrayDefinitionType) != null;
+
+                    Trace.WriteLine(
+                      string.Format("    [{0}] - {1}(this ModelNode model, IEnumerable<{2}Definition> definitions))",
+                          hasAddArrayDefinitionMethod.ToString().ToUpper(), addArrayDefinitionMethodName, definitionName));
+
+                }
+                else
+                {
+                    Trace.WriteLine(string.Format("    [SKIPPING] Skipping AddXXXs() arrary overload as there is no ExpectArrayExtensionMethod attr"));
+                }
 
                 #endregion
 
-
                 #region AddHostXXX()
 
-                var shouldCheckAddHostOverload = definitionType.GetCustomAttributes(typeof(ExpectAddHostExtensionMethod)).Any();
+                var shouldCheckAddHostOverload = definitionType.GetCustomAttributes(
+                    typeof(ExpectAddHostExtensionMethod), false).Any();
 
                 var hasAddHostDefinitionMethod = true;
                 var hasAddHostDefinitionWithCallbackMethod = true;
@@ -222,7 +410,8 @@ namespace SPMeta2.Regression.Tests.Impl.Definitions
 
                 // push back
                 if (hasAddDefinitionMethod != true || hasAddDefinitionWithCallbackMethod != true ||
-                    hasAddHostDefinitionMethod != true || hasAddHostDefinitionWithCallbackMethod != true)
+                    hasAddHostDefinitionMethod != true || hasAddHostDefinitionWithCallbackMethod != true ||
+                    hasAddArrayDefinitionMethod != true)
                     hasAllAddMethods = false;
             }
 

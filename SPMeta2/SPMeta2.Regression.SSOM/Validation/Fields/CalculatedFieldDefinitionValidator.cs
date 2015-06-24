@@ -5,6 +5,7 @@ using SPMeta2.Definitions;
 using SPMeta2.Definitions.Fields;
 using SPMeta2.Utils;
 using Microsoft.SharePoint;
+using SPMeta2.Containers.Utils;
 
 namespace SPMeta2.Regression.SSOM.Validation.Fields
 {
@@ -36,25 +37,44 @@ namespace SPMeta2.Regression.SSOM.Validation.Fields
             typedFieldAssert.ShouldBeEqual(m => m.DateFormat, o => o.GetDateFormat());
 
             typedFieldAssert.ShouldBeEqual(m => m.OutputType, o => o.GetOutputType());
-            typedFieldAssert.ShouldBeEqual(m => m.ShowAsPercentage, o => o.ShowAsPercentage);
+            //
             typedFieldAssert.ShouldBeEqual(m => m.DisplayFormat, o => o.GetDisplayFormat());
+
+            if (typedDefinition.ShowAsPercentage.HasValue)
+                typedFieldAssert.ShouldBeEqual(m => m.ShowAsPercentage, o => o.ShowAsPercentage);
+            else
+                typedFieldAssert.SkipProperty(m => m.ShowAsPercentage, "ShowAsPercentage is NULL. Skipping.");
 
             // formula
             typedFieldAssert.ShouldBeEqual(m => m.Formula, o => o.Formula);
-            typedFieldAssert.ShouldBeEqual(m => m.ValidationFormula, o => o.ValidationFormula);
-            typedFieldAssert.ShouldBeEqual(m => m.ValidationMessage, o => o.ValidationMessage);
+
+            TraceUtils.WithScope(s =>
+            {
+                s.WriteLine(string.Format("Formula: Src:[{0}] Dst:[{1}]", typedDefinition.Formula, typedField.Formula));
+            });
 
             // field refs
             if (typedDefinition.FieldReferences.Count > 0)
             {
                 var hasFieldRefs = true;
 
-                foreach (var dstFieldRef in typedField.FieldReferences)
+                if (typedField.FieldReferences != null)
                 {
-                    if (typedDefinition.FieldReferences.FirstOrDefault(c => c.ToUpper() == dstFieldRef.ToUpper()) == null)
+                    foreach (var dstFieldRef in typedField.FieldReferences)
                     {
-                        hasFieldRefs = false;
+                        if (typedDefinition.FieldReferences.FirstOrDefault(c => c.ToUpper() == dstFieldRef.ToUpper()) ==
+                            null)
+                        {
+                            hasFieldRefs = false;
+                        }
                     }
+
+                    if (typedField.FieldReferences.Length == 0)
+                        hasFieldRefs = false;
+                }
+                else
+                {
+                    hasFieldRefs = false;
                 }
 
                 typedFieldAssert.ShouldBeEqual((p, s, d) =>
