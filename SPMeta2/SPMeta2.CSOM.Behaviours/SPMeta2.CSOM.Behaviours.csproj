@@ -111,6 +111,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContentTypeBehaviours.cs" />
+	<Compile Include="ListBehaviours.cs" />
+    <Compile Include="ListViewBehaviours.cs" />
     <Compile Include="WorkflowSubscriptionBehaviours.cs" />
     <Compile Include="FieldBehaviours.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
